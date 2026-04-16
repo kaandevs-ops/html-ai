@@ -1,0 +1,3035 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personel Yönetim & Bilgi Sistemi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --primary-light: #3b82f6;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --sidebar-width: 260px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .login-box {
+            background: var(--bg-primary);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 420px;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: var(--primary);
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: var(--bg-primary);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-icon {
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .demo-users {
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .demo-users h4 {
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .demo-user {
+            padding: 8px;
+            margin: 6px 0;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .demo-user:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Main Layout */
+        .app-container {
+            display: none;
+        }
+
+        .app-container.active {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-header h2 {
+            color: var(--primary);
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+            border-right: 3px solid var(--primary-dark);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Bar */
+        .topbar {
+            height: 70px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            gap: 20px;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .topbar-search {
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+        }
+
+        .topbar-search input {
+            width: 100%;
+            padding: 10px 40px 10px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .topbar-search .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .topbar-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .topbar-icon:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            background: var(--danger);
+            border-radius: 50%;
+            border: 2px solid var(--bg-primary);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .user-menu:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .page-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .stat-icon.primary { background: rgba(37, 99, 235, 0.1); color: var(--primary); }
+        .stat-icon.success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .stat-icon.warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .stat-icon.danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+        .stat-info {
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-change {
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .stat-change.positive { color: var(--success); }
+        .stat-change.negative { color: var(--danger); }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--bg-tertiary);
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .table-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-details-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .user-details-email {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .badge-success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .badge-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .badge-info { background: rgba(6, 182, 212, 0.1); color: var(--info); }
+        .badge-primary { background: rgba(37, 99, 235, 0.1); color: var(--primary); }
+        .badge-secondary { background: rgba(100, 116, 139, 0.1); color: var(--secondary); }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            color: var(--text-secondary);
+        }
+
+        .modal-close:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        /* Calendar */
+        .calendar {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .calendar-day-header {
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .calendar-day {
+            padding: 12px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+        }
+
+        .calendar-day:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .calendar-day.today {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        .calendar-day.other-month {
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+
+        .calendar-day.has-event {
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        /* Task Board */
+        .task-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .task-column {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .task-column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .task-column-title {
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .task-count {
+            background: var(--bg-primary);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .task-card {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .task-card.priority-high { border-left-color: var(--danger); }
+        .task-card.priority-medium { border-left-color: var(--warning); }
+        .task-card.priority-low { border-left-color: var(--info); }
+
+        .task-card-title {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .task-card-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .task-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .task-assignee {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .task-assignee-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .pagination-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+
+        .pagination-btn:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .pagination-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .empty-state-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state-description {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .alert-info {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--info);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -260px;
+                top: 0;
+                height: 100%;
+                z-index: 999;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .topbar {
+                padding: 0 16px;
+            }
+
+            .content-area {
+                padding: 16px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .task-board {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .page-actions {
+                flex-direction: column;
+            }
+
+            .page-actions .btn {
+                width: 100%;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .profile-image-upload {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .profile-image-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 600;
+            margin: 0 auto 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .profile-image-preview:hover {
+            transform: scale(1.05);
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 8px;
+            background: var(--bg-tertiary);
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .view-toggle-btn {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .view-toggle-btn.active {
+            background: var(--bg-primary);
+            color: var(--primary);
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .personnel-card {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .personnel-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .personnel-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .personnel-card-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .personnel-card-info {
+            flex: 1;
+        }
+
+        .personnel-card-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .personnel-card-position {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .personnel-card-details {
+font-size: 13px;
+color: var(--text-secondary);
+}
+    .personnel-card-detail {
+        margin: 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .log-entry {
+        padding: 12px;
+        border-left: 3px solid var(--primary);
+        background: var(--bg-tertiary);
+        border-radius: 4px;
+        margin-bottom: 12px;
+    }
+
+    .log-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .log-user {
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+    .log-time {
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+
+    .log-action {
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+
+    .note-item {
+        padding: 16px;
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        margin-bottom: 12px;
+    }
+
+    .note-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .note-author {
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+    .note-date {
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+
+    .note-content {
+        font-size: 14px;
+        color: var(--text-primary);
+        line-height: 1.6;
+    }
+
+    .note-actions {
+        margin-top: 12px;
+        display: flex;
+        gap: 8px;
+    }
+
+    .attachment-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    .attachment-item {
+        padding: 8px 12px;
+        background: var(--bg-tertiary);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+    }
+
+    .time-entry {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 12px;
+        padding: 12px;
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        margin-bottom: 8px;
+    }
+
+    .time-entry-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-bottom: 4px;
+    }
+
+    .time-entry-value {
+        font-weight: 500;
+    }
+</style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-container" id="loginScreen">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>👥 Personel Yönetim Sistemi</h1>
+                <p>Lütfen giriş yapın</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>E-posta</label>
+                    <input type="email" class="form-control" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Şifre</label>
+                    <input type="password" class="form-control" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Giriş Yap</button>
+            </form>
+            <div class="demo-users">
+                <h4>Demo Kullanıcılar (Tıklayın)</h4>
+                <div class="demo-user" onclick="quickLogin('admin@company.com', 'Admin')">
+                    👑 <strong>Admin</strong> - admin@company.com
+                </div>
+                <div class="demo-user" onclick="quickLogin('hr@company.com', 'İK')">
+                    👔 <strong>İK</strong> - hr@company.com
+                </div>
+                <div class="demo-user" onclick="quickLogin('manager@company.com', 'Yönetici')">
+                    📊 <strong>Yönetici</strong> - manager@company.com
+                </div>
+                <div class="demo-user" onclick="quickLogin('staff@company.com', 'Personel')">
+                    👤 <strong>Personel</strong> - staff@company.com
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- Main App -->
+<div class="app-container" id="appContainer">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>👥 HR Panel</h2>
+        </div>
+        <div class="sidebar-nav" id="sidebarNav">
+            <!-- Navigation will be injected here -->
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <div class="topbar-search">
+                    <input type="text" placeholder="Ara..." id="globalSearch">
+                    <span class="search-icon">🔍</span>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-icon" onclick="showNotifications()">
+                    🔔
+                    <span class="notification-badge"></span>
+                </div>
+                <div class="user-menu" onclick="showUserMenu()">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div class="user-info">
+                        <div class="user-name" id="userName">Admin</div>
+                        <div class="user-role" id="userRole">Sistem Yöneticisi</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area" id="contentArea">
+            <!-- Content will be injected here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // Global State
+    const state = {
+        currentUser: null,
+        currentPage: 'dashboard',
+        personnel: [],
+        attendance: [],
+        tasks: [],
+        notes: [],
+        logs: [],
+        filters: {},
+        viewMode: 'table'
+    };
+
+    // Users Database
+    const users = [
+        { id: 1, email: 'admin@company.com', password: 'admin', name: 'Admin Kullanıcı', role: 'Admin' },
+        { id: 2, email: 'hr@company.com', password: 'hr', name: 'İK Müdürü', role: 'İK' },
+        { id: 3, email: 'manager@company.com', password: 'manager', name: 'Departman Yöneticisi', role: 'Yönetici' },
+        { id: 4, email: 'staff@company.com', password: 'staff', name: 'Personel', role: 'Personel' }
+    ];
+
+    // Role Permissions
+    const permissions = {
+        'Admin': ['dashboard', 'personnel', 'attendance', 'tasks', 'roles', 'notes', 'reports'],
+        'İK': ['dashboard', 'personnel', 'attendance', 'notes', 'reports'],
+        'Yönetici': ['dashboard', 'personnel', 'attendance', 'tasks', 'reports'],
+        'Personel': ['dashboard', 'attendance', 'tasks']
+    };
+
+    // Sample Personnel Data
+    function initializeSampleData() {
+        state.personnel = [
+            { id: 1, name: 'Ahmet Yılmaz', email: 'ahmet@company.com', phone: '0532 123 4567', department: 'IT', position: 'Yazılım Geliştirici', salary: 25000, startDate: '2020-01-15', status: 'Aktif', photo: '' },
+            { id: 2, name: 'Ayşe Demir', email: 'ayse@company.com', phone: '0533 234 5678', department: 'İK', position: 'İK Uzmanı', salary: 20000, startDate: '2019-03-20', status: 'Aktif', photo: '' },
+            { id: 3, name: 'Mehmet Kaya', email: 'mehmet@company.com', phone: '0534 345 6789', department: 'Satış', position: 'Satış Temsilcisi', salary: 18000, startDate: '2021-06-10', status: 'Aktif', photo: '' },
+            { id: 4, name: 'Fatma Çelik', email: 'fatma@company.com', phone: '0535 456 7890', department: 'Muhasebe', position: 'Muhasebeci', salary: 22000, startDate: '2018-09-05', status: 'Aktif', photo: '' },
+            { id: 5, name: 'Ali Öztürk', email: 'ali@company.com', phone: '0536 567 8901', department: 'IT', position: 'Sistem Yöneticisi', salary: 28000, startDate: '2017-11-12', status: 'İzinli', photo: '' },
+            { id: 6, name: 'Zeynep Arslan', email: 'zeynep@company.com', phone: '0537 678 9012', department: 'Pazarlama', position: 'Pazarlama Müdürü', salary: 30000, startDate: '2016-02-28', status: 'Aktif', photo: '' }
+        ];
+
+        state.attendance = generateAttendanceData();
+        state.tasks = generateTaskData();
+        state.notes = generateNotesData();
+        state.logs = generateLogsData();
+    }
+
+    function generateAttendanceData() {
+        const data = [];
+        const today = new Date();
+        for (let i = 0; i < 30; i++) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            state.personnel.forEach(person => {
+                if (Math.random() > 0.1) { // 90% attendance
+                    const checkIn = new Date(date);
+                    checkIn.setHours(8 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60));
+                    const checkOut = new Date(date);
+                    checkOut.setHours(17 + Math.floor(Math.random() * 3), Math.floor(Math.random() * 60));
+                    
+                    data.push({
+                        id: data.length + 1,
+                        personnelId: person.id,
+                        personnelName: person.name,
+                        date: date.toISOString().split('T')[0],
+                        checkIn: checkIn.toTimeString().split(' ')[0].substring(0, 5),
+                        checkOut: checkOut.toTimeString().split(' ')[0].substring(0, 5),
+                        late: checkIn.getHours() >= 9,
+                        earlyLeave: checkOut.getHours() < 17,
+                        overtime: checkOut.getHours() > 18
+                    });
+                }
+            });
+        }
+        return data;
+    }
+
+    function generateTaskData() {
+        return [
+            { id: 1, title: 'Website Yenileme Projesi', description: 'Şirket websitesinin tasarımı ve kodlaması', assignedTo: 1, assignedToName: 'Ahmet Yılmaz', priority: 'Yüksek', status: 'Devam Ediyor', dueDate: '2026-02-15', createdBy: 'Admin', createdAt: '2026-01-10' },
+            { id: 2, title: 'Personel Memnuniyet Anketi', description: 'Yıllık personel memnuniyet anketinin hazırlanması', assignedTo: 2, assignedToName: 'Ayşe Demir', priority: 'Orta', status: 'Bekliyor', dueDate: '2026-02-01', createdBy: 'Admin', createdAt: '2026-01-15' },
+            { id: 3, title: 'Satış Hedefi Planlaması', description: 'Q1 satış hedeflerinin belirlenmesi', assignedTo: 3, assignedToName: 'Mehmet Kaya', priority: 'Yüksek', status: 'Tamamlandı', dueDate: '2026-01-20', createdBy: 'Yönetici', createdAt: '2026-01-05' },
+            { id: 4, title: 'Sistem Güvenlik Güncellemesi', description: 'Sunucu güvenlik yamalarının uygulanması', assignedTo: 5, assignedToName: 'Ali Öztürk', priority: 'Yüksek', status: 'Devam Ediyor', dueDate: '2026-01-25', createdBy: 'Admin', createdAt: '2026-01-18' },
+            { id: 5, title: 'Sosyal Medya Kampanyası', description: 'Yeni ürün lansmanı için kampanya', assignedTo: 6, assignedToName: 'Zeynep Arslan', priority: 'Orta', status: 'Bekliyor', dueDate: '2026-02-10', createdBy: 'Pazarlama', createdAt: '2026-01-12' }
+        ];
+    }
+
+    function generateNotesData() {
+        return [
+            { id: 1, personnelId: 1, content: 'Performans değerlendirmesi mükemmel. Terfi için uygun.', isPrivate: true, createdBy: 'Admin', createdAt: '2026-01-15', editedAt: null },
+            { id: 2, personnelId: 2, content: 'Eğitim programına katılımı sağlanmalı.', isPrivate: false, createdBy: 'İK', createdAt: '2026-01-10', editedAt: null },
+            { id: 3, personnelId: 3, content: 'Müşteri şikayeti alındı. Görüşme yapıldı.', isPrivate: true, createdBy: 'Yönetici', createdAt: '2026-01-20', editedAt: '2026-01-21' }
+        ];
+    }
+
+    function generateLogsData() {
+        return [
+            { id: 1, action: 'Yeni personel eklendi', user: 'Admin', details: 'Ahmet Yılmaz eklendi', timestamp: '2026-01-22 09:30' },
+            { id: 2, action: 'Görev güncellendi', user: 'Yönetici', details: 'Satış Hedefi Planlaması tamamlandı', timestamp: '2026-01-22 10:15' },
+            { id: 3, action: 'Puantaj kaydı eklendi', user: 'Sistem', details: '5 personel için giriş kaydedildi', timestamp: '2026-01-22 08:05' },
+            { id: 4, action: 'Not eklendi', user: 'İK', details: 'Ayşe Demir için not eklendi', timestamp: '2026-01-21 14:20' }
+        ];
+    }
+
+    // Login Functions
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        
+        const user = users.find(u => u.email === email && u.password === password);
+        if (user) {
+            login(user);
+        } else {
+            alert('Hatalı e-posta veya şifre!');
+        }
+    });
+
+    function quickLogin(email, role) {
+        const user = users.find(u => u.email === email);
+        if (user) {
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('loginPassword').value = user.password;
+        }
+    }
+
+    function login(user) {
+        state.currentUser = user;
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appContainer').classList.add('active');
+        
+        document.getElementById('userName').textContent = user.name;
+        document.getElementById('userRole').textContent = user.role;
+        document.getElementById('userAvatar').textContent = user.name.charAt(0);
+        
+        renderNavigation();
+        navigateTo('dashboard');
+    }
+
+    function logout() {
+        if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
+            state.currentUser = null;
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appContainer').classList.remove('active');
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+    }
+
+    // Navigation
+    function renderNavigation() {
+        const nav = document.getElementById('sidebarNav');
+        const userPermissions = permissions[state.currentUser.role] || [];
+        
+        const menuItems = [
+            { id: 'dashboard', label: 'Anasayfa', icon: '🏠' },
+            { id: 'personnel', label: 'Personel Yönetimi', icon: '👥' },
+            { id: 'attendance', label: 'Giriş-Çıkış', icon: '⏰' },
+            { id: 'tasks', label: 'Görevler', icon: '✓' },
+            { id: 'roles', label: 'Yetkiler', icon: '🔐' },
+            { id: 'notes', label: 'Notlar', icon: '📝' },
+            { id: 'reports', label: 'Raporlar', icon: '📊' }
+        ];
+
+        nav.innerHTML = menuItems
+            .filter(item => userPermissions.includes(item.id))
+            .map(item => `
+                <div class="nav-item ${state.currentPage === item.id ? 'active' : ''}" 
+                     onclick="navigateTo('${item.id}')">
+                    <div class="nav-icon">${item.icon}</div>
+                    <span>${item.label}</span>
+                </div>
+            `).join('') + `
+                <div class="nav-item" onclick="logout()">
+                    <div class="nav-icon">🚪</div>
+                    <span>Çıkış</span>
+                </div>
+            `;
+    }
+
+    function navigateTo(page) {
+        state.currentPage = page;
+        renderNavigation();
+        renderPage(page);
+    }
+
+    function renderPage(page) {
+        const content = document.getElementById('contentArea');
+        
+        switch(page) {
+            case 'dashboard':
+                renderDashboard(content);
+                break;
+            case 'personnel':
+                renderPersonnel(content);
+                break;
+            case 'attendance':
+                renderAttendance(content);
+                break;
+            case 'tasks':
+                renderTasks(content);
+                break;
+            case 'roles':
+                renderRoles(content);
+                break;
+            case 'notes':
+                renderNotes(content);
+                break;
+            case 'reports':
+                renderReports(content);
+                break;
+            default:
+                content.innerHTML = '<div class="empty-state"><div class="empty-state-title">Sayfa bulunamadı</div></div>';
+        }
+    }
+
+    // Dashboard
+    function renderDashboard(container) {
+        const activePersonnel = state.personnel.filter(p => p.status === 'Aktif').length;
+        const todayAttendance = state.attendance.filter(a => a.date === new Date().toISOString().split('T')[0]).length;
+        const activeTasks = state.tasks.filter(t => t.status !== 'Tamamlandı').length;
+        const lateToday = state.attendance.filter(a => a.date === new Date().toISOString().split('T')[0] && a.late).length;
+
+        container.innerHTML = `
+            <div class="page-header">
+                <h1>Anasayfa</h1>
+                <p>Personel yönetim sistemine hoş geldiniz</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon primary">👥</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Toplam Personel</div>
+                        <div class="stat-value">${state.personnel.length}</div>
+                        <div class="stat-change positive">↑ ${activePersonnel} aktif</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon success">✓</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Bugün Gelen</div>
+                        <div class="stat-value">${todayAttendance}</div>
+                        <div class="stat-change">${lateToday} geç kalma</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon warning">📋</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Aktif Görevler</div>
+                        <div class="stat-value">${activeTasks}</div>
+                        <div class="stat-change">${state.tasks.filter(t => t.status === 'Bekliyor').length} bekliyor</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon danger">⏰</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Geç Kalma</div>
+                        <div class="stat-value">${lateToday}</div>
+                        <div class="stat-change negative">Bugün</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Son Aktiviteler</h3>
+                </div>
+                ${state.logs.slice(0, 5).map(log => `
+                    <div class="log-entry">
+                        <div class="log-header">
+                            <span class="log-user">${log.user}</span>
+                            <span class="log-time">${log.timestamp}</span>
+                        </div>
+                        <div class="log-action">${log.action}: ${log.details}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // Personnel Management
+    function renderPersonnel(container) {
+        container.innerHTML = `
+            <div class="page-header">
+                <h1>Personel Yönetimi</h1>
+                <p>Tüm personel bilgilerini görüntüleyin ve yönetin</p>
+                <div class="page-actions">
+                    <button class="btn btn-primary" onclick="openPersonnelModal()">➕ Yeni Personel</button>
+                    <button class="btn btn-secondary" onclick="exportPersonnel()">📥 Dışa Aktar</button>
+                    <div class="view-toggle">
+                        <button class="view-toggle-btn ${state.viewMode === 'table' ? 'active' : ''}" 
+                                onclick="setViewMode('table')">📋 Tablo</button>
+                        <button class="view-toggle-btn ${state.viewMode === 'card' ? 'active' : ''}" 
+                                onclick="setViewMode('card')">🎴 Kart</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <input type="text" placeholder="Ara..." id="personnelSearch" 
+                               oninput="filterPersonnel()">
+                    </div>
+                    <div class="filter-group">
+                        <select id="departmentFilter" onchange="filterPersonnel()">
+                            <option value="">Tüm Departmanlar</option>
+                            <option value="IT">IT</option>
+                            <option value="İK">İK</option>
+                            <option value="Satış">Satış</option>
+                            <option value="Muhasebe">Muhasebe</option>
+                            <option value="Pazarlama">Pazarlama</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <select id="statusFilter" onchange="filterPersonnel()">
+                            <option value="">Tüm Durumlar</option>
+                            <option value="Aktif">Aktif</option>
+                            <option value="İzinli">İzinli</option>
+                            <option value="Pasif">Pasif</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="personnelList"></div>
+            </div>
+        `;
+        
+        filterPersonnel();
+    }
+
+    function setViewMode(mode) {
+        state.viewMode = mode;
+        filterPersonnel();
+    }
+
+    function filterPersonnel() {
+        const search = document.getElementById('personnelSearch')?.value.toLowerCase() || '';
+        const dept = document.getElementById('departmentFilter')?.value || '';
+        const status = document.getElementById('statusFilter')?.value || '';
+
+        let filtered = state.personnel.filter(p => {
+            const matchSearch = p.name.toLowerCase().includes(search) || 
+                               p.email.toLowerCase().includes(search);
+            const matchDept = !dept || p.department === dept;
+            const matchStatus = !status || p.status === status;
+            return matchSearch && matchDept && matchStatus;
+        });
+
+        const listContainer = document.getElementById('personnelList');
+        
+        if (state.viewMode === 'table') {
+            listContainer.innerHTML = `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Personel</th>
+                                <th>Departman</th>
+                                <th>Pozisyon</th>
+                                <th>Telefon</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filtered.map(p => `
+                                <tr>
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="table-avatar">${p.name.charAt(0)}</div>
+                                            <div class="user-details">
+                                                <div class="user-details-name">${p.name}</div>
+                                                <div class="user-details-email">${p.email}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>${p.department}</td>
+                                    <td>${p.position}</td>
+                                    <td>${p.phone}</td>
+                                    <td>
+                                        <span class="badge ${p.status === 'Aktif' ? 'badge-success' : p.status === 'İzinli' ? 'badge-warning' : 'badge-danger'}">
+                                            ${p.status}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-primary" onclick="viewPersonnel(${p.id})">👁️</button>
+                                            <button class="btn btn-sm btn-secondary" onclick="editPersonnel(${p.id})">✏️</button>
+                                            <button class="btn btn-sm btn-danger" onclick="deletePersonnel(${p.id})">🗑️</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        } else {
+            listContainer.innerHTML = `
+                <div class="card-grid">
+                    ${filtered.map(p => `
+                        <div class="personnel-card" onclick="viewPersonnel(${p.id})">
+                            <div class="personnel-card-header">
+                                <div class="personnel-card-avatar">${p.name.charAt(0)}</div>
+                                <div class="personnel-card-info">
+                                    <div class="personnel-card-name">${p.name}</div>
+                                    <div class="personnel-card-position">${p.position}</div>
+                                </div>
+                            </div>
+                            <div class="personnel-card-details">
+                                <div class="personnel-card-detail">📧 ${p.email}</div>
+                                <div class="personnel-card-detail">📞 ${p.phone}</div>
+                                <div class="personnel-card-detail">🏢 ${p.department}</div>
+                                <div class="personnel-card-detail">
+                                    <span class="badge ${p.status === 'Aktif' ? 'badge-success' : p.status === 'İzinli' ? 'badge-warning' : 'badge-danger'}">
+                                        ${p.status}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+    }
+
+    function openPersonnelModal(id = null) {
+        const person = id ? state.personnel.find(p => p.id === id) : null;
+        const isEdit = !!person;
+
+        showModal(`
+            <div class="modal-header">
+                <h3 class="modal-title">${isEdit ? 'Personel Düzenle' : 'Yeni Personel Ekle'}</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="personnelForm">
+                    <div class="profile-image-upload">
+                        <div class="profile-image-preview" onclick="document.getElementById('photoUpload').click()">
+${person?.photo || person?.name.charAt(0) || '📷'}
+</div>
+<input type="file" id="photoUpload" accept="image/*" style="display:none">
+<p style="font-size: 13px; color: var(--text-secondary)">Fotoğraf yüklemek için tıklayın</p>
+</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Ad Soyad *</label>
+                            <input type="text" class="form-control" id="personName" 
+                                   value="${person?.name || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>E-posta *</label>
+                            <input type="email" class="form-control" id="personEmail" 
+                                   value="${person?.email || ''}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Telefon *</label>
+                            <input type="tel" class="form-control" id="personPhone" 
+                                   value="${person?.phone || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Departman *</label>
+                            <select class="form-control" id="personDepartment" required>
+                                <option value="">Seçiniz</option>
+                                <option value="IT" ${person?.department === 'IT' ? 'selected' : ''}>IT</option>
+                                <option value="İK" ${person?.department === 'İK' ? 'selected' : ''}>İK</option>
+                                <option value="Satış" ${person?.department === 'Satış' ? 'selected' : ''}>Satış</option>
+                                <option value="Muhasebe" ${person?.department === 'Muhasebe' ? 'selected' : ''}>Muhasebe</option>
+                                <option value="Pazarlama" ${person?.department === 'Pazarlama' ? 'selected' : ''}>Pazarlama</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Pozisyon *</label>
+                            <input type="text" class="form-control" id="personPosition" 
+                                   value="${person?.position || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Maaş *</label>
+                            <input type="number" class="form-control" id="personSalary" 
+                                   value="${person?.salary || ''}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>İşe Giriş Tarihi *</label>
+                            <input type="date" class="form-control" id="personStartDate" 
+                                   value="${person?.startDate || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Durum *</label>
+                            <select class="form-control" id="personStatus" required>
+                                <option value="Aktif" ${person?.status === 'Aktif' ? 'selected' : ''}>Aktif</option>
+                                <option value="İzinli" ${person?.status === 'İzinli' ? 'selected' : ''}>İzinli</option>
+                                <option value="Pasif" ${person?.status === 'Pasif' ? 'selected' : ''}>Pasif</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">İptal</button>
+                <button class="btn btn-primary" onclick="savePersonnel(${id})">💾 Kaydet</button>
+            </div>
+        `);
+    }
+
+    function savePersonnel(id) {
+        const formData = {
+            name: document.getElementById('personName').value,
+            email: document.getElementById('personEmail').value,
+            phone: document.getElementById('personPhone').value,
+            department: document.getElementById('personDepartment').value,
+            position: document.getElementById('personPosition').value,
+            salary: parseFloat(document.getElementById('personSalary').value),
+            startDate: document.getElementById('personStartDate').value,
+            status: document.getElementById('personStatus').value,
+            photo: ''
+        };
+
+        if (id) {
+            const index = state.personnel.findIndex(p => p.id === id);
+            state.personnel[index] = { ...state.personnel[index], ...formData };
+            addLog('Personel güncellendi', state.currentUser.name, `${formData.name} güncellendi`);
+        } else {
+            const newPerson = {
+                id: state.personnel.length + 1,
+                ...formData
+            };
+            state.personnel.push(newPerson);
+            addLog('Yeni personel eklendi', state.currentUser.name, `${formData.name} eklendi`);
+        }
+
+        closeModal();
+        filterPersonnel();
+        showAlert('success', 'Başarılı!', 'Personel kaydedildi.');
+    }
+
+    function viewPersonnel(id) {
+        const person = state.personnel.find(p => p.id === id);
+        if (!person) return;
+
+        const personNotes = state.notes.filter(n => n.personnelId === id);
+        const personAttendance = state.attendance.filter(a => a.personnelId === id).slice(0, 10);
+
+        showModal(`
+            <div class="modal-header">
+                <h3 class="modal-title">Personel Detayları</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <div class="profile-image-preview" style="margin: 0 auto 16px;">
+                        ${person.name.charAt(0)}
+                    </div>
+                    <h2>${person.name}</h2>
+                    <p style="color: var(--text-secondary);">${person.position}</p>
+                    <span class="badge ${person.status === 'Aktif' ? 'badge-success' : person.status === 'İzinli' ? 'badge-warning' : 'badge-danger'}">
+                        ${person.status}
+                    </span>
+                </div>
+
+                <div class="form-row" style="margin-bottom: 20px;">
+                    <div>
+                        <strong>E-posta:</strong><br>${person.email}
+                    </div>
+                    <div>
+                        <strong>Telefon:</strong><br>${person.phone}
+                    </div>
+                </div>
+
+                <div class="form-row" style="margin-bottom: 20px;">
+                    <div>
+                        <strong>Departman:</strong><br>${person.department}
+                    </div>
+                    <div>
+                        <strong>Maaş:</strong><br>₺${person.salary.toLocaleString()}
+                    </div>
+                </div>
+
+                <div class="form-row" style="margin-bottom: 24px;">
+                    <div>
+                        <strong>İşe Giriş:</strong><br>${new Date(person.startDate).toLocaleDateString('tr-TR')}
+                    </div>
+                    <div>
+                        <strong>Çalışma Süresi:</strong><br>${calculateWorkDuration(person.startDate)}
+                    </div>
+                </div>
+
+                <h4 style="margin-bottom: 12px;">Son Giriş-Çıkışlar</h4>
+                ${personAttendance.length > 0 ? personAttendance.map(a => `
+                    <div class="time-entry">
+                        <div>
+                            <div class="time-entry-label">Tarih</div>
+                            <div class="time-entry-value">${new Date(a.date).toLocaleDateString('tr-TR')}</div>
+                        </div>
+                        <div>
+                            <div class="time-entry-label">Giriş</div>
+                            <div class="time-entry-value">${a.checkIn}</div>
+                        </div>
+                        <div>
+                            <div class="time-entry-label">Çıkış</div>
+                            <div class="time-entry-value">${a.checkOut}</div>
+                        </div>
+                        <div>
+                            <div class="time-entry-label">Durum</div>
+                            <div class="time-entry-value">
+                                ${a.late ? '<span class="badge badge-danger">Geç</span>' : '<span class="badge badge-success">Normal</span>'}
+                            </div>
+                        </div>
+                    </div>
+                `).join('') : '<p style="color: var(--text-secondary);">Kayıt bulunamadı</p>'}
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Kapat</button>
+                <button class="btn btn-primary" onclick="editPersonnel(${id})">✏️ Düzenle</button>
+            </div>
+        `, 'large');
+    }
+
+    function editPersonnel(id) {
+        closeModal();
+        setTimeout(() => openPersonnelModal(id), 100);
+    }
+
+    function deletePersonnel(id) {
+        if (confirm('Bu personeli silmek istediğinize emin misiniz?')) {
+            const person = state.personnel.find(p => p.id === id);
+            state.personnel = state.personnel.filter(p => p.id !== id);
+            addLog('Personel silindi', state.currentUser.name, `${person.name} silindi`);
+            filterPersonnel();
+            showAlert('success', 'Silindi!', 'Personel başarıyla silindi.');
+        }
+    }
+
+    function calculateWorkDuration(startDate) {
+        const start = new Date(startDate);
+        const now = new Date();
+        const years = now.getFullYear() - start.getFullYear();
+        const months = now.getMonth() - start.getMonth();
+        
+        if (years > 0) {
+            return `${years} yıl ${months >= 0 ? months : 12 + months} ay`;
+        } else {
+            return `${months} ay`;
+        }
+    }
+
+    // Attendance Management
+    function renderAttendance(container) {
+        const today = new Date().toISOString().split('T')[0];
+        const todayRecords = state.attendance.filter(a => a.date === today);
+
+        container.innerHTML = `
+            <div class="page-header">
+                <h1>Giriş-Çıkış Takibi</h1>
+                <p>Personel puantaj kayıtları</p>
+                <div class="page-actions">
+                    <button class="btn btn-primary" onclick="addAttendanceRecord()">➕ Giriş Ekle</button>
+                    <button class="btn btn-secondary" onclick="exportAttendance()">📥 Dışa Aktar</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon success">✓</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Bugün Gelen</div>
+                        <div class="stat-value">${todayRecords.length}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon danger">⏰</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Geç Kalanlar</div>
+                        <div class="stat-value">${todayRecords.filter(r => r.late).length}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon warning">🏃</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Erken Çıkanlar</div>
+                        <div class="stat-value">${todayRecords.filter(r => r.earlyLeave).length}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon info">⏱️</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Fazla Mesai</div>
+                        <div class="stat-value">${todayRecords.filter(r => r.overtime).length}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Puantaj Kayıtları</h3>
+                </div>
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <input type="date" id="attendanceDate" value="${today}" 
+                               onchange="filterAttendance()">
+                    </div>
+                    <div class="filter-group">
+                        <select id="attendancePersonFilter" onchange="filterAttendance()">
+                            <option value="">Tüm Personel</option>
+                            ${state.personnel.map(p => `
+                                <option value="${p.id}">${p.name}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <select id="attendanceStatusFilter" onchange="filterAttendance()">
+                            <option value="">Tüm Durumlar</option>
+                            <option value="late">Geç Kalanlar</option>
+                            <option value="earlyLeave">Erken Çıkanlar</option>
+                            <option value="overtime">Fazla Mesai</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="attendanceList"></div>
+            </div>
+        `;
+
+        filterAttendance();
+    }
+
+    function filterAttendance() {
+        const date = document.getElementById('attendanceDate')?.value || new Date().toISOString().split('T')[0];
+        const personId = document.getElementById('attendancePersonFilter')?.value || '';
+        const statusFilter = document.getElementById('attendanceStatusFilter')?.value || '';
+
+        let filtered = state.attendance.filter(a => {
+            const matchDate = a.date === date;
+            const matchPerson = !personId || a.personnelId == personId;
+            let matchStatus = true;
+            
+            if (statusFilter === 'late') matchStatus = a.late;
+            else if (statusFilter === 'earlyLeave') matchStatus = a.earlyLeave;
+            else if (statusFilter === 'overtime') matchStatus = a.overtime;
+
+            return matchDate && matchPerson && matchStatus;
+        });
+
+        const listContainer = document.getElementById('attendanceList');
+        listContainer.innerHTML = `
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Personel</th>
+                            <th>Giriş Saati</th>
+                            <th>Çıkış Saati</th>
+                            <th>Toplam Süre</th>
+                            <th>Durum</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filtered.map(a => {
+                            const duration = calculateDuration(a.checkIn, a.checkOut);
+                            return `
+                                <tr>
+                                    <td>${a.personnelName}</td>
+                                    <td>${a.checkIn}</td>
+                                    <td>${a.checkOut}</td>
+                                    <td>${duration}</td>
+                                    <td>
+                                        ${a.late ? '<span class="badge badge-danger">Geç</span>' : ''}
+                                        ${a.earlyLeave ? '<span class="badge badge-warning">Erken Çıkış</span>' : ''}
+                                        ${a.overtime ? '<span class="badge badge-info">Fazla Mesai</span>' : ''}
+                                        ${!a.late && !a.earlyLeave ? '<span class="badge badge-success">Normal</span>' : ''}
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary" onclick="editAttendance(${a.id})">✏️</button>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteAttendance(${a.id})">🗑️</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    function calculateDuration(checkIn, checkOut) {
+        const [h1, m1] = checkIn.split(':').map(Number);
+        const [h2, m2] = checkOut.split(':').map(Number);
+        const minutes = (h2 * 60 + m2) - (h1 * 60 + m1);
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return `${hours}s ${mins}dk`;
+    }
+
+    function addAttendanceRecord() {
+        showModal(`
+            <div class="modal-header">
+                <h3 class="modal-title">Giriş-Çıkış Kaydı Ekle</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="attendanceForm">
+                    <div class="form-group">
+                        <label>Personel *</label>
+                        <select class="form-control" id="attPersonnel" required>
+                            <option value="">Seçiniz</option>
+                            ${state.personnel.map(p => `
+                                <option value="${p.id}">${p.name}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tarih *</label>
+                        <input type="date" class="form-control" id="attDate" 
+                               value="${new Date().toISOString().split('T')[0]}" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Giriş Saati *</label>
+                            <input type="time" class="form-control" id="attCheckIn" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Çıkış Saati *</label>
+                            <input type="time" class="form-control" id="attCheckOut" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">İptal</button>
+                <button class="btn btn-primary" onclick="saveAttendance()">💾 Kaydet</button>
+            </div>
+        `);
+    }
+
+    function saveAttendance() {
+        const personnelId = parseInt(document.getElementById('attPersonnel').value);
+        const person = state.personnel.find(p => p.id === personnelId);
+        const date = document.getElementById('attDate').value;
+        const checkIn = document.getElementById('attCheckIn').value;
+        const checkOut = document.getElementById('attCheckOut').value;
+
+        const [h, m] = checkIn.split(':').map(Number);
+        const isLate = h >= 9;
+        const [h2, m2] = checkOut.split(':').map(Number);
+        const isEarlyLeave = h2 < 17;
+        const isOvertime = h2 > 18;
+
+        const newRecord = {
+            id: state.attendance.length + 1,
+            personnelId,
+            personnelName: person.name,
+            date,
+            checkIn,
+            checkOut,
+            late: isLate,
+            earlyLeave: isEarlyLeave,
+            overtime: isOvertime
+        };
+
+        state.attendance.unshift(newRecord);
+        addLog('Puantaj kaydı eklendi', state.currentUser.name, `${person.name} için kayıt eklendi`);
+        closeModal();
+        filterAttendance();
+        showAlert('success', 'Başarılı!', 'Puantaj kaydı eklendi.');
+    }
+
+    function editAttendance(id) {
+        const record = state.attendance.find(a => a.id === id);
+        showModal(`
+            <div class="modal-header">
+                <h3 class="modal-title">Kaydı Düzenle</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label>Personel</label>
+                        <input type="text" class="form-control" value="${record.personnelName}" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Tarih</label>
+                        <input type="date" class="form-control" value="${record.date}" disabled>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Giriş Saati *</label>
+                            <input type="time" class="form-control" id="editCheckIn" value="${record.checkIn}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Çıkış Saati *</label>
+                            <input type="time" class="form-control" id="editCheckOut" value="${record.checkOut}" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">İptal</button>
+                <button class="btn btn-primary" onclick="updateAttendance(${id})">💾 Güncelle</button>
+            </div>
+        `);
+    }
+
+    function updateAttendance(id) {
+        const checkIn = document.getElementById('editCheckIn').value;
+        const checkOut = document.getElementById('editCheckOut').value;
+        
+        const index = state.attendance.findIndex(a => a.id === id);
+        const [h, m] = checkIn.split(':').map(Number);
+        const isLate = h >= 9;
+        const [h2, m2] = checkOut.split(':').map(Number);
+        const isEarlyLeave = h2 < 17;
+        const isOvertime = h2 > 18;
+
+        state.attendance[index] = {
+            ...state.attendance[index],
+            checkIn,
+            checkOut,
+            late: isLate,
+            earlyLeave: isEarlyLeave,
+            overtime: isOvertime
+        };
+
+        addLog('Puantaj güncellendi', state.currentUser.name, `${state.attendance[index].personnelName} kaydı güncellendi`);
+        closeModal();
+        filterAttendance();
+        showAlert('success', 'Güncellendi!', 'Kayıt güncellendi.');
+    }
+
+    function deleteAttendance(id) {
+        if (confirm('Bu kaydı silmek istediğinize emin misiniz?')) {
+            const record = state.attendance.find(a => a.id === id);
+            state.attendance = state.attendance.filter(a => a.id !== id);
+            addLog('Puantaj silindi', state.currentUser.name, `${record.personnelName} kaydı silindi`);
+            filterAttendance();
+            showAlert('success', 'Silindi!', 'Kayıt silindi.');
+        }
+    }
+
+    // Tasks Management
+    function renderTasks(container) {
+        container.innerHTML = `
+            <div class="page-header">
+                <h1>Görev Yönetimi</h1>
+                <p>Tüm görevleri takip edin ve yönetin</p>
+                <div class="page-actions">
+                    <button class="btn btn-primary" onclick="openTaskModal()">➕ Yeni Görev</button>
+                </div>
+            </div>
+
+            <div class="task-board">
+                <div class="task-column">
+                    <div class="task-column-header">
+                        <div class="task-column-title">
+                            ⏳ Bekliyor
+                            <span class="task-count">${state.tasks.filter(t => t.status === 'Bekliyor').length}</span>
+                        </div>
+                    </div>
+                    ${state.tasks.filter(t => t.status === 'Bekliyor').map(t => renderTaskCard(t)).join('')}
+                </div>
+
+                <div class="task-column">
+                    <div class="task-column-header">
+                        <div class="task-column-title">
+                            🔄 Devam Ediyor
+                            <span class="task-count">${state.tasks.filter(t => t.status === 'Devam Ediyor').length}</span>
+                        </div>
+                    </div>
+                    ${state.tasks.filter(t => t.status === 'Devam Ediyor').map(t => renderTaskCard(t)).join('')}
+                </div>
+
+                <div class="task-column">
+                    <div class="task-column-header">
+                        <div class="task-column-title">
+                            ✅ Tamamlandı
+                            <span class="task-count">${state.tasks.filter(t => t.status === 'Tamamlandı').length}</span>
+                        </div>
+                    </div>
+                    ${state.tasks.filter(t => t.status === 'Tamamlandı').map(t => renderTaskCard(t)).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderTaskCard(task) {
+        const priorityClass = task.priority === 'Yüksek' ? 'priority-high' : 
+                             task.priority === 'Orta' ? 'priority-medium' : 'priority-low';
+        return `
+            <div class="task-card ${priorityClass}" onclick="viewTask(${task.id})">
+                <div class="task-card-title">${task.title}</div>
+                <div class="task-card-description">${task.description.substring(0, 80)}...</div>
+                <div class="task-card-footer">
+                    <div class="task-assignee">
+                        <div class="task-assignee-avatar">${task.assignedToName.charAt(0)}</div>
+                        <span>${task.assignedToName}</span>
+                    </div>
+                    <span class="badge ${task.priority === 'Yüksek' ? 'badge-danger' : task.priority === 'Orta' ? 'badge-warning' : 'badge-info'}">
+                        ${task.priority}
+                    </span>
+                </div>
+                <div style="margin-top: 8px; font-size: 11px; color: var(--text-secondary);">
+                    📅 ${new Date(task.dueDate).toLocaleDateString('tr-TR')}
+                </div>
+            </div>
+        `;
+    }
+
+    function openTaskModal(id = null) {
+        const task = id ? state.tasks.find(t => t.id === id) : null;
+        const isEdit = !!task;
+
+        showModal(`
+            <div class="modal-header">
+                <h3 class="modal-title">${isEdit ? 'Görev Düzenle' : 'Yeni Görev Ekle'}</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label>Görev Başlığı *</label>
+                        <input type="text" class="form-control" id="taskTitle" 
+                               value="${task?.title || ''}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Açıklama *</label>
+                        <textarea class="form-control" id="taskDescription" rows="4" required>${task?.description || ''}</textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Atanan Kişi *</label>
+                            <select class="form-control" id="taskAssignee" required>
+                                <option value="">Seçiniz</option>
+                                ${state.personnel.map(p => `
+                                    <option value="${p.id}" ${task?.assignedTo === p.id ? 'selected' : ''}>${p.name}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Öncelik *</label>
+                            <select class="form-control" id="taskPriority" required>
+                                <option value="Düşük" ${task?.priority === 'Düşük' ? 'selected' : ''}>Düşük</option>
+                                <option value="Orta" ${task?.priority === 'Orta' ? 'selected' : ''}>Orta</option>
+                                <option value="Yüksek" ${task?.priority === 'Yüksek' ? 'selected' : ''}>Yüksek</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Durum *</label>
+                            <select class="form-control" id="taskStatus" required>
+                                <option value="Bekliyor" ${task?.status === 'Bekliyor' ? 'selected' : ''}>Bekliyor</option>
+                                <option value="Devam Ediyor" ${task?.status === 'Devam Ediyor' ? 'selected' : ''}>Devam Ediyor</option>
+                                <option value="Tamamlandı" ${task?.status === 'Tamamlandı' ? 'selected' : ''}>Tamamlandı</option>
+</select>
+</div>
+<div class="form-group">
+<label>Teslim Tarihi *</label>
+<input type="date" class="form-control" id="taskDueDate" 
+                                    value="${task?.dueDate || ''}" required>
+</div>
+</div>
+</form>
+</div>
+<div class="modal-footer">
+<button class="btn btn-secondary" onclick="closeModal()">İptal</button>
+<button class="btn btn-primary" onclick="saveTask(${id})">💾 Kaydet</button>
+</div>
+`);
+}
+    function saveTask(id) {
+        const assigneeId = parseInt(document.getElementById('taskAssignee').value);
+        const assignee = state.personnel.find(p => p.id === assigneeId);
+
+        const formData = {
+            title: document.getElementById('taskTitle').value,
+            description: document.getElementById('taskDescription').value,
+            assignedTo: assigneeId,
+            assignedToName: assignee.name,
+            priority: document.getElementById('taskPriority').value,
+            status: document.getElementById('taskStatus').value,
+            dueDate: document.getElementById('taskDueDate').value
+        };
+
+        if (id) {
+            const index = state.tasks.findIndex(t => t.id === id);
+            state.tasks[index] = { ...state.tasks[index], ...formData };
+            addLog('Görev güncellendi', state.currentUser.name, `${formData.title} güncellendi`);
+        } else {
+            const newTask = {
+                id: state.tasks.length + 1,
+                ...formData,
+                createdBy: state.currentUser.name,
+                createdAt: new Date().toISOString().split('T')[0]
+            };
+            state.tasks.push(newTask);
+            addLog('Yeni görev oluşturuldu', state.currentUser.name, `${formData.title} oluşturuldu`);
+        }
+
+        closeModal();
+        navigateTo('tasks');
+        showAlert('success', 'Başarılı!', 'Görev kaydedildi.');
+    }
+
+    function viewTask(id) {
+        const task = state.tasks.find(t => t.id === id);
+        showModal(`
+            <div class="modal-header">
+                <h3 class="modal-title">Görev Detayları</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <h2 style="margin-bottom: 16px;">${task.title}</h2>
+                <div style="margin-bottom: 20px;">
+                    <span class="badge ${task.priority === 'Yüksek' ? 'badge-danger' : task.priority === 'Orta' ? 'badge-warning' : 'badge-info'}">
+                        ${task.priority}
+                    </span>
+                    <span class="badge ${task.status === 'Tamamlandı' ? 'badge-success' : task.status === 'Devam Ediyor' ? 'badge-warning' : 'badge-secondary'}">
+                        ${task.status}
+                    </span>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <strong>Açıklama:</strong><br>
+                    <p style="margin-top: 8px; line-height: 1.6;">${task.description}</p>
+                </div>
+                <div class="form-row" style="margin-bottom: 16px;">
+                    <div>
+                        <strong>Atanan:</strong><br>${task.assignedToName}
+                    </div>
+                    <div>
+                        <strong>Teslim Tarihi:</strong><br>${new Date(task.dueDate).toLocaleDateString('tr-TR')}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <strong>Oluşturan:</strong><br>${task.createdBy}
+                    </div>
+                    <div>
+                        <strong>Oluşturma:</strong><br>${new Date(task.createdAt).toLocaleDateString('tr-TR')}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="deleteTask(${id})">🗑️ Sil</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Kapat</button>
+                <button class="btn btn-primary" onclick="editTask(${id})">✏️ Düzenle</button>
+            </div>
+        `);
+    }
+
+    function editTask(id) {
+        closeModal();
+        setTimeout(() => openTaskModal(id), 100);
+    }
+
+    function deleteTask(id) {
+        if (confirm('Bu görevi silmek istediğinize emin misiniz?')) {
+            const task = state.tasks.find(t => t.id === id);
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            addLog('Görev silindi', state.currentUser.name, `${task.title} silindi`);
+            closeModal();
+            navigateTo('tasks');
+            showAlert('success', 'Silindi!', 'Görev başarıyla silindi.');
+        }
+    }
+
+    // Roles Management
+    function renderRoles(container) {
+        container.innerHTML = `
+            <div class="page-header">
+                <h1>Yetki & Rol Yönetimi</h1>
+                <p>Kullanıcı rollerini ve yetkilerini yönetin</p>
+            </div>
+
+            ${Object.keys(permissions).map(role => `
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🔐 ${role}</h3>
+                        <button class="btn btn-sm btn-primary" onclick="editRolePermissions('${role}')">✏️ Düzenle</button>
+                    </div>
+                    <div style="padding: 20px;">
+                        <h4 style="margin-bottom: 12px;">Yetkiler:</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            ${permissions[role].map(perm => `
+                                <span class="badge badge-primary">${getPermissionName(perm)}</span>
+                            `).join('')}
+                        </div>
+                        <h4 style="margin: 20px 0 12px;">Bu rolü kullanan personel:</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                            ${users.filter(u => u.role === role).map(u => `
+                                <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg-tertiary); border-radius: 6px;">
+                                    <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600;">
+                                        ${u.name.charAt(0)}
+                                    </div>
+                                    <span>${u.name}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        `;
+    }
+
+    function getPermissionName(perm) {
+        const names = {
+            'dashboard': 'Anasayfa',
+            'personnel': 'Personel Yönetimi',
+            'attendance': 'Giriş-Çıkış',
+            'tasks': 'Görevler',
+            'roles': 'Yetkiler',
+            'notes': 'Notlar',
+            'reports': 'Raporlar'
+        };
+        return names[perm] || perm;
+    }
+
+    function editRolePermissions(role) {
+        const allPermissions = ['dashboard', 'personnel', 'attendance', 'tasks', 'roles', 'notes', 'reports'];
+        const currentPerms = permissions[role];
+
+        showModal(`
+            <div class="modal-header">
+                <h3 class="modal-title">${role} - Yetki Düzenleme</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 20px; color: var(--text-secondary);">
+                    Bu rol için erişim yetkilerini seçin:
+                </p>
+                ${allPermissions.map(perm => `
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                            <input type="checkbox" id="perm_${perm}" 
+                                   ${currentPerms.includes(perm) ? 'checked' : ''}>
+                            <span>${getPermissionName(perm)}</span>
+                        </label>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">İptal</button>
+                <button class="btn btn-primary" onclick="saveRolePermissions('${role}')">💾 Kaydet</button>
+            </div>
+        `);
+    }
+
+    function saveRolePermissions(role) {
+        const allPermissions = ['dashboard', 'personnel', 'attendance', 'tasks', 'roles', 'notes', 'reports'];
+        const newPerms = allPermissions.filter(perm => 
+            document.getElementById(`perm_${perm}`).checked
+        );
+
+        permissions[role] = newPerms;
+        addLog('Rol yetkileri güncellendi', state.currentUser.name, `${role} yetkileri değiştirildi`);
+        closeModal();
+        navigateTo('roles');
+        showAlert('success', 'Başarılı!', 'Rol yetkileri güncellendi.');
+    }
+
+    // Notes Management
+    function renderNotes(container) {
+        container.innerHTML = `
+            <div class="page-header">
+                <h1>Notlar & Kayıtlar</h1>
+                <p>Personel notlarını görüntüleyin ve yönetin</p>
+                <div class="page-actions">
+                    <button class="btn btn-primary" onclick="openNoteModal()">➕ Yeni Not</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <select id="notePersonFilter" onchange="filterNotes()">
+                            <option value="">Tüm Personel</option>
+                            ${state.personnel.map(p => `
+                                <option value="${p.id}">${p.name}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="showPrivateNotes" onchange="filterNotes()"
+                                   ${state.currentUser.role === 'Admin' || state.currentUser.role === 'İK' ? '' : 'disabled'}>
+                            <span>Gizli Notları Göster</span>
+                        </label>
+                    </div>
+                </div>
+                <div id="notesList"></div>
+            </div>
+        `;
+
+        filterNotes();
+    }
+
+    function filterNotes() {
+        const personId = document.getElementById('notePersonFilter')?.value || '';
+        const showPrivate = document.getElementById('showPrivateNotes')?.checked || false;
+
+        let filtered = state.notes.filter(n => {
+            const matchPerson = !personId || n.personnelId == personId;
+            const matchPrivacy = !n.isPrivate || (showPrivate && (state.currentUser.role === 'Admin' || state.currentUser.role === 'İK'));
+            return matchPerson && matchPrivacy;
+        });
+
+        const listContainer = document.getElementById('notesList');
+        if (filtered.length === 0) {
+            listContainer.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📝</div>
+                    <div class="empty-state-title">Not bulunamadı</div>
+                    <div class="empty-state-description">Henüz eklenmiş not bulunmamaktadır.</div>
+                </div>
+            `;
+        } else {
+            listContainer.innerHTML = filtered.map(note => {
+                const person = state.personnel.find(p => p.id === note.personnelId);
+                return `
+                    <div class="note-item">
+                        <div class="note-header">
+                            <div>
+                                <span class="note-author">${note.createdBy}</span>
+                                ${note.isPrivate ? '<span class="badge badge-danger" style="margin-left: 8px;">🔒 Gizli</span>' : ''}
+                                <div class="note-date">${new Date(note.createdAt).toLocaleString('tr-TR')}</div>
+                            </div>
+                            <div>
+                                <strong>${person?.name}</strong>
+                            </div>
+                        </div>
+                        <div class="note-content">${note.content}</div>
+                        ${note.editedAt ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">Düzenlendi: ${new Date(note.editedAt).toLocaleString('tr-TR')}</div>` : ''}
+                        <div class="note-actions">
+                            <button class="btn btn-sm btn-secondary" onclick="editNote(${note.id})">✏️ Düzenle</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteNote(${note.id})">🗑️ Sil</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+
+    function openNoteModal(id = null) {
+        const note = id ? state.notes.find(n => n.id === id) : null;
+        const isEdit = !!note;
+
+        showModal(`
+            <div class="modal-header">
+                <h3 class="modal-title">${isEdit ? 'Notu Düzenle' : 'Yeni Not Ekle'}</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="noteForm">
+                    <div class="form-group">
+                        <label>Personel *</label>
+                        <select class="form-control" id="notePersonnel" required ${isEdit ? 'disabled' : ''}>
+                            <option value="">Seçiniz</option>
+                            ${state.personnel.map(p => `
+                                <option value="${p.id}" ${note?.personnelId === p.id ? 'selected' : ''}>${p.name}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Not İçeriği *</label>
+                        <textarea class="form-control" id="noteContent" rows="6" required>${note?.content || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                            <input type="checkbox" id="notePrivate" ${note?.isPrivate ? 'checked' : ''}>
+                            <span>🔒 Gizli Not (Sadece yetkililer görebilir)</span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">İptal</button>
+                <button class="btn btn-primary" onclick="saveNote(${id})">💾 Kaydet</button>
+            </div>
+        `);
+    }
+
+    function saveNote(id) {
+        const formData = {
+            personnelId: parseInt(document.getElementById('notePersonnel').value),
+            content: document.getElementById('noteContent').value,
+            isPrivate: document.getElementById('notePrivate').checked
+        };
+
+        if (id) {
+            const index = state.notes.findIndex(n => n.id === id);
+            state.notes[index] = {
+                ...state.notes[index],
+                ...formData,
+                editedAt: new Date().toISOString()
+            };
+            addLog('Not güncellendi', state.currentUser.name, `Not düzenlendi`);
+        } else {
+            const newNote = {
+                id: state.notes.length + 1,
+                ...formData,
+                createdBy: state.currentUser.name,
+                createdAt: new Date().toISOString(),
+                editedAt: null
+            };
+            state.notes.push(newNote);
+            addLog('Yeni not eklendi', state.currentUser.name, `Yeni not oluşturuldu`);
+        }
+
+        closeModal();
+        filterNotes();
+        showAlert('success', 'Başarılı!', 'Not kaydedildi.');
+    }
+
+    function editNote(id) {
+        openNoteModal(id);
+    }
+
+    function deleteNote(id) {
+        if (confirm('Bu notu silmek istediğinize emin misiniz?')) {
+            state.notes = state.notes.filter(n => n.id !== id);
+            addLog('Not silindi', state.currentUser.name, `Not silindi`);
+            filterNotes();
+            showAlert('success', 'Silindi!', 'Not başarıyla silindi.');
+        }
+    }
+
+    // Reports
+    function renderReports(container) {
+        const activeCount = state.personnel.filter(p => p.status === 'Aktif').length;
+        const totalSalary = state.personnel.reduce((sum, p) => sum + p.salary, 0);
+        const deptCounts = {};
+        state.personnel.forEach(p => {
+            deptCounts[p.department] = (deptCounts[p.department] || 0) + 1;
+        });
+
+        container.innerHTML = `
+            <div class="page-header">
+                <h1>Raporlar & İstatistikler</h1>
+                <p>Detaylı raporlama ve analiz</p>
+                <div class="page-actions">
+                    <button class="btn btn-primary" onclick="exportFullReport()">📥 Tam Rapor İndir</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon primary">👥</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Aktif Personel</div>
+                        <div class="stat-value">${activeCount}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon success">💰</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Toplam Maaş</div>
+                        <div class="stat-value">₺${totalSalary.toLocaleString()}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon warning">🏢</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Departman Sayısı</div>
+                        <div class="stat-value">${Object.keys(deptCounts).length}</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon info">📊</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Ort. Maaş</div>
+                        <div class="stat-value">₺${Math.round(totalSalary / state.personnel.length).toLocaleString()}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Departmanlara Göre Dağılım</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Departman</th>
+                            <th>Personel Sayısı</th>
+                            <th>Toplam Maaş</th>
+                            <th>Ortalama Maaş</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.keys(deptCounts).map(dept => {
+                            const deptPersonnel = state.personnel.filter(p => p.department === dept);
+                            const deptTotal = deptPersonnel.reduce((sum, p) => sum + p.salary, 0);
+                            const deptAvg = deptTotal / deptPersonnel.length;
+                            return `
+                                <tr>
+                                    <td><strong>${dept}</strong></td>
+                                    <td>${deptCounts[dept]}</td>
+                                    <td>₺${deptTotal.toLocaleString()}</td>
+                                    <td>₺${Math.round(deptAvg).toLocaleString()}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Aylık Puantaj Özeti</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Personel</th>
+                            <th>Toplam Gün</th>
+                            <th>Geç Kalma</th>
+                            <th>Erken Çıkış</th>
+                            <th>Fazla Mesai</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${state.personnel.map(p => {
+                            const personAtt = state.attendance.filter(a => a.personnelId === p.id);
+                            const lateCount = personAtt.filter(a => a.late).length;
+                            const earlyCount = personAtt.filter(a => a.earlyLeave).length;
+                            const overtimeCount = personAtt.filter(a => a.overtime).length;
+                            return `
+                                <tr>
+                                    <td>${p.name}</td>
+                                    <td>${personAtt.length}</td>
+                                    <td><span class="badge ${lateCount > 0 ? 'badge-danger' : 'badge-success'}">${lateCount}</span></td>
+                                    <td><span class="badge ${earlyCount > 0 ? 'badge-warning' : 'badge-success'}">${earlyCount}</span></td>
+                                    <td><span class="badge badge-info">${overtimeCount}</span></td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    // Utility Functions
+    function showModal(content, size = 'normal') {
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content" style="${size === 'large' ? 'max-width: 800px;' : ''}">
+                ${content}
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    }
+
+    function closeModal() {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(m => m.remove());
+    }
+
+    function showAlert(type, title, message) {
+        const alertClass = `alert-${type}`;
+        const alert = document.createElement('div');
+        alert.className = `alert ${alertClass}`;
+        alert.innerHTML = `
+            <strong>${title}</strong> ${message}
+        `;
+        alert.style.position = 'fixed';
+        alert.style.top = '20px';
+        alert.style.right = '20px';
+        alert.style.zIndex = '10000';
+        alert.style.minWidth = '300px';
+        alert.style.animation = 'fadeInUp 0.3s ease';
+
+        document.body.appendChild(alert);
+
+        setTimeout(() => {
+            alert.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => alert.remove(), 300);
+        }, 3000);
+    }
+
+    function addLog(action, user, details) {
+        const now = new Date();
+        const timestamp = `${now.toLocaleDateString('tr-TR')} ${now.toTimeString().split(' ')[0].substring(0, 5)}`;
+        state.logs.unshift({
+            id: state.logs.length + 1,
+            action,
+            user,
+            details,
+            timestamp
+        });
+    }
+
+    function exportPersonnel() {
+        alert('Personel listesi CSV olarak dışa aktarılıyor...');
+        addLog('Personel listesi dışa aktarıldı', state.currentUser.name, 'CSV formatında');
+    }
+
+    function exportAttendance() {
+        alert('Puantaj verileri Excel olarak dışa aktarılıyor...');
+        addLog('Puantaj dışa aktarıldı', state.currentUser.name, 'Excel formatında');
+    }
+
+    function exportFullReport() {
+        alert('Tam rapor PDF olarak oluşturuluyor...');
+        addLog('Tam rapor oluşturuldu', state.currentUser.name, 'PDF formatında');
+    }
+
+    function showNotifications() {
+        showModal(`
+            <div class="modal-header">
+                <h3 class="modal-title">🔔 Bildirimler</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="note-item">
+                    <div class="note-header">
+                        <span class="note-author">Sistem</span>
+                        <span class="note-date">Bugün, 09:00</span>
+                    </div>
+                    <div class="note-content">3 personel bugün geç kaldı.</div>
+                </div>
+                <div class="note-item">
+                    <div class="note-header">
+                        <span class="note-author">Sistem</span>
+                        <span class="note-date">Dün, 17:30</span>
+                    </div>
+                    <div class="note-content">2 görev yarın sona eriyor.</div>
+                </div>
+                <div class="note-item">
+                    <div class="note-header">
+                        <span class="note-author">Sistem</span>
+                        <span class="note-date">2 gün önce</span>
+                    </div>
+                    <div class="note-content">Yeni personel eklendi: Ahmet Yılmaz</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Kapat</button>
+            </div>
+        `);
+    }
+
+    function showUserMenu() {
+        showModal(`
+            <div class="modal-header">
+                <h3 class="modal-title">👤 Kullanıcı Menüsü</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <div class="user-avatar" style="width: 80px; height: 80px; font-size: 36px; margin: 0 auto 16px;">
+                        ${state.currentUser.name.charAt(0)}
+                    </div>
+                    <h2>${state.currentUser.name}</h2>
+                    <p style="color: var(--text-secondary);">${state.currentUser.role}</p>
+                    <p style="color: var(--text-secondary); font-size: 14px;">${state.currentUser.email}</p>
+                </div>
+                <div style="border-top: 1px solid var(--border); padding-top: 20px;">
+                    <button class="btn btn-secondary" style="width: 100%; margin-bottom: 12px;" onclick="alert('Profil düzenleme özelliği yakında...')">
+                        ⚙️ Profil Ayarları
+                    </button>
+                    <button class="btn btn-danger" style="width: 100%;" onclick="logout()">
+                        🚪 Çıkış Yap
+                    </button>
+                </div>
+            </div>
+        `);
+    }
+
+    // Initialize
+    initializeSampleData();
+</script>
+</body>
+</html>

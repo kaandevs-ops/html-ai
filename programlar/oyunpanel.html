@@ -1,0 +1,2736 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Admin Panel - Profesyonel Yönetim Sistemi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --border: #e5e7eb;
+            --text: #111827;
+            --text-muted: #6b7280;
+            --sidebar-width: 280px;
+            --topbar-height: 70px;
+        }
+
+        [data-theme="dark"] {
+            --dark: #f9fafb;
+            --light: #111827;
+            --border: #374151;
+            --text: #f9fafb;
+            --text-muted: #9ca3af;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--light);
+            color: var(--text);
+            transition: all 0.3s ease;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-header .version {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .menu-section {
+            margin-bottom: 30px;
+        }
+
+        .menu-section-title {
+            padding: 0 20px 10px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+            font-weight: 600;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left-color: white;
+        }
+
+        .menu-item.active {
+            background: rgba(255, 255, 255, 0.15);
+            border-left-color: white;
+            font-weight: 600;
+        }
+
+        .menu-item i {
+            width: 20px;
+            font-size: 16px;
+        }
+
+        .menu-item .badge {
+            margin-left: auto;
+            background: var(--danger);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* TOPBAR */
+        .topbar {
+            position: fixed;
+            left: var(--sidebar-width);
+            top: 0;
+            right: 0;
+            height: var(--topbar-height);
+            background: var(--light);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 999;
+            transition: all 0.3s ease;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .search-bar {
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 350px;
+            padding: 10px 15px 10px 40px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--light);
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .search-bar i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .topbar-icon {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--light);
+            border: 1px solid var(--border);
+        }
+
+        .topbar-icon:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .topbar-icon .badge-dot {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            background: var(--danger);
+            border-radius: 50%;
+            border: 2px solid var(--light);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border);
+        }
+
+        .user-menu:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .user-role {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--topbar-height);
+            padding: 30px;
+            min-height: calc(100vh - var(--topbar-height));
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .page-breadcrumb {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .page-breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* CARDS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--light);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .stat-icon.primary {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+        }
+
+        .stat-icon.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .stat-icon.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .stat-icon.danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .stat-icon.info {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--info);
+        }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .stat-trend.up {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .stat-trend.down {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* CARD */
+        .card {
+            background: var(--light);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--text-muted);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* TABLE */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 15px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tbody tr:hover {
+            background: rgba(99, 102, 241, 0.03);
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .badge-info {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--info);
+        }
+
+        .badge-primary {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--light);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .modal-footer {
+            padding: 15px 25px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* FORM */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--light);
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* SWITCH */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 26px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--primary);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(24px);
+        }
+
+        /* TOAST */
+        .toast-container {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            z-index: 10001;
+        }
+
+        .toast {
+            background: var(--light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            animation: toastSlideIn 0.3s ease;
+        }
+
+        @keyframes toastSlideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--danger);
+        }
+
+        .toast.warning {
+            border-left: 4px solid var(--warning);
+        }
+
+        .toast.info {
+            border-left: 4px solid var(--info);
+        }
+
+        .toast-icon {
+            font-size: 20px;
+        }
+
+        .toast.success .toast-icon {
+            color: var(--success);
+        }
+
+        .toast.error .toast-icon {
+            color: var(--danger);
+        }
+
+        .toast.warning .toast-icon {
+            color: var(--warning);
+        }
+
+        .toast.info .toast-icon {
+            color: var(--info);
+        }
+
+        .toast-message {
+            flex: 1;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        /* CHART PLACEHOLDER */
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* FILTERS */
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-item {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-muted);
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .tab:hover {
+            color: var(--text);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .topbar {
+                left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .search-bar input {
+                width: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .topbar {
+                padding: 0 15px;
+            }
+
+            .search-bar {
+                display: none;
+            }
+
+            .main-content {
+                padding: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .user-info {
+                display: none;
+            }
+        }
+
+        /* LOADING */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* PLAYER AVATAR */
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+        }
+
+        .activity-log {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* DROPDOWN MENU */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            min-width: 200px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-top: 5px;
+            z-index: 1000;
+        }
+
+        .dropdown-menu.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 5px 0;
+        }
+
+        /* INVENTORY GRID */
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+        }
+
+        .inventory-slot {
+            aspect-ratio: 1;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            background: var(--light);
+        }
+
+        .inventory-slot:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .inventory-slot.legendary {
+            border-color: #ff6b00;
+        }
+
+        .inventory-slot.epic {
+            border-color: #a335ee;
+        }
+
+        .inventory-slot.rare {
+            border-color: #0070dd;
+        }
+
+        .inventory-slot.uncommon {
+            border-color: #1eff00;
+        }
+
+        .inventory-icon {
+            font-size: 28px;
+        }
+
+        .inventory-count {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .page-hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body data-theme="light">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-gamepad"></i> GameAdmin Pro</h2>
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Oyuncu ara, event ara, item ara..." id="globalSearch">
+            </div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-icon" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </div>
+            <div class="topbar-icon">
+                <i class="fas fa-bell"></i>
+                <span class="badge-dot"></span>
+            </div>
+            <div class="topbar-icon">
+                <i class="fas fa-envelope"></i>
+                <span class="badge-dot"></span>
+            </div>
+            <div class="topbar-icon">
+                <i class="fas fa-cog"></i>
+            </div>
+            <div class="user-menu dropdown" id="userMenuBtn">
+                <div class="user-avatar">AD</div>
+                <div class="user-info">
+                    <div class="user-name">Admin User</div>
+                    <div class="user-role">Super Admin</div>
+                </div>
+                <i class="fas fa-chevron-down"></i>
+                <div class="dropdown-menu" id="userDropdown">
+                    <div class="dropdown-item"><i class="fas fa-user"></i> Profilim</div>
+                    <div class="dropdown-item"><i class="fas fa-cog"></i> Ayarlar</div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item"><i class="fas fa-sign-out-alt"></i> Çıkış Yap</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+        <!-- DASHBOARD PAGE -->
+        <div id="page-dashboard" class="page-content">
+            <div class="page-header">
+                <h1 class="page-title">Dashboard</h1>
+                <div class="page-breadcrumb">
+                    <a href="#">Ana Sayfa</a> / <span>Dashboard</span>
+                </div>
+            </div>
+
+            <!-- STATS CARDS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon primary">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-trend up">
+                            <i class="fas fa-arrow-up"></i> 12.5%
+                        </div>
+                    </div>
+                    <div class="stat-value">2,847</div>
+                    <div class="stat-label">Aktif Oyuncu (Şu An)</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon success">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="stat-trend up">
+                            <i class="fas fa-arrow-up"></i> 8.3%
+                        </div>
+                    </div>
+                    <div class="stat-value">1,247</div>
+                    <div class="stat-label">Yeni Kayıt (Bu Hafta)</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon warning">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-trend up">
+                            <i class="fas fa-arrow-up"></i> 23%
+                        </div>
+                    </div>
+                    <div class="stat-value">68%</div>
+                    <div class="stat-label">Event Katılım Oranı</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon info">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="stat-trend down">
+                            <i class="fas fa-arrow-down"></i> 3.2%
+                        </div>
+                    </div>
+                    <div class="stat-value">$28,450</div>
+                    <div class="stat-label">Günlük Gelir</div>
+                </div>
+            </div>
+
+            <!-- CHARTS -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Oyuncu Aktivitesi (Son 7 Gün)</h3>
+                    <div class="card-actions">
+                        <button class="btn btn-outline btn-sm"><i class="fas fa-download"></i> Export</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="playerChart"></canvas>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                <!-- RECENT ACTIVITIES -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Son Aktiviteler</h3>
+                    </div>
+                    <div class="activity-log" id="activityLog"></div>
+                </div>
+
+                <!-- TOP PLAYERS -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">En Aktif Oyuncular</h3>
+                    </div>
+                    <div id="topPlayers"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PLAYERS PAGE -->
+        <div id="page-players" class="page-content page-hidden">
+            <div class="page-header">
+                <h1 class="page-title">Oyuncu Yönetimi</h1>
+                <div class="page-breadcrumb">
+                    <a href="#">Ana Sayfa</a> / <span>Oyuncular</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Tüm Oyuncular (1,247)</h3>
+                    <div class="card-actions">
+                        <button class="btn btn-primary" id="addPlayerBtn"><i class="fas fa-plus"></i> Yeni
+                            Oyuncu</button>
+                    </div>
+                </div>
+
+                <div class="filters">
+                    <div class="filter-item">
+                        <input type="text" class="form-control" placeholder="Oyuncu ara..." id="playerSearch">
+                    </div>
+                    <div class="filter-item">
+                        <select class="form-control" id="playerStatusFilter">
+                            <option value="">Tüm Durumlar</option>
+                            <option value="online">Çevrimiçi</option>
+                            <option value="offline">Çevrimdışı</option>
+                            <option value="banned">Yasaklı</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <select class="form-control" id="playerLevelFilter">
+                            <option value="">Tüm Seviyeler</option>
+                            <option value="1-10">Seviye 1-10</option>
+                            <option value="11-30">Seviye 11-30</option>
+                            <option value="31-50">Seviye 31-50</option>
+                            <option value="51+">Seviye 51+</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="playersTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Oyuncu</th>
+                                <th>Level</th>
+                                <th>Coin</th>
+                                <th>Son Giriş</th>
+                                <th>Durum</th>
+                                <th>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="playersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- EVENTS PAGE -->
+        <div id="page-events" class="page-content page-hidden">
+            <div class="page-header">
+                <h1 class="page-title">Event Yönetimi</h1>
+                <div class="page-breadcrumb">
+                    <a href="#">Ana Sayfa</a> / <span>Events</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Aktif Eventler (8)</h3>
+                    <div class="card-actions">
+                        <button class="btn btn-primary" id="createEventBtn"><i class="fas fa-plus"></i> Yeni
+                            Event</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="eventsTable">
+                        <thead>
+                            <tr>
+                                <th>Event Adı</th>
+                                <th>Tip</th>
+                                <th>Başlangıç</th>
+                                <th>Bitiş</th>
+                                <th>Katılımcı</th>
+                                <th>Reward</th>
+                                <th>Durum</th>
+                                <th>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS PAGE -->
+        <div id="page-settings" class="page-content page-hidden">
+            <div class="page-header">
+                <h1 class="page-title">Oyun Ayarları</h1>
+                <div class="page-breadcrumb">
+                    <a href="#">Ana Sayfa</a> / <span>Ayarlar</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Global Oyun Ayarları</h3>
+                </div>
+                <div id="gameSettings"></div>
+            </div>
+        </div>
+
+        <!-- MARKET PAGE -->
+        <div id="page-market" class="page-content page-hidden">
+            <div class="page-header">
+                <h1 class="page-title">Market & Item Yönetimi</h1>
+                <div class="page-breadcrumb">
+                    <a href="#">Ana Sayfa</a> / <span>Market</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Tüm İtemler (342)</h3>
+                    <div class="card-actions">
+                        <button class="btn btn-primary" id="addItemBtn"><i class="fas fa-plus"></i> Yeni İtem</button>
+                    </div>
+                </div>
+
+                <div class="filters">
+                    <div class="filter-item">
+                        <input type="text" class="form-control" placeholder="İtem ara..." id="itemSearch">
+                    </div>
+                    <div class="filter-item">
+                        <select class="form-control" id="itemRarityFilter">
+                            <option value="">Tüm Rarityler</option>
+                            <option value="common">Common</option>
+                            <option value="uncommon">Uncommon</option>
+                            <option value="rare">Rare</option>
+                            <option value="epic">Epic</option>
+                            <option value="legendary">Legendary</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="itemsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>İtem</th>
+                                <th>Rarity</th>
+                                <th>Fiyat</th>
+                                <th>Stok</th>
+                                <th>Satış</th>
+                                <th>Durum</th>
+                                <th>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOTIFICATIONS PAGE -->
+        <div id="page-notifications" class="page-content page-hidden">
+            <div class="page-header">
+                <h1 class="page-title">Bildirim & Duyuru</h1>
+                <div class="page-breadcrumb">
+                    <a href="#">Ana Sayfa</a> / <span>Bildirimler</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Yeni Duyuru Gönder</h3>
+                </div>
+                <div id="notificationForm"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Gönderim Geçmişi</h3>
+                </div>
+                <div class="table-container">
+                    <table id="notificationHistory">
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Başlık</th>
+                                <th>Tip</th>
+                                <th>Alıcı</th>
+                                <th>Durum</th>
+                                <th>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="notificationHistoryBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- LOGS PAGE -->
+        <div id="page-logs" class="page-content page-hidden">
+            <div class="page-header">
+                <h1 class="page-title">Log & Kayıtlar</h1>
+                <div class="page-breadcrumb">
+                    <a href="#">Ana Sayfa</a> / <span>Loglar</span>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" data-tab="admin-logs">Admin İşlemleri</div>
+                <div class="tab" data-tab="player-logs">Oyuncu Hareketleri</div>
+                <div class="tab" data-tab="event-logs">Event Logları</div>
+                <div class="tab" data-tab="system-logs">Sistem Logları</div>
+            </div>
+
+            <div class="card">
+                <div class="filters">
+                    <div class="filter-item">
+                        <input type="date" class="form-control" id="logDateFrom">
+                    </div>
+                    <div class="filter-item">
+                        <input type="date" class="form-control" id="logDateTo">
+                    </div>
+                    <div class="filter-item">
+                        <select class="form-control" id="logTypeFilter">
+                            <option value="">Tüm Tipler</option>
+                            <option value="create">Create</option>
+                            <option value="update">Update</option>
+                            <option value="delete">Delete</option>
+                            <option value="ban">Ban/Unban</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary"><i class="fas fa-search"></i> Filtrele</button>
+                </div>
+
+                <div class="table-container">
+                    <table id="logsTable">
+                        <thead>
+                            <tr>
+                                <th>Zaman</th>
+                                <th>Tip</th>
+                                <th>Kullanıcı</th>
+                                <th>İşlem</th>
+                                <th>Detay</th>
+                                <th>IP</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROLES PAGE -->
+        <div id="page-roles" class="page-content page-hidden">
+            <div class="page-header">
+                <h1 class="page-title">Yetki & Rol Yönetimi</h1>
+                <div class="page-breadcrumb">
+                    <a href="#">Ana Sayfa</a> / <span>Yetkiler</span>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Admin</h3>
+                        <span class="badge badge-danger">Full Access</span>
+                    </div>
+                    <div id="adminPermissions"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Moderator</h3>
+                        <span class="badge badge-warning">Limited</span>
+                    </div>
+                    <div id="modPermissions"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Support</h3>
+                        <span class="badge badge-info">Read Only</span>
+                    </div>
+                    <div id="supportPermissions"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Player Detail Modal -->
+    <div class="modal" id="playerDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Oyuncu Detayları</h3>
+                <button class="modal-close" onclick="closeModal('playerDetailModal')">×</button>
+            </div>
+            <div class="modal-body" id="playerDetailBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="banPlayerBtn">Ban Player</button>
+                <button class="btn btn-primary" id="addItemToPlayerBtn">Item Ekle</button>
+                <button class="btn btn-success" id="addMoneyBtn">Para Ekle</button>
+                <button class="btn btn-secondary" onclick="closeModal('playerDetailModal')">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Modal -->
+    <div class="modal" id="eventModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Yeni Event Oluştur</h3>
+                <button class="modal-close" onclick="closeModal('eventModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="eventForm">
+                    <div class="form-group">
+                        <label class="form-label">Event Adı</label>
+                        <input type="text" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Event Tipi</label>
+                        <select class="form-control" required>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="special">Special</option>
+                            <option value="seasonal">Seasonal</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Başlangıç Tarihi</label>
+                        <input type="datetime-local" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Bitiş Tarihi</label>
+                        <input type="datetime-local" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Reward (Coin)</label>
+                        <input type="number" class="form-control" value="1000" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Açıklama</label>
+                        <textarea class="form-control"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('eventModal')">İptal</button>
+                <button class="btn btn-primary" onclick="saveEvent()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Item Modal -->
+    <div class="modal" id="itemModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Yeni İtem Ekle</h3>
+                <button class="modal-close" onclick="closeModal('itemModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="itemForm">
+                    <div class="form-group">
+                        <label class="form-label">İtem Adı</label>
+                        <input type="text" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Rarity</label>
+                        <select class="form-control" required>
+                            <option value="common">Common</option>
+                            <option value="uncommon">Uncommon</option>
+                            <option value="rare">Rare</option>
+                            <option value="epic">Epic</option>
+                            <option value="legendary">Legendary</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fiyat (Coin)</label>
+                        <input type="number" class="form-control" value="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Stok Miktarı</label>
+                        <input type="number" class="form-control" value="999" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Açıklama</label>
+                        <textarea class="form-control"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('itemModal')">İptal</button>
+                <button class="btn btn-primary" onclick="saveItem()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // MOCK DATA
+        const mockPlayers = [
+            { id: 1001, nick: "DragonSlayer", level: 45, coin: 125000, lastLogin: "2 dakika önce", status: "online", banned: false, avatar: "🐉" },
+            { id: 1002, nick: "NightWolf", level: 38, coin: 89000, lastLogin: "15 dakika önce", status: "online", banned: false, avatar: "🐺" },
+            { id: 1003, nick: "PhoenixRider", level: 52, coin: 234000, lastLogin: "1 saat önce", status: "offline", banned: false, avatar: "🔥" },
+            { id: 1004, nick: "IceQueen", level: 41, coin: 156000, lastLogin: "3 saat önce", status: "offline", banned: false, avatar: "❄️" },
+            { id: 1005, nick: "ShadowAssassin", level: 29, coin: 45000, lastLogin: "1 gün önce", status: "banned", banned: true, avatar: "🗡️" },
+            { id: 1006, nick: "ThunderStrike", level: 48, coin: 198000, lastLogin: "5 dakika önce", status: "online", banned: false, avatar: "⚡" },
+            { id: 1007, nick: "MysticMage", level: 35, coin: 78000, lastLogin: "30 dakika önce", status: "online", banned: false, avatar: "🔮" },
+            { id: 1008, nick: "BattleTitan", level: 50, coin: 210000, lastLogin: "2 saat önce", status: "offline", banned: false, avatar: "⚔️" },
+        ];
+
+        const mockEvents = [
+            { id: 1, name: "Weekend XP Boost", type: "weekly", start: "2026-01-25", end: "2026-01-27", participants: 1847, reward: "2x XP", status: "active" },
+            { id: 2, name: "New Year Special", type: "special", start: "2026-01-01", end: "2026-01-31", participants: 3421, reward: "5000 Coins", status: "active" },
+            { id: 3, name: "Daily Login Bonus", type: "daily", start: "2026-01-22", end: "2026-01-22", participants: 2847, reward: "500 Coins", status: "active" },
+            { id: 4, name: "Boss Hunt", type: "weekly", start: "2026-01-20", end: "2026-01-27", participants: 1234, reward: "Legendary Item", status: "active" },
+            { id: 5, name: "PvP Tournament", type: "special", start: "2026-01-28", end: "2026-01-30", participants: 0, reward: "10000 Coins", status: "scheduled" },
+        ];
+
+        const mockItems = [
+            { id: 501, name: "Legendary Sword", rarity: "legendary", price: 50000, stock: 5, sales: 127, status: "active", icon: "🗡️" },
+            { id: 502, name: "Epic Shield", rarity: "epic", price: 25000, stock: 15, sales: 341, status: "active", icon: "🛡️" },
+            { id: 503, name: "Rare Potion", rarity: "rare", price: 5000, stock: 150, sales: 2847, status: "active", icon: "🧪" },
+            { id: 504, name: "Magic Armor", rarity: "epic", price: 30000, stock: 8, sales: 219, status: "active", icon: "👕" },
+            { id: 505, name: "Health Potion", rarity: "common", price: 500, stock: 999, sales: 15432, status: "active", icon: "❤️" },
+        ];
+
+        const mockLogs = [
+            { time: "2026-01-22 14:35:21", type: "ban", user: "Admin", action: "Player Banned", detail: "ShadowAssassin - Cheating", ip: "192.168.1.100" },
+            { time: "2026-01-22 14:28:15", type: "create", user: "Admin", action: "Event Created", detail: "Weekend XP Boost", ip: "192.168.1.100" },
+            { time: "2026-01-22 13:45:32", type: "update", user: "Moderator", action: "Item Price Updated", detail: "Legendary Sword: 45000 -> 50000", ip: "192.168.1.101" },
+            { time: "2026-01-22 12:15:48", type: "delete", user: "Admin", action: "Item Deleted", detail: "Broken Sword #342", ip: "192.168.1.100" },
+        ];
+
+        // STATE
+        let currentPage = 'dashboard';
+        let currentTheme = 'light';
+        let currentRole = 'admin'; // admin, moderator, support
+
+        // NAVIGATION
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function () {
+                const page = this.getAttribute('data-page');
+                navigateTo(page);
+            });
+        });
+
+        function navigateTo(page) {
+            document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('page-hidden'));
+            document.getElementById(`page-${page}`).classList.remove('page-hidden');
+
+            currentPage = page;
+            loadPageData(page);
+        }
+
+        // THEME TOGGLE
+        document.getElementById('themeToggle').addEventListener('click', function () {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', currentTheme);
+            this.querySelector('i').className = currentTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        });
+
+        // SIDEBAR TOGGLE
+        document.getElementById('menuToggle').addEventListener('click', function () {
+            document.getElementById('sidebar').classList.toggle('active');
+        });
+
+        // USER DROPDOWN
+        document.getElementById('userMenuBtn').addEventListener('click', function (e) {
+            e.stopPropagation();
+            document.getElementById('userDropdown').classList.toggle('active');
+        });
+
+        document.addEventListener('click', function () {
+            document.getElementById('userDropdown').classList.remove('active');
+        });
+
+        // LOAD PAGE DATA
+        function loadPageData(page) {
+            switch (page) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'players':
+                    loadPlayers();
+                    break;
+                case 'events':
+                    loadEvents();
+                    break;
+                case 'settings':
+                    loadSettings();
+                    break;
+                case 'market':
+                    loadMarket();
+                    break;
+                case 'notifications':
+                    loadNotifications();
+                    break;
+                case 'logs':
+                    loadLogs();
+                    break;
+                case 'roles':
+                    loadRoles();
+                    break;
+            }
+        }
+
+        // ==================== DASHBOARD FUNCTIONS ====================
+function loadDashboard() {
+    // Activity Log
+    const activities = [
+        { icon: "👤", iconBg: "primary", title: "Yeni oyuncu kaydı", desc: "DragonSlayer sisteme katıldı", time: "2 dakika önce" },
+        { icon: "🎮", iconBg: "success", title: "Event tamamlandı", desc: "Weekend XP Boost sona erdi", time: "15 dakika önce" },
+        { icon: "💰", iconBg: "warning", title: "Büyük alışveriş", desc: "PhoenixRider 50,000 coin harcadı", time: "1 saat önce" },
+        { icon: "⚔️", iconBg: "info", title: "PvP maçı", desc: "ThunderStrike vs NightWolf - Kazanan: ThunderStrike", time: "2 saat önce" },
+        { icon: "🏆", iconBg: "success", title: "Achievement unlock", desc: "IceQueen 'Legend' unvanını kazandı", time: "3 saat önce" },
+        { icon: "🚫", iconBg: "danger", title: "Oyuncu yasaklandı", desc: "ShadowAssassin kalıcı ban yedi", time: "4 saat önce" },
+    ];
+
+    const activityLog = document.getElementById('activityLog');
+    activityLog.innerHTML = activities.map(a => `
+        <div class="activity-item">
+            <div class="activity-icon ${a.iconBg}" style="background: rgba(99, 102, 241, 0.1); color: var(--${a.iconBg});">
+                ${a.icon}
+            </div>
+            <div class="activity-content">
+                <div class="activity-title">${a.title}</div>
+                <div style="font-size: 13px; color: var(--text-muted); margin: 3px 0;">${a.desc}</div>
+                <div class="activity-time">${a.time}</div>
+            </div>
+        </div>
+    `).join('');
+
+    // Top Players
+    const topPlayersData = mockPlayers
+        .filter(p => !p.banned)
+        .sort((a, b) => b.coin - a.coin)
+        .slice(0, 5);
+
+    const topPlayers = document.getElementById('topPlayers');
+    topPlayers.innerHTML = topPlayersData.map((p, i) => `
+        <div style="display: flex; align-items: center; gap: 15px; padding: 15px 0; border-bottom: 1px solid var(--border);">
+            <div style="font-size: 20px; font-weight: 700; color: var(--text-muted); width: 30px;">#${i + 1}</div>
+            <div class="player-avatar" style="background: linear-gradient(135deg, var(--primary), var(--secondary));">
+                ${p.avatar}
+            </div>
+            <div style="flex: 1;">
+                <div style="font-weight: 600;">${p.nick}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">Level ${p.level}</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-weight: 600; color: var(--warning);">${p.coin.toLocaleString()}</div>
+                <div style="font-size: 11px; color: var(--text-muted);">coins</div>
+            </div>
+        </div>
+    `).join('');
+
+    // Simple Chart Placeholder
+    const chartCanvas = document.getElementById('playerChart');
+    if (chartCanvas) {
+        const ctx = chartCanvas.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
+        gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+
+        // Draw simple area chart
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(0, 200);
+        const points = [180, 160, 190, 150, 120, 140, 100];
+        points.forEach((y, i) => {
+            const x = (chartCanvas.width / (points.length - 1)) * i;
+            ctx.lineTo(x, y);
+        });
+        ctx.lineTo(chartCanvas.width, 300);
+        ctx.lineTo(0, 300);
+        ctx.fill();
+
+        // Draw line
+        ctx.strokeStyle = '#6366f1';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        points.forEach((y, i) => {
+            const x = (chartCanvas.width / (points.length - 1)) * i;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+    }
+}
+
+// ==================== PLAYERS FUNCTIONS ====================
+function loadPlayers() {
+    renderPlayersTable(mockPlayers);
+
+    // Search
+    document.getElementById('playerSearch').addEventListener('input', function (e) {
+        const query = e.target.value.toLowerCase();
+        const filtered = mockPlayers.filter(p =>
+            p.nick.toLowerCase().includes(query) ||
+            p.id.toString().includes(query)
+        );
+        renderPlayersTable(filtered);
+    });
+
+    // Status Filter
+    document.getElementById('playerStatusFilter').addEventListener('change', function (e) {
+        const status = e.target.value;
+        const filtered = status ? mockPlayers.filter(p => p.status === status) : mockPlayers;
+        renderPlayersTable(filtered);
+    });
+
+    // Level Filter
+    document.getElementById('playerLevelFilter').addEventListener('change', function (e) {
+        const range = e.target.value;
+        let filtered = mockPlayers;
+        if (range === '1-10') filtered = mockPlayers.filter(p => p.level <= 10);
+        else if (range === '11-30') filtered = mockPlayers.filter(p => p.level >= 11 && p.level <= 30);
+        else if (range === '31-50') filtered = mockPlayers.filter(p => p.level >= 31 && p.level <= 50);
+        else if (range === '51+') filtered = mockPlayers.filter(p => p.level > 50);
+        renderPlayersTable(filtered);
+    });
+
+    // Add Player Button
+    document.getElementById('addPlayerBtn').addEventListener('click', function () {
+        showToast('success', 'Yeni oyuncu ekleme özelliği yakında aktif olacak!');
+    });
+}
+
+function renderPlayersTable(players) {
+    const tbody = document.getElementById('playersTableBody');
+    tbody.innerHTML = players.map(p => `
+        <tr>
+            <td>#${p.id}</td>
+            <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="player-avatar" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); width: 35px; height: 35px; font-size: 18px;">
+                        ${p.avatar}
+                    </div>
+                    <div>
+                        <div style="font-weight: 600;">${p.nick}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">ID: ${p.id}</div>
+                    </div>
+                </div>
+            </td>
+            <td><span class="badge badge-info">Level ${p.level}</span></td>
+            <td style="font-weight: 600; color: var(--warning);">${p.coin.toLocaleString()}</td>
+            <td>${p.lastLogin}</td>
+            <td>
+                <span class="badge badge-${p.status === 'online' ? 'success' : p.status === 'banned' ? 'danger' : 'secondary'}">
+                    ${p.status === 'online' ? 'Çevrimiçi' : p.status === 'banned' ? 'Yasaklı' : 'Çevrimdışı'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-primary btn-sm" onclick="viewPlayerDetail(${p.id})">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-${p.banned ? 'success' : 'danger'} btn-sm" onclick="toggleBan(${p.id})">
+                    <i class="fas fa-${p.banned ? 'unlock' : 'ban'}"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function viewPlayerDetail(playerId) {
+    const player = mockPlayers.find(p => p.id === playerId);
+    if (!player) return;
+
+    const modal = document.getElementById('playerDetailModal');
+    const body = document.getElementById('playerDetailBody');
+
+    body.innerHTML = `
+        <div style="display: flex; gap: 20px; margin-bottom: 25px;">
+            <div class="player-avatar" style="width: 80px; height: 80px; font-size: 40px; background: linear-gradient(135deg, var(--primary), var(--secondary));">
+                ${player.avatar}
+            </div>
+            <div style="flex: 1;">
+                <h2 style="margin-bottom: 5px;">${player.nick}</h2>
+                <div style="color: var(--text-muted); margin-bottom: 10px;">ID: #${player.id}</div>
+                <div style="display: flex; gap: 10px;">
+                    <span class="badge badge-info">Level ${player.level}</span>
+                    <span class="badge badge-${player.status === 'online' ? 'success' : 'secondary'}">${player.status}</span>
+                    ${player.banned ? '<span class="badge badge-danger">BANNED</span>' : ''}
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+            <div style="padding: 15px; background: rgba(99, 102, 241, 0.05); border-radius: 8px;">
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">TOPLAM COİN</div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--warning);">${player.coin.toLocaleString()}</div>
+            </div>
+            <div style="padding: 15px; background: rgba(16, 185, 129, 0.05); border-radius: 8px;">
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">SON GİRİŞ</div>
+                <div style="font-size: 16px; font-weight: 600;">${player.lastLogin}</div>
+            </div>
+        </div>
+
+        <h4 style="margin-bottom: 15px;">Envanter</h4>
+        <div class="inventory-grid">
+            ${['🗡️', '🛡️', '🧪', '❤️', '⚔️', '🏹', '🔮', '💎'].map((icon, i) => `
+                <div class="inventory-slot ${['legendary', 'epic', 'rare', 'common', 'epic', 'rare', 'legendary', 'epic'][i]}">
+                    <div class="inventory-icon">${icon}</div>
+                    <div class="inventory-count">${Math.floor(Math.random() * 99) + 1}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    modal.classList.add('active');
+
+    // Ban/Unban Button
+    document.getElementById('banPlayerBtn').onclick = () => toggleBan(playerId);
+    
+    // Add Item Button
+    document.getElementById('addItemToPlayerBtn').onclick = () => {
+        showToast('success', `${player.nick} oyuncusuna item eklendi!`);
+        closeModal('playerDetailModal');
+    };
+    
+    // Add Money Button
+    document.getElementById('addMoneyBtn').onclick = () => {
+        showToast('success', `${player.nick} oyuncusuna 10,000 coin eklendi!`);
+        player.coin += 10000;
+        closeModal('playerDetailModal');
+        renderPlayersTable(mockPlayers);
+    };
+}
+
+function toggleBan(playerId) {
+    const player = mockPlayers.find(p => p.id === playerId);
+    if (!player) return;
+
+    player.banned = !player.banned;
+    player.status = player.banned ? 'banned' : 'offline';
+
+    showToast(
+        player.banned ? 'danger' : 'success',
+        player.banned ? `${player.nick} yasaklandı!` : `${player.nick} yasağı kaldırıldı!`
+    );
+
+    renderPlayersTable(mockPlayers);
+    closeModal('playerDetailModal');
+}
+
+// ==================== EVENTS FUNCTIONS ====================
+function loadEvents() {
+    renderEventsTable(mockEvents);
+
+    document.getElementById('createEventBtn').addEventListener('click', function () {
+        openModal('eventModal');
+    });
+}
+
+function renderEventsTable(events) {
+    const tbody = document.getElementById('eventsTableBody');
+    tbody.innerHTML = events.map(e => `
+        <tr>
+            <td style="font-weight: 600;">${e.name}</td>
+            <td><span class="badge badge-primary">${e.type}</span></td>
+            <td>${e.start}</td>
+            <td>${e.end}</td>
+            <td>${e.participants.toLocaleString()}</td>
+            <td style="color: var(--warning); font-weight: 600;">${e.reward}</td>
+            <td>
+                <span class="badge badge-${e.status === 'active' ? 'success' : 'warning'}">
+                    ${e.status === 'active' ? 'Aktif' : 'Planlandı'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-primary btn-sm" onclick="editEvent(${e.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteEvent(${e.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function saveEvent() {
+    showToast('success', 'Event başarıyla oluşturuldu!');
+    closeModal('eventModal');
+    
+    // Add new event to mock data
+    const newEvent = {
+        id: mockEvents.length + 1,
+        name: "Yeni Event " + (mockEvents.length + 1),
+        type: "special",
+        start: "2026-01-25",
+        end: "2026-01-27",
+        participants: 0,
+        reward: "5000 Coins",
+        status: "scheduled"
+    };
+    mockEvents.push(newEvent);
+    renderEventsTable(mockEvents);
+}
+
+function editEvent(eventId) {
+    showToast('info', 'Event düzenleme ekranı açılıyor...');
+    openModal('eventModal');
+}
+
+function deleteEvent(eventId) {
+    const index = mockEvents.findIndex(e => e.id === eventId);
+    if (index > -1) {
+        mockEvents.splice(index, 1);
+        showToast('danger', 'Event silindi!');
+        renderEventsTable(mockEvents);
+    }
+}
+
+// ==================== SETTINGS FUNCTIONS ====================
+function loadSettings() {
+    const container = document.getElementById('gameSettings');
+    container.innerHTML = `
+        <div style="display: grid; gap: 20px; padding: 20px 0;">
+            ${createSetting('XP Multiplier', 'number', '1.0', 'XP kazanım çarpanı')}
+            ${createSetting('Drop Rate', 'number', '5.0', 'Item düşme oranı (%)')}
+            ${createSetting('Max Level', 'number', '100', 'Maksimum seviye')}
+            ${createSetting('Daily Login Reward', 'number', '500', 'Günlük giriş ödülü (coin)')}
+            ${createSetting('Server Status', 'switch', true, 'Server durumu')}
+            ${createSetting('Maintenance Mode', 'switch', false, 'Bakım modu')}
+            ${createSetting('PvP Enabled', 'switch', true, 'PvP sistemi')}
+            ${createSetting('Chat Filter', 'switch', true, 'Küfür filtresi')}
+        </div>
+        <div style="margin-top: 20px;">
+            <button class="btn btn-success" onclick="saveSettings()">
+                <i class="fas fa-save"></i> Ayarları Kaydet
+            </button>
+            <button class="btn btn-secondary" onclick="resetSettings()">
+                <i class="fas fa-undo"></i> Varsayılana Dön
+            </button>
+        </div>
+    `;
+}
+
+function createSetting(label, type, value, description) {
+    if (type === 'switch') {
+        return `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid var(--border); border-radius: 8px;">
+                <div>
+                    <div style="font-weight: 600; margin-bottom: 3px;">${label}</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">${description}</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" ${value ? 'checked' : ''}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        `;
+    } else {
+        return `
+            <div style="padding: 15px; border: 1px solid var(--border); border-radius: 8px;">
+                <label class="form-label">${label}</label>
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">${description}</div>
+                <input type="${type}" class="form-control" value="${value}">
+            </div>
+        `;
+    }
+}
+
+function saveSettings() {
+    showToast('success', 'Ayarlar başarıyla kaydedildi!');
+}
+
+function resetSettings() {
+    showToast('info', 'Ayarlar varsayılana döndürüldü!');
+    loadSettings();
+}
+
+// ==================== MARKET FUNCTIONS ====================
+function loadMarket() {
+    renderItemsTable(mockItems);
+
+    // Item Search
+    document.getElementById('itemSearch').addEventListener('input', function (e) {
+        const query = e.target.value.toLowerCase();
+        const filtered = mockItems.filter(i =>
+            i.name.toLowerCase().includes(query) ||
+            i.id.toString().includes(query)
+        );
+        renderItemsTable(filtered);
+    });
+
+    // Rarity Filter
+    document.getElementById('itemRarityFilter').addEventListener('change', function (e) {
+        const rarity = e.target.value;
+        const filtered = rarity ? mockItems.filter(i => i.rarity === rarity) : mockItems;
+        renderItemsTable(filtered);
+    });
+
+    // Add Item Button
+    document.getElementById('addItemBtn').addEventListener('click', function () {
+        openModal('itemModal');
+    });
+}
+
+function renderItemsTable(items) {
+    const tbody = document.getElementById('itemsTableBody');
+    tbody.innerHTML = items.map(i => `
+        <tr>
+            <td>#${i.id}</td>
+            <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="font-size: 24px;">${i.icon}</div>
+                    <div>
+                        <div style="font-weight: 600;">${i.name}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">ID: ${i.id}</div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <span class="badge badge-${
+                    i.rarity === 'legendary' ? 'danger' :
+                    i.rarity === 'epic' ? 'warning' :
+                    i.rarity === 'rare' ? 'info' :
+                    i.rarity === 'uncommon' ? 'success' : 'secondary'
+                }">${i.rarity.toUpperCase()}</span>
+            </td>
+            <td style="font-weight: 600; color: var(--warning);">${i.price.toLocaleString()}</td>
+            <td>${i.stock}</td>
+            <td>${i.sales.toLocaleString()}</td>
+            <td><span class="badge badge-success">${i.status}</span></td>
+            <td>
+                <button class="btn btn-primary btn-sm" onclick="editItem(${i.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteItem(${i.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function saveItem() {
+    showToast('success', 'Yeni item başarıyla eklendi!');
+    closeModal('itemModal');
+    
+    const newItem = {
+        id: 500 + mockItems.length + 1,
+        name: "Yeni Item",
+        rarity: "common",
+        price: 1000,
+        stock: 100,
+        sales: 0,
+        status: "active",
+        icon: "✨"
+    };
+    mockItems.push(newItem);
+    renderItemsTable(mockItems);
+}
+
+function editItem(itemId) {
+    showToast('info', 'Item düzenleme ekranı açılıyor...');
+    openModal('itemModal');
+}
+
+function deleteItem(itemId) {
+    const index = mockItems.findIndex(i => i.id === itemId);
+    if (index > -1) {
+        mockItems.splice(index, 1);
+        showToast('danger', 'Item silindi!');
+        renderItemsTable(mockItems);
+    }
+}
+
+// ==================== NOTIFICATIONS FUNCTIONS ====================
+function loadNotifications() {
+    const form = document.getElementById('notificationForm');
+    form.innerHTML = `
+        <div class="form-group">
+            <label class="form-label">Bildirim Tipi</label>
+            <select class="form-control" id="notifType">
+                <option value="all">Tüm Oyunculara</option>
+                <option value="online">Sadece Online Oyunculara</option>
+                <option value="level">Belirli Seviye Aralığına</option>
+                <option value="individual">Tekil Oyuncuya</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Başlık</label>
+            <input type="text" class="form-control" id="notifTitle" placeholder="Örn: Yeni Event Başladı!">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Mesaj</label>
+            <textarea class="form-control" id="notifMessage" placeholder="Duyuru mesajınızı buraya yazın..."></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Görünüm Tipi</label>
+            <select class="form-control" id="notifDisplayType">
+                <option value="popup">Popup (Ekranda beliren pencere)</option>
+                <option value="toast">Toast (Köşe bildirimi)</option>
+                <option value="inbox">Inbox (Gelen kutusu)</option>
+            </select>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="sendNotification()">
+            <i class="fas fa-paper-plane"></i> Bildirimi Gönder
+        </button>
+    `;
+
+    // Notification History
+    const historyData = [
+        { date: "2026-01-22 14:30", title: "Weekend XP Event", type: "popup", recipient: "Tüm Oyuncular", status: "success" },
+        { date: "2026-01-22 12:00", title: "Bakım Duyurusu", type: "toast", recipient: "Online Oyuncular", status: "success" },
+        { date: "2026-01-21 18:45", title: "Yeni Item Eklendi", type: "inbox", recipient: "Level 30+", status: "success" },
+    ];
+
+    const tbody = document.getElementById('notificationHistoryBody');
+    tbody.innerHTML = historyData.map(n => `
+        <tr>
+            <td>${n.date}</td>
+            <td style="font-weight: 600;">${n.title}</td>
+            <td><span class="badge badge-info">${n.type}</span></td>
+            <td>${n.recipient}</td>
+            <td><span class="badge badge-success">Gönderildi</span></td>
+            <td>
+                <button class="btn btn-primary btn-sm">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function sendNotification() {
+    const title = document.getElementById('notifTitle').value;
+    const message = document.getElementById('notifMessage').value;
+    
+    if (!title || !message) {
+        showToast('warning', 'Lütfen tüm alanları doldurun!');
+        return;
+    }
+    
+    showToast('success', 'Bildirim başarıyla gönderildi!');
+    document.getElementById('notifTitle').value = '';
+    document.getElementById('notifMessage').value = '';
+}
+
+// ==================== LOGS FUNCTIONS ====================
+function loadLogs() {
+    renderLogsTable(mockLogs);
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function () {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            showToast('info', `${this.textContent} sekmesi yükleniyor...`);
+        });
+    });
+}
+
+function renderLogsTable(logs) {
+    const tbody = document.getElementById('logsTableBody');
+    tbody.innerHTML = logs.map(l => `
+        <tr>
+            <td style="font-size: 12px;">${l.time}</td>
+            <td>
+                <span class="badge badge-${
+                    l.type === 'ban' ? 'danger' :
+                    l.type === 'create' ? 'success' :
+                    l.type === 'update' ? 'warning' : 'info'
+                }">${l.type.toUpperCase()}</span>
+            </td>
+            <td style="font-weight: 600;">${l.user}</td>
+            <td>${l.action}</td>
+            <td style="font-size: 13px; color: var(--text-muted);">${l.detail}</td>
+            <td style="font-family: monospace; font-size: 12px;">${l.ip}</td>
+        </tr>
+    `).join('');
+}
+
+// ==================== ROLES FUNCTIONS ====================
+function loadRoles() {
+    const permissions = [
+        { name: 'Oyuncu Yönetimi', admin: true, mod: true, support: false },
+        { name: 'Ban/Unban', admin: true, mod: true, support: false },
+        { name: 'Event Oluşturma', admin: true, mod: false, support: false },
+        { name: 'Item Yönetimi', admin: true, mod: true, support: false },
+        { name: 'Ekonomi Ayarları', admin: true, mod: false, support: false },
+        { name: 'Sistem Ayarları', admin: true, mod: false, support: false },
+        { name: 'Log Görüntüleme', admin: true, mod: true, support: true },
+        { name: 'Bildirim Gönderme', admin: true, mod: true, support: false },
+        { name: 'Rapor İnceleme', admin: true, mod: true, support: true },
+        { name: 'Yetki Yönetimi', admin: true, mod: false, support: false },
+    ];
+
+    const renderPermissionList = (role) => {
+        return permissions.map(p => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border);">
+                <span style="font-size: 14px;">${p.name}</span>
+                <i class="fas fa-${p[role] ? 'check-circle' : 'times-circle'}" 
+                   style="color: var(--${p[role] ? 'success' : 'danger'}); font-size: 18px;"></i>
+            </div>
+        `).join('');
+    };
+
+    document.getElementById('adminPermissions').innerHTML = renderPermissionList('admin');
+    document.getElementById('modPermissions').innerHTML = renderPermissionList('mod');
+    document.getElementById('supportPermissions').innerHTML = renderPermissionList('support');
+}
+
+// ==================== MODAL FUNCTIONS ====================
+function openModal(modalId) {
+    document.getElementById(modalId).classList.add('active');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+}
+
+// Close modal when clicking outside
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', function (e) {if (e.target === this) {
+            this.classList.remove('active');
+        }
+    });
+});
+
+// ==================== TOAST FUNCTIONS ====================
+function showToast(type, message) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle'
+    };
+    
+    toast.innerHTML = `
+        <i class="fas ${icons[type]} toast-icon"></i>
+        <div class="toast-message">${message}</div>
+        <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 5000);
+}
+
+// ==================== GLOBAL SEARCH ====================
+document.getElementById('globalSearch').addEventListener('input', function(e) {
+    const query = e.target.value.toLowerCase();
+    
+    if (query.length < 2) return;
+    
+    // Search in players
+    const playerResults = mockPlayers.filter(p => 
+        p.nick.toLowerCase().includes(query) || 
+        p.id.toString().includes(query)
+    );
+    
+    // Search in events
+    const eventResults = mockEvents.filter(e => 
+        e.name.toLowerCase().includes(query)
+    );
+    
+    // Search in items
+    const itemResults = mockItems.filter(i => 
+        i.name.toLowerCase().includes(query)
+    );
+    
+    if (playerResults.length > 0) {
+        navigateTo('players');
+        renderPlayersTable(playerResults);
+        showToast('info', `${playerResults.length} oyuncu bulundu`);
+    } else if (eventResults.length > 0) {
+        navigateTo('events');
+        renderEventsTable(eventResults);
+        showToast('info', `${eventResults.length} event bulundu`);
+    } else if (itemResults.length > 0) {
+        navigateTo('market');
+        renderItemsTable(itemResults);
+        showToast('info', `${itemResults.length} item bulundu`);
+    }
+});
+
+// ==================== SIDEBAR MENU HTML ====================
+const sidebarMenuHTML = `
+    <div class="sidebar-menu">
+        <div class="menu-section">
+            <div class="menu-section-title">ANA MENÜ</div>
+            <div class="menu-item active" data-page="dashboard">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </div>
+            <div class="menu-item" data-page="players">
+                <i class="fas fa-users"></i>
+                <span>Oyuncular</span>
+                <span class="badge">1,247</span>
+            </div>
+            <div class="menu-item" data-page="events">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Events</span>
+                <span class="badge">8</span>
+            </div>
+        </div>
+        
+        <div class="menu-section">
+            <div class="menu-section-title">YÖNETİM</div>
+            <div class="menu-item" data-page="market">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Market & Items</span>
+            </div>
+            <div class="menu-item" data-page="settings">
+                <i class="fas fa-sliders-h"></i>
+                <span>Oyun Ayarları</span>
+            </div>
+            <div class="menu-item" data-page="notifications">
+                <i class="fas fa-bullhorn"></i>
+                <span>Bildirimler</span>
+            </div>
+        </div>
+        
+        <div class="menu-section">
+            <div class="menu-section-title">SİSTEM</div>
+            <div class="menu-item" data-page="logs">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Loglar</span>
+            </div>
+            <div class="menu-item" data-page="roles">
+                <i class="fas fa-user-shield"></i>
+                <span>Yetkiler</span>
+            </div>
+        </div>
+    </div>
+`;
+
+// Insert sidebar menu
+document.querySelector('.sidebar').insertAdjacentHTML('beforeend', sidebarMenuHTML);
+
+// ==================== TOPBAR HTML ====================
+const topbarHTML = `
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Ara... (oyuncu, event, item)" id="topbarSearch">
+            </div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-icon" id="themeToggleTop">
+                <i class="fas fa-moon"></i>
+            </div>
+            <div class="topbar-icon">
+                <i class="fas fa-bell"></i>
+                <span class="badge-dot"></span>
+            </div>
+            <div class="topbar-icon">
+                <i class="fas fa-envelope"></i>
+                <span class="badge-dot"></span>
+            </div>
+            <div class="topbar-icon">
+                <i class="fas fa-cog"></i>
+            </div>
+            <div class="user-menu dropdown" id="userMenuBtnTop">
+                <div class="user-avatar">AD</div>
+                <div class="user-info">
+                    <div class="user-name">Admin User</div>
+                    <div class="user-role">Super Admin</div>
+                </div>
+                <i class="fas fa-chevron-down"></i>
+                <div class="dropdown-menu" id="userDropdownTop">
+                    <div class="dropdown-item"><i class="fas fa-user"></i> Profilim</div>
+                    <div class="dropdown-item"><i class="fas fa-cog"></i> Ayarlar</div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item"><i class="fas fa-sign-out-alt"></i> Çıkış Yap</div>
+                </div>
+            </div>
+        </div>
+    </div>
+`;
+
+// Insert topbar before main content
+document.querySelector('.main-content').insertAdjacentHTML('beforebegin', topbarHTML);
+
+// ==================== INITIALIZE THEME TOGGLE (TOP) ====================
+document.getElementById('themeToggleTop').addEventListener('click', function () {
+    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+    document.body.setAttribute('data-theme', currentTheme);
+    this.querySelector('i').className = currentTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+    document.querySelector('#themeToggle i').className = currentTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+});
+
+// ==================== INITIALIZE USER DROPDOWN (TOP) ====================
+document.getElementById('userMenuBtnTop').addEventListener('click', function (e) {
+    e.stopPropagation();
+    document.getElementById('userDropdownTop').classList.toggle('active');
+});
+
+// ==================== TOPBAR SEARCH ====================
+document.getElementById('topbarSearch').addEventListener('input', function(e) {
+    const query = e.target.value.toLowerCase();
+    
+    if (query.length < 2) return;
+    
+    // Same as global search
+    const playerResults = mockPlayers.filter(p => 
+        p.nick.toLowerCase().includes(query) || 
+        p.id.toString().includes(query)
+    );
+    
+    const eventResults = mockEvents.filter(e => 
+        e.name.toLowerCase().includes(query)
+    );
+    
+    const itemResults = mockItems.filter(i => 
+        i.name.toLowerCase().includes(query)
+    );
+    
+    if (playerResults.length > 0) {
+        navigateTo('players');
+        renderPlayersTable(playerResults);
+        showToast('info', `${playerResults.length} oyuncu bulundu`);
+    } else if (eventResults.length > 0) {
+        navigateTo('events');
+        renderEventsTable(eventResults);
+        showToast('info', `${eventResults.length} event bulundu`);
+    } else if (itemResults.length > 0) {
+        navigateTo('market');
+        renderItemsTable(itemResults);
+        showToast('info', `${itemResults.length} item bulundu`);
+    } else {
+        showToast('warning', 'Sonuç bulunamadı');
+    }
+});
+
+// ==================== REAL-TIME STATS UPDATE ====================
+function updateRealtimeStats() {
+    // Simulate real-time data changes
+    const statsCards = document.querySelectorAll('.stat-value');
+    
+    setInterval(() => {
+        if (currentPage === 'dashboard') {
+            // Update active players count
+            const currentPlayers = parseInt(statsCards[0]?.textContent.replace(',', '') || '2847');
+            const change = Math.floor(Math.random() * 20) - 10;
+            const newValue = Math.max(2800, Math.min(3000, currentPlayers + change));
+            if (statsCards[0]) statsCards[0].textContent = newValue.toLocaleString();
+        }
+    }, 5000);
+}
+
+// ==================== AUTO-REFRESH ACTIVITY LOG ====================
+function autoRefreshActivity() {
+    setInterval(() => {
+        if (currentPage === 'dashboard') {
+            const newActivities = [
+                { icon: "🎮", iconBg: "success", title: "Yeni başarım", desc: `${mockPlayers[Math.floor(Math.random() * mockPlayers.length)].nick} bir görev tamamladı`, time: "Şimdi" },
+                { icon: "💰", iconBg: "warning", title: "Market işlemi", desc: `${mockPlayers[Math.floor(Math.random() * mockPlayers.length)].nick} bir item satın aldı`, time: "1 dakika önce" }
+            ];
+            
+            // Optionally refresh activity log
+            // loadDashboard();
+        }
+    }, 30000); // Every 30 seconds
+}
+
+// ==================== EXPORT FUNCTIONS ====================
+function exportData(type) {
+    let data, filename;
+    
+    switch(type) {
+        case 'players':
+            data = mockPlayers;
+            filename = 'players_export.json';
+            break;
+        case 'events':
+            data = mockEvents;
+            filename = 'events_export.json';
+            break;
+        case 'items':
+            data = mockItems;
+            filename = 'items_export.json';
+            break;
+        case 'logs':
+            data = mockLogs;
+            filename = 'logs_export.json';
+            break;
+        default:
+            showToast('error', 'Export türü belirtilmedi');
+            return;
+    }
+    
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    showToast('success', `${filename} başarıyla indirildi!`);
+}
+
+// ==================== CONFIRMATION DIALOG ====================
+function confirmAction(message, callback) {
+    const confirmed = confirm(message);
+    if (confirmed) {
+        callback();
+    }
+}
+
+// ==================== BULK ACTIONS ====================
+function selectAllPlayers() {
+    const checkboxes = document.querySelectorAll('#playersTable tbody input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = true);
+    showToast('info', `${checkboxes.length} oyuncu seçildi`);
+}
+
+function bulkBanPlayers() {
+    const selected = document.querySelectorAll('#playersTable tbody input[type="checkbox"]:checked');
+    confirmAction(`${selected.length} oyuncuyu yasaklamak istediğinize emin misiniz?`, () => {
+        showToast('success', `${selected.length} oyuncu yasaklandı`);
+        selected.forEach(cb => cb.checked = false);
+    });
+}
+
+// ==================== STATISTICS CALCULATOR ====================
+function calculateStatistics() {
+    const stats = {
+        totalPlayers: mockPlayers.length,
+        onlinePlayers: mockPlayers.filter(p => p.status === 'online').length,
+        bannedPlayers: mockPlayers.filter(p => p.banned).length,
+        totalCoins: mockPlayers.reduce((sum, p) => sum + p.coin, 0),
+        avgLevel: Math.floor(mockPlayers.reduce((sum, p) => sum + p.level, 0) / mockPlayers.length),
+        activeEvents: mockEvents.filter(e => e.status === 'active').length,
+        totalItems: mockItems.length,
+        totalSales: mockItems.reduce((sum, i) => sum + i.sales, 0)
+    };
+    
+    return stats;
+}
+
+// ==================== KEYBOARD SHORTCUTS ====================
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + K for search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('globalSearch').focus();
+    }
+    
+    // Ctrl/Cmd + S for save (if in modal)
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        const activeModal = document.querySelector('.modal.active');
+        if (activeModal) {
+            if (activeModal.id === 'eventModal') saveEvent();
+            if (activeModal.id === 'itemModal') saveItem();
+            showToast('info', 'Kaydet kısayolu tetiklendi');
+        }
+    }
+    
+    // ESC to close modal
+    if (e.key === 'Escape') {
+        const activeModal = document.querySelector('.modal.active');
+        if (activeModal) {
+            activeModal.classList.remove('active');
+        }
+    }
+});
+
+// ==================== INITIALIZE APP ====================
+function initializeApp() {
+    // Load initial page
+    loadDashboard();
+    
+    // Start real-time updates
+    updateRealtimeStats();
+    autoRefreshActivity();
+    
+    // Show welcome toast
+    setTimeout(() => {
+        showToast('success', 'Game Admin Panel başarıyla yüklendi!');
+    }, 500);
+    
+    // Log startup
+    console.log('🎮 Game Admin Panel v2.0');
+    console.log('📊 Statistics:', calculateStatistics());
+    console.log('👤 Current Role:', currentRole);
+}
+
+// ==================== RUN APP ====================
+initializeApp();
+
+// ==================== PREVENT FORM SUBMISSION ====================
+document.addEventListener('submit', function(e) {
+    e.preventDefault();
+    return false;
+});
+
+// ==================== RESPONSIVE HANDLER ====================
+window.addEventListener('resize', function() {
+    if (window.innerWidth > 1024) {
+        document.getElementById('sidebar').classList.remove('active');
+    }
+});
+
+// ==================== SMOOTH SCROLL ====================
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+});
+
+// ==================== END OF SCRIPT ====================
+    </script>
+</body>
+</html>

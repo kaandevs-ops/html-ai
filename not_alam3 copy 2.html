@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gelişmiş Not Alma ve Çizim Uygulaması</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+body {
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+min-height: 100vh;
+padding: 20px;
+}
+.container {
+max-width: 1400px;
+margin: 0 auto;
+background: white;
+border-radius: 20px;
+box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+overflow: hidden;
+}
+.header {
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+padding: 30px;
+text-align: center;
+position: relative;
+}
+.header h1 {
+font-size: 2.5rem;
+margin-bottom: 10px;
+animation: fadeInDown 0.5s;
+}
+@keyframes fadeInDown {
+from {
+opacity: 0;
+transform: translateY(-20px);
+}
+to {
+opacity: 1;
+transform: translateY(0);
+}
+}
+.theme-toggle {
+position: absolute;
+top: 30px;
+right: 30px;
+background: rgba(255, 255, 255, 0.2);
+border: none;
+color: white;
+padding: 10px 20px;
+border-radius: 20px;
+cursor: pointer;
+font-size: 16px;
+transition: all 0.3s;
+}
+.theme-toggle:hover {
+background: rgba(255, 255, 255, 0.3);
+transform: scale(1.05);
+}
+.sidebar {
+width: 280px;
+background: #f8f9fa;
+border-right: 1px solid #dee2e6;
+float: left;
+min-height: calc(100vh - 140px);
+padding: 20px;
+}
+.main-content {
+margin-left: 280px;
+padding: 30px;
+min-height: calc(100vh - 140px);
+}
+.search-box {
+width: 100%;
+padding: 12px;
+border: 2px solid #dee2e6;
+border-radius: 10px;
+margin-bottom: 15px;
+font-size: 14px;
+transition: all 0.3s;
+}
+.search-box:focus {
+outline: none;
+border-color: #667eea;
+box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+}
+.new-note-btn {
+width: 100%;
+padding: 15px;
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+border: none;
+border-radius: 10px;
+font-size: 16px;
+font-weight: bold;
+cursor: pointer;
+margin-bottom: 20px;
+transition: all 0.3s;
+}
+.new-note-btn:hover {
+transform: translateY(-2px);
+box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+.filter-buttons {
+display: flex;
+gap: 5px;
+margin-bottom: 15px;
+flex-wrap: wrap;
+}
+.filter-btn {
+padding: 8px 12px;
+border: 2px solid #dee2e6;
+background: white;
+border-radius: 5px;
+cursor: pointer;
+font-size: 12px;
+transition: all 0.3s;
+}
+.filter-btn.active {
+background: #667eea;
+color: white;
+border-color: #667eea;
+}
+.notes-list {
+list-style: none;
+max-height: calc(100vh - 400px);
+overflow-y: auto;
+}
+.note-item {
+padding: 12px;
+margin-bottom: 10px;
+background: white;
+border-radius: 8px;
+cursor: pointer;
+transition: all 0.3s;
+border: 2px solid transparent;
+position: relative;
+}
+.note-item:hover {
+border-color: #667eea;
+transform: translateX(5px);
+}
+.note-item.active {
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+}
+.note-title {
+font-weight: bold;
+margin-bottom: 5px;
+}
+.note-preview {
+font-size: 11px;
+opacity: 0.7;
+margin-bottom: 5px;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+.note-date {
+font-size: 11px;
+opacity: 0.7;
+}
+.note-category {
+display: inline-block;
+padding: 2px 8px;
+background: #667eea;
+color: white;
+border-radius: 10px;
+font-size: 10px;
+margin-top: 5px;
+}
+.toolbar {
+background: #f8f9fa;
+padding: 15px;
+border-radius: 10px;
+margin-bottom: 20px;
+display: flex;
+flex-wrap: wrap;
+gap: 10px;
+border: 1px solid #dee2e6;
+}
+.toolbar-group {
+display: flex;
+gap: 5px;
+align-items: center;
+padding-right: 15px;
+border-right: 1px solid #dee2e6;
+}
+.toolbar-group:last-child {
+border-right: none;
+}
+.toolbar button, .toolbar select, .toolbar input[type="color"], .toolbar input[type="file"] {
+padding: 8px 15px;
+border: 1px solid #dee2e6;
+background: white;
+border-radius: 5px;
+cursor: pointer;
+transition: all 0.2s;
+font-size: 14px;
+}
+.toolbar button:hover {
+background: #667eea;
+color: white;
+border-color: #667eea;
+}
+.toolbar input[type="color"] {
+width: 50px;
+height: 38px;
+padding: 2px;
+cursor: pointer;
+}
+.toolbar label {
+font-size: 12px;
+color: #666;
+margin-right: 5px;
+}
+.toolbar select {
+cursor: pointer;
+}
+#noteTitle {
+width: 100%;
+padding: 15px;
+font-size: 24px;
+font-weight: bold;
+border: none;
+border-bottom: 2px solid #dee2e6;
+margin-bottom: 15px;
+outline: none;
+}
+#noteTitle:focus {
+border-bottom-color: #667eea;
+}
+.note-meta {
+display: flex;
+gap: 15px;
+margin-bottom: 20px;
+flex-wrap: wrap;
+}
+.note-meta select, .note-meta input {
+padding: 8px 12px;
+border: 2px solid #dee2e6;
+border-radius: 5px;
+font-size: 14px;
+}
+.note-meta select:focus, .note-meta input:focus {
+outline: none;
+border-color: #667eea;
+}
+#noteContent {
+width: 100%;
+min-height: 450px;
+padding: 20px;
+border: 2px solid #dee2e6;
+border-radius: 10px;
+font-size: 16px;
+line-height: 1.6;
+outline: none;
+overflow-y: auto;
+}
+#noteContent:focus {
+border-color: #667eea;
+}
+.save-status {
+text-align: center;
+margin-top: 20px;
+padding: 10px;
+border-radius: 5px;
+font-weight: bold;
+animation: slideIn 0.3s;
+}
+@keyframes slideIn {
+from {
+opacity: 0;
+transform: translateY(-10px);
+}
+to {
+opacity: 1;
+transform: translateY(0);
+}
+}
+.save-status.success {
+background: #d4edda;
+color: #155724;
+}
+.save-status.error {
+background: #f8d7da;
+color: #721c24;
+}
+table {
+border-collapse: collapse;
+width: 100%;
+margin: 10px 0;
+}
+table td, table th {
+border: 1px solid #dee2e6;
+padding: 8px;
+min-width: 100px;
+}
+table th {
+background: #f8f9fa;
+font-weight: bold;
+}
+img {
+max-width: 100%;
+height: auto;
+border-radius: 10px;
+margin: 10px 0;
+}
+.empty-state {
+text-align: center;
+padding: 100px 20px;
+color: #999;
+}
+.empty-state svg {
+width: 100px;
+height: 100px;
+margin-bottom: 20px;
+opacity: 0.3;
+}
+.stats {
+display: flex;
+justify-content: space-around;
+margin-bottom: 20px;
+padding: 15px;
+background: white;
+border-radius: 10px;
+box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.stat-item {
+text-align: center;
+}
+.stat-number {
+font-size: 24px;
+font-weight: bold;
+color: #667eea;
+}
+.stat-label {
+font-size: 12px;
+color: #666;
+}
+.export-btn {
+width: 100%;
+padding: 10px;
+background: #28a745;
+color: white;
+border: none;
+border-radius: 8px;
+cursor: pointer;
+margin-top: 10px;
+transition: all 0.3s;
+}
+.export-btn:hover {
+background: #218838;
+transform: translateY(-2px);
+}
+body.dark-mode {
+background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+body.dark-mode .container {
+background: #0f3460;
+color: #e8e8e8;
+}
+body.dark-mode .sidebar {
+background: #16213e;
+border-right-color: #1a1a2e;
+}
+body.dark-mode .note-item {
+background: #1a1a2e;
+color: #e8e8e8;
+}
+body.dark-mode .toolbar {
+background: #16213e;
+border-color: #1a1a2e;
+}
+body.dark-mode .toolbar button,
+body.dark-mode .toolbar select {
+background: #1a1a2e;
+color: #e8e8e8;
+border-color: #0f3460;
+}
+body.dark-mode #noteTitle {
+background: #0f3460;
+color: #e8e8e8;
+border-bottom-color: #1a1a2e;
+}
+body.dark-mode #noteContent {
+background: #16213e;
+color: #e8e8e8;
+border-color: #1a1a2e;
+}
+body.dark-mode .search-box {
+background: #1a1a2e;
+color: #e8e8e8;
+border-color: #0f3460;
+}
+body.dark-mode .stats {
+background: #16213e;
+}
+body.dark-mode .drawing-toolbar {
+background: #16213e;
+border-color: #1a1a2e;
+}
+body.dark-mode .drawing-toolbar button {
+background: #1a1a2e;
+color: #e8e8e8;
+border-color: #0f3460;
+}
+.word-count {
+text-align: right;
+margin-top: 10px;
+font-size: 12px;
+color: #666;
+}
+body.dark-mode .word-count {
+color: #999;
+}
+.tag-input {
+display: flex;
+flex-wrap: wrap;
+gap: 5px;
+padding: 8px;
+border: 2px solid #dee2e6;
+border-radius: 5px;
+min-height: 38px;
+}
+.tag {
+background: #667eea;
+color: white;
+padding: 4px 10px;
+border-radius: 15px;
+font-size: 12px;
+display: inline-flex;
+align-items: center;
+gap: 5px;
+}
+.tag-remove {
+cursor: pointer;
+font-weight: bold;
+}
+.tag-input input {
+border: none;
+outline: none;
+flex: 1;
+min-width: 100px;
+}
+
+/* Çizim Özellikleri */
+.drawing-container {
+position: relative;
+width: 100%;
+height: 500px;
+border: 2px solid #dee2e6;
+border-radius: 10px;
+margin-bottom: 20px;
+background: white;
+overflow: hidden;
+}
+#drawingCanvas {
+display: block;
+cursor: crosshair;
+}
+.drawing-toolbar {
+background: #f8f9fa;
+padding: 15px;
+border-radius: 10px;
+margin-bottom: 20px;
+display: flex;
+flex-wrap: wrap;
+gap: 10px;
+border: 1px solid #dee2e6;
+align-items: center;
+}
+.drawing-toolbar button {
+padding: 10px 20px;
+border: 1px solid #dee2e6;
+background: white;
+border-radius: 5px;
+cursor: pointer;
+transition: all 0.2s;
+font-size: 14px;
+}
+.drawing-toolbar button:hover,
+.drawing-toolbar button.active {
+background: #667eea;
+color: white;
+border-color: #667eea;
+}
+.drawing-toolbar input[type="color"] {
+width: 60px;
+height: 40px;
+border: 1px solid #dee2e6;
+border-radius: 5px;
+cursor: pointer;
+}
+.drawing-toolbar input[type="range"] {
+width: 150px;
+}
+.drawing-toolbar label {
+font-size: 12px;
+color: #666;
+margin-right: 5px;
+}
+.mode-tabs {
+display: flex;
+gap: 10px;
+margin-bottom: 20px;
+}
+.mode-tab {
+padding: 12px 30px;
+background: #f8f9fa;
+border: 2px solid #dee2e6;
+border-radius: 10px;
+cursor: pointer;
+font-weight: bold;
+transition: all 0.3s;
+}
+.mode-tab.active {
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+border-color: #667eea;
+}
+.mode-content {
+display: none;
+}
+.mode-content.active {
+display: block;
+}
+
+@media (max-width: 768px) {
+.sidebar {
+width: 100%;
+float: none;
+min-height: auto;
+border-right: none;
+border-bottom: 1px solid #dee2e6;
+}
+.main-content {
+margin-left: 0;
+}
+.toolbar, .drawing-toolbar {
+flex-direction: column;
+}
+.toolbar-group {
+border-right: none;
+border-bottom: 1px solid #dee2e6;
+padding-bottom: 10px;
+width: 100%;
+}
+.theme-toggle {
+top: 10px;
+right: 10px;
+padding: 8px 15px;
+font-size: 14px;
+}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>📝 Gelişmiş Not Alma ve Çizim Uygulaması</h1>
+<p>Profesyonel not alma ve çizim deneyimi</p>
+<button class="theme-toggle" onclick="toggleTheme()">🌙 Tema Değiştir</button>
+</div>
+<div class="sidebar">
+<input type="text" class="search-box" id="searchBox" placeholder="🔍 Notlarda ara..." oninput="searchNotes()">
+<div class="stats">
+<div class="stat-item">
+<div class="stat-number" id="totalNotes">0</div>
+<div class="stat-label">Toplam Not</div>
+</div>
+<div class="stat-item">
+<div class="stat-number" id="todayNotes">0</div>
+<div class="stat-label">Bugün</div>
+</div>
+</div>
+<div class="filter-buttons">
+<button class="filter-btn active" onclick="filterNotes('all')">Tümü</button>
+<button class="filter-btn" onclick="filterNotes('work')">İş</button>
+<button class="filter-btn" onclick="filterNotes('personal')">Kişisel</button>
+<button class="filter-btn" onclick="filterNotes('ideas')">Fikirler</button>
+</div>
+<button class="new-note-btn" onclick="createNewNote()">+ Yeni Not</button>
+<button class="export-btn" onclick="exportNotes()">📥 Tüm Notları Dışa Aktar</button>
+<input type="file" id="importFile" accept="application/json" style="display:none" onchange="importNotes(event)">
+<button class="export-btn" style="background:#007bff" onclick="document.getElementById('importFile').click()">📤 Notları İçe Aktar</button>
+
+<ul class="notes-list" id="notesList"></ul>
+</div>
+<div class="main-content">
+<div id="editorArea" style="display: none;">
+<input type="text" id="noteTitle" placeholder="Not başlığı...">
+<div class="note-meta">
+<select id="noteCategory">
+<option value="personal">Kişisel</option>
+<option value="work">İş</option>
+<option value="ideas">Fikirler</option>
+<option value="study">Ders</option>
+<option value="other">Diğer</option>
+</select>
+<div class="tag-input" id="tagContainer">
+<input type="text" id="tagInput" placeholder="Etiket ekle (Enter)" onkeypress="addTag(event)">
+</div>
+</div>
+
+<div class="mode-tabs">
+<div class="mode-tab active" onclick="switchMode('text')">✍️ Metin Düzenleyici</div>
+<div class="mode-tab" onclick="switchMode('drawing')">🎨 Çizim Tahtası</div>
+</div>
+
+<!-- Metin Düzenleyici Modu -->
+<div id="textMode" class="mode-content active">
+<div class="toolbar">
+<div class="toolbar-group">
+<button onclick="execCommand('bold')" title="Kalın"><b>B</b></button>
+<button onclick="execCommand('italic')" title="İtalik"><i>I</i></button>
+<button onclick="execCommand('underline')" title="Altını çiz"><u>U</u></button>
+<button onclick="execCommand('strikeThrough')" title="Üstünü çiz"><s>S</s></button>
+</div>
+<div class="toolbar-group">
+<label>Yazı Tipi:</label>
+<select id="fontSelect" onchange="changeFontFamily()">
+<option value="Arial">Arial</option>
+<option value="Georgia">Georgia</option>
+<option value="Times New Roman">Times New Roman</option>
+<option value="Courier New">Courier New</option>
+<option value="Verdana">Verdana</option>
+<option value="Comic Sans MS">Comic Sans</option>
+</select>
+</div>
+<div class="toolbar-group">
+<label>Yazı Boyutu:</label>
+<select id="fontSizeSelect" onchange="changeFontSize()">
+<option value="10px">10px</option>
+<option value="12px">12px</option>
+<option value="14px" selected>14px</option>
+<option value="16px">16px</option>
+<option value="18px">18px</option>
+<option value="20px">20px</option>
+<option value="24px">24px</option>
+<option value="28px">28px</option>
+<option value="32px">32px</option>
+<option value="36px">36px</option>
+</select>
+</div>
+<div class="toolbar-group">
+<label>Yazı Rengi:</label>
+<input type="color" id="textColor" onchange="changeTextColor()" value="#000000">
+</div>
+<div class="toolbar-group">
+<label>Arka Plan:</label>
+<input type="color" id="bgColor" onchange="changeBackgroundColor()" value="#ffff00">
+</div>
+<div class="toolbar-group">
+<button onclick="execCommand('justifyLeft')" title="Sola hizala">⬅</button>
+<button onclick="execCommand('justifyCenter')" title="Ortala">↔</button>
+<button onclick="execCommand('justifyRight')" title="Sağa hizala">➡</button>
+<button onclick="execCommand('justifyFull')" title="İki yana yasla">⬌</button>
+</div>
+<div class="toolbar-group">
+<button onclick="execCommand('insertUnorderedList')" title="Madde işaretli liste">• Liste</button>
+<button onclick="execCommand('insertOrderedList')" title="Numaralı liste">1. Liste</button>
+<button onclick="execCommand('indent')" title="Girinti artır">→|</button>
+<button onclick="execCommand('outdent')" title="Girinti azalt">|←</button>
+</div>
+<div class="toolbar-group">
+<button onclick="insertLink()" title="Link ekle">🔗 Link</button>
+<button onclick="insertTable()" title="Tablo ekle">📊 Tablo</button>
+<button onclick="document.getElementById('imageUpload').click()" title="Resim ekle">🖼 Resim</button>
+<input type="file" id="imageUpload" accept="image/*" style="display: none;" onchange="insertImage(event)">
+</div>
+<div class="toolbar-group">
+<button onclick="execCommand('undo')" title="Geri al">↶ Geri</button>
+<button onclick="execCommand('redo')" title="İleri al">↷ İleri</button>
+</div>
+</div>
+<div id="noteContent" contenteditable="true"></div>
+<div class="word-count" id="wordCount">0 kelime, 0 karakter</div>
+</div>
+
+<!-- Çizim Modu -->
+<div id="drawingMode" class="mode-content">
+<div class="drawing-toolbar">
+<button id="penTool" class="active" onclick="setDrawingTool('pen')">✏️ Kalem</button>
+<button id="lineTool" onclick="setDrawingTool('line')">📏 Çizgi</button>
+<button id="rectTool" onclick="setDrawingTool('rectangle')">⬜ Dikdörtgen</button>
+<button id="circleTool" onclick="setDrawingTool('circle')">⭕ Daire</button>
+<button id="eraserTool" onclick="setDrawingTool('eraser')">🧹 Silgi</button>
+<div style="border-left: 1px solid #dee2e6; height: 30px; margin: 0 10px;"></div>
+<label>Renk:</label>
+<input type="color" id="drawColor" value="#000000" onchange="updateDrawingColor()">
+<label>Kalınlık:</label>
+<input type="range" id="lineWidth" min="1" max="50" value="3" oninput="updateLineWidth()">
+<span id="lineWidthValue">3px</span>
+<div style="border-left: 1px solid #dee2e6; height: 30px; margin: 0 10px;"></div>
+<button onclick="clearCanvas()">🗑️ Temizle</button>
+<button onclick="saveDrawing()">💾 Çizimi Kaydet</button>
+<button onclick="insertDrawingToNote()">📌 Nota Ekle</button>
+<button onclick="exportDrawing()">📥 Çizimi İndir</button>
+</div>
+<div class="drawing-container">
+<canvas id="drawingCanvas"></canvas>
+</div>
+</div>
+
+<div class="toolbar">
+<div class="toolbar-group">
+<button onclick="saveNote()" title="Notu kaydet" style="background: #28a745; color: white;">💾 Kaydet</button>
+<button onclick="exportCurrentNote()" title="Notu dışa aktar" style="background: #17a2b8; color: white;">📤 Dışa Aktar</button>
+<button onclick="deleteCurrentNote()" title="Notu sil" style="background: #dc3545; color: white;">🗑 Sil</button>
+</div>
+</div>
+
+<div id="saveStatus" class="save-status" style="display: none;"></div>
+</div>
+<div id="emptyState" class="empty-state">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+</svg>
+<h2>Henüz not yok</h2>
+<p>Başlamak için "Yeni Not" butonuna tıklayın</p>
+</div>
+</div>
+</div>
+<script>
+let notes = [];
+let currentNoteId = null;
+let currentFilter = 'all';
+let currentMode = 'text';
+
+// Çizim değişkenleri
+let canvas, ctx;
+let isDrawing = false;
+let drawingTool = 'pen';
+let drawColor = '#000000';
+let lineWidth = 3;
+let startX, startY;
+let savedImageData;
+let drawingHistory = [];
+let historyStep = -1;
+
+// Canvas başlatma
+function initCanvas() {
+canvas = document.getElementById('drawingCanvas');
+const container = canvas.parentElement;
+canvas.width = container.offsetWidth;
+canvas.height = container.offsetHeight;
+ctx = canvas.getContext('2d');
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+
+// Canvas event listeners
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDrawing);
+canvas.addEventListener('mouseout', stopDrawing);
+
+// Touch event listeners
+canvas.addEventListener('touchstart', handleTouch);
+canvas.addEventListener('touchmove', handleTouch);
+canvas.addEventListener('touchend', stopDrawing);
+
+saveToHistory();
+}
+
+function handleTouch(e) {
+e.preventDefault();
+const touch = e.touches[0];
+const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
+clientX: touch.clientX,
+clientY: touch.clientY
+});
+canvas.dispatchEvent(mouseEvent);
+}
+
+function startDrawing(e) {
+isDrawing = true;
+const rect = canvas.getBoundingClientRect();
+startX = e.clientX - rect.left;
+startY = e.clientY - rect.top;
+
+if (drawingTool === 'pen' || drawingTool === 'eraser') {
+ctx.beginPath();
+ctx.moveTo(startX, startY);
+}
+
+if (drawingTool !== 'pen' && drawingTool !== 'eraser') {
+savedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+}
+}
+
+function draw(e) {
+if (!isDrawing) return;
+
+const rect = canvas.getBoundingClientRect();
+const currentX = e.clientX - rect.left;
+const currentY = e.clientY - rect.top;
+
+ctx.strokeStyle = drawingTool === 'eraser' ? '#ffffff' : drawColor;
+ctx.lineWidth = drawingTool === 'eraser' ? lineWidth * 2 : lineWidth;
+
+if (drawingTool === 'pen' || drawingTool === 'eraser') {
+ctx.lineTo(currentX, currentY);
+ctx.stroke();
+} else if (savedImageData) {
+ctx.putImageData(savedImageData, 0, 0);
+ctx.beginPath();
+
+if (drawingTool === 'line') {
+ctx.moveTo(startX, startY);
+ctx.lineTo(currentX, currentY);
+ctx.stroke();
+} else if (drawingTool === 'rectangle') {
+ctx.strokeRect(startX, startY, currentX - startX, currentY - startY);
+} else if (drawingTool === 'circle') {
+const radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
+ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+ctx.stroke();
+}
+}
+}
+
+function stopDrawing() {
+if (isDrawing) {
+isDrawing = false;
+ctx.beginPath();
+saveToHistory();
+}
+}
+
+function setDrawingTool(tool) {
+drawingTool = tool;
+document.querySelectorAll('.drawing-toolbar button').forEach(btn => {
+btn.classList.remove('active');
+});
+document.getElementById(tool + 'Tool').classList.add('active');
+}
+
+function updateDrawingColor() {
+drawColor = document.getElementById('drawColor').value;
+}
+
+function updateLineWidth() {
+lineWidth = document.getElementById('lineWidth').value;
+document.getElementById('lineWidthValue').textContent = lineWidth + 'px';
+}
+
+function clearCanvas() {
+if (confirm('Çizimi temizlemek istediğinizden emin misiniz?')) {
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+saveToHistory();
+}
+}
+
+function saveToHistory() {
+historyStep++;
+if (historyStep < drawingHistory.length) {
+drawingHistory.length = historyStep;
+}
+drawingHistory.push(canvas.toDataURL());
+}
+
+function saveDrawing() {
+if (!currentNoteId) return;
+const note = notes.find(n => n.id === currentNoteId);
+if (note) {
+note.drawing = canvas.toDataURL();
+saveNotesToMemory();
+showSaveStatus('Çizim kaydedildi! ✓', 'success');
+}
+}
+
+function insertDrawingToNote() {
+const imageData = canvas.toDataURL();
+const img = `<img src="${imageData}" alt="Çizim" style="max-width:100%; border-radius:10px; margin:10px 0;"><br>`;
+document.getElementById('noteContent').focus();
+document.execCommand('insertHTML', false, img);
+showSaveStatus('Çizim nota eklendi! 📌', 'success');
+}
+
+function exportDrawing() {
+const link = document.createElement('a');
+link.download = `cizim_${new Date().getTime()}.png`;
+link.href = canvas.toDataURL();
+link.click();
+showSaveStatus('Çizim indirildi! 📥', 'success');
+}
+
+function loadDrawing(imageData) {
+if (!imageData) return;
+const img = new Image();
+img.onload = function() {
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+ctx.drawImage(img, 0, 0);
+saveToHistory();
+};
+img.src = imageData;
+}
+
+function switchMode(mode) {
+currentMode = mode;
+document.querySelectorAll('.mode-tab').forEach(tab => {
+tab.classList.remove('active');
+});
+document.querySelectorAll('.mode-content').forEach(content => {
+content.classList.remove('active');
+});
+
+if (mode === 'text') {
+document.querySelector('.mode-tab:nth-child(1)').classList.add('active');
+document.getElementById('textMode').classList.add('active');
+} else {
+document.querySelector('.mode-tab:nth-child(2)').classList.add('active');
+document.getElementById('drawingMode').classList.add('active');
+if (!canvas) {
+initCanvas();
+}
+}
+}
+
+function loadNotes() {
+const savedNotes = window.notes || '[]';
+notes = typeof savedNotes === 'string' ? JSON.parse(savedNotes) : savedNotes;
+renderNotesList();
+updateStats();
+}
+
+function saveNotesToMemory() {
+window.notes = JSON.stringify(notes);
+}
+
+function updateStats() {
+document.getElementById('totalNotes').textContent = notes.length;
+const today = new Date().toDateString();
+const todayNotes = notes.filter(n => new Date(n.createdAt).toDateString() === today);
+document.getElementById('todayNotes').textContent = todayNotes.length;
+}
+
+function renderNotesList() {
+const notesList = document.getElementById('notesList');
+notesList.innerHTML = '';
+if (notes.length === 0) {
+document.getElementById('emptyState').style.display = 'block';
+document.getElementById('editorArea').style.display = 'none';
+return;
+}
+
+let filteredNotes = notes;
+if (currentFilter !== 'all') {
+filteredNotes = notes.filter(n => n.category === currentFilter);
+}
+
+const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+if (searchTerm) {
+filteredNotes = filteredNotes.filter(n =>
+n.title.toLowerCase().includes(searchTerm) ||
+n.content.toLowerCase().includes(searchTerm) ||
+(n.tags && n.tags.some(tag => tag.toLowerCase().includes(searchTerm)))
+);
+}
+
+filteredNotes.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+filteredNotes.forEach(note => {
+const li = document.createElement('li');
+li.className = 'note-item' + (note.id === currentNoteId ? ' active' : '');
+li.onclick = () => loadNote(note.id);
+
+const title = document.createElement('div');
+title.className = 'note-title';
+title.textContent = note.title || 'Başlıksız Not';
+
+const preview = document.createElement('div');
+preview.className = 'note-preview';
+const tempDiv = document.createElement('div');
+tempDiv.innerHTML = note.content;
+preview.textContent = tempDiv.textContent.substring(0, 50) + '...';
+
+const date = document.createElement('div');
+date.className = 'note-date';
+date.textContent = new Date(note.updatedAt).toLocaleString('tr-TR');
+
+const category = document.createElement('span');
+category.className = 'note-category';
+category.textContent = getCategoryName(note.category);
+
+li.appendChild(title);
+li.appendChild(preview);
+li.appendChild(date);
+li.appendChild(category);
+notesList.appendChild(li);
+});
+}
+
+function getCategoryName(cat) {
+const names = {
+'personal': 'Kişisel',
+'work': 'İş',
+'ideas': 'Fikirler',
+'study': 'Ders',
+'other': 'Diğer'
+};
+return names[cat] || cat;
+}
+
+function createNewNote() {
+const newNote = {
+id: Date.now(),
+title: '',
+content: '',
+category: 'personal',
+tags: [],
+drawing: null,
+createdAt: new Date().toISOString(),
+updatedAt: new Date().toISOString()
+};
+notes.push(newNote);
+currentNoteId = newNote.id;
+document.getElementById('noteTitle').value = '';
+document.getElementById('noteContent').innerHTML = '';
+document.getElementById('noteCategory').value = 'personal';
+renderTags([]);
+if (canvas) {
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+document.getElementById('emptyState').style.display = 'none';
+document.getElementById('editorArea').style.display = 'block';
+renderNotesList();
+updateStats();
+document.getElementById('noteTitle').focus();
+}
+
+function loadNote(noteId) {
+const note = notes.find(n => n.id === noteId);
+if (!note) return;
+
+currentNoteId = noteId;
+document.getElementById('noteTitle').value = note.title;
+document.getElementById('noteContent').innerHTML = note.content;
+document.getElementById('noteCategory').value = note.category || 'personal';
+renderTags(note.tags || []);
+
+if (note.drawing && canvas) {
+loadDrawing(note.drawing);
+}
+
+document.getElementById('emptyState').style.display = 'none';
+document.getElementById('editorArea').style.display = 'block';
+renderNotesList();
+updateWordCount();
+}
+
+function saveNote() {
+if (!currentNoteId) return;
+const note = notes.find(n => n.id === currentNoteId);
+if (!note) return;
+
+note.title = document.getElementById('noteTitle').value || 'Başlıksız Not';
+note.content = document.getElementById('noteContent').innerHTML;
+note.category = document.getElementById('noteCategory').value;
+note.updatedAt = new Date().toISOString();
+
+if (canvas) {
+note.drawing = canvas.toDataURL();
+}
+
+saveNotesToMemory();
+renderNotesList();
+updateStats();
+showSaveStatus('Not başarıyla kaydedildi! ✓', 'success');
+}
+
+function deleteCurrentNote() {
+if (!currentNoteId) return;
+if (confirm('Bu notu silmek istediğinizden emin misiniz?')) {
+notes = notes.filter(n => n.id !== currentNoteId);
+saveNotesToMemory();
+currentNoteId = null;
+document.getElementById('noteTitle').value = '';
+document.getElementById('noteContent').innerHTML = '';
+if (canvas) {
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+renderNotesList();
+updateStats();
+if (notes.length === 0) {
+document.getElementById('emptyState').style.display = 'block';
+document.getElementById('editorArea').style.display = 'none';
+} else {
+loadNote(notes[0].id);
+}
+}
+}
+
+function showSaveStatus(message, type) {
+const status = document.getElementById('saveStatus');
+status.textContent = message;
+status.className = 'save-status ' + type;
+status.style.display = 'block';
+setTimeout(() => {
+status.style.display = 'none';
+}, 3000);
+}
+
+function execCommand(command, value = null) {
+document.getElementById('noteContent').focus();
+document.execCommand(command, false, value);
+}
+
+function changeFontFamily() {
+const fontSelect = document.getElementById('fontSelect');
+const fontFamily = fontSelect.value;
+document.getElementById('noteContent').focus();
+document.execCommand('fontName', false, fontFamily);
+}
+
+function changeFontSize() {
+const fontSizeSelect = document.getElementById('fontSizeSelect');
+const fontSize = fontSizeSelect.value;
+const selection = window.getSelection();
+if (selection.rangeCount > 0) {
+const range = selection.getRangeAt(0);
+const selectedText = range.extractContents();
+const span = document.createElement('span');
+span.style.fontSize = fontSize;
+span.appendChild(selectedText);
+range.insertNode(span);
+selection.removeAllRanges();
+selection.addRange(range);
+}
+}
+
+function changeTextColor() {
+const color = document.getElementById('textColor').value;
+document.getElementById('noteContent').focus();
+document.execCommand('foreColor', false, color);
+}
+
+function changeBackgroundColor() {
+const color = document.getElementById('bgColor').value;
+const selection = window.getSelection();
+if (selection.rangeCount > 0) {
+const range = selection.getRangeAt(0);
+const selectedText = range.extractContents();
+const span = document.createElement('span');
+span.style.backgroundColor = color;
+span.appendChild(selectedText);
+range.insertNode(span);
+selection.removeAllRanges();
+selection.addRange(range);
+}
+}
+
+function insertLink() {
+const url = prompt('Link URL giriniz:', 'https://');
+if (url) {
+execCommand('createLink', url);
+}
+}
+
+function insertTable() {
+const rows = prompt('Kaç satır?', '3');
+const cols = prompt('Kaç sütun?', '3');
+if (rows && cols) {
+let tableHTML = '<table><tbody>';
+for (let i = 0; i < parseInt(rows); i++) {
+tableHTML += '<tr>';
+for (let j = 0; j < parseInt(cols); j++) {
+tableHTML += i === 0 ? '<th>Başlık</th>' : '<td>Hücre</td>';
+}
+tableHTML += '</tr>';
+}
+tableHTML += '</tbody></table><br>';
+document.execCommand('insertHTML', false, tableHTML);
+}
+}
+
+function insertImage(event) {
+const file = event.target.files[0];
+if (!file) return;
+const reader = new FileReader();
+reader.onload = function(e) {
+const img = `<img src="${e.target.result}" alt="Yüklenen resim"><br>`;
+document.execCommand('insertHTML', false, img);
+};
+reader.readAsDataURL(file);
+event.target.value = '';
+}
+
+function addTag(event) {
+if (event.key === 'Enter') {
+event.preventDefault();
+const tagInput = document.getElementById('tagInput');
+const tagValue = tagInput.value.trim();
+if (tagValue && currentNoteId) {
+const note = notes.find(n => n.id === currentNoteId);
+if (note) {
+if (!note.tags) note.tags = [];
+if (!note.tags.includes(tagValue)) {
+note.tags.push(tagValue);
+renderTags(note.tags);
+tagInput.value = '';
+}
+}
+}
+}
+}
+
+function renderTags(tags) {
+const container = document.getElementById('tagContainer');
+const input = document.getElementById('tagInput');
+container.innerHTML = '';
+tags.forEach(tag => {
+const tagEl = document.createElement('span');
+tagEl.className = 'tag';
+tagEl.innerHTML = `${tag} <span class="tag-remove" onclick="removeTag('${tag}')">×</span>`;
+container.appendChild(tagEl);
+});
+container.appendChild(input);
+}
+
+function removeTag(tagToRemove) {
+if (!currentNoteId) return;
+const note = notes.find(n => n.id === currentNoteId);
+if (note && note.tags) {
+note.tags = note.tags.filter(tag => tag !== tagToRemove);
+renderTags(note.tags);
+}
+}
+
+function filterNotes(category) {
+currentFilter = category;
+document.querySelectorAll('.filter-btn').forEach(btn => {
+btn.classList.remove('active');
+});
+event.target.classList.add('active');
+renderNotesList();
+}
+
+function searchNotes() {
+renderNotesList();
+}
+
+function updateWordCount() {
+const content = document.getElementById('noteContent').textContent;
+const words = content.trim().split(/\s+/).filter(w => w.length > 0).length;
+const chars = content.length;
+document.getElementById('wordCount').textContent = `${words} kelime, ${chars} karakter`;
+}
+
+function toggleTheme() {
+document.body.classList.toggle('dark-mode');
+const isDark = document.body.classList.contains('dark-mode');
+window.darkMode = isDark;
+}
+
+function exportNotes() {
+const dataStr = JSON.stringify(notes, null, 2);
+const dataBlob = new Blob([dataStr], {type: 'application/json'});
+const url = URL.createObjectURL(dataBlob);
+const link = document.createElement('a');
+link.href = url;
+link.download = `notlar_${new Date().toISOString().split('T')[0]}.json`;
+link.click();
+URL.revokeObjectURL(url);
+showSaveStatus('Notlar başarıyla dışa aktarıldı! 📥', 'success');
+}
+
+function exportCurrentNote() {
+if (!currentNoteId) return;
+const note = notes.find(n => n.id === currentNoteId);
+if (!note) return;
+const noteText = `${note.title}\n\n${document.getElementById('noteContent').textContent}`;
+const blob = new Blob([noteText], {type: 'text/plain'});
+const url = URL.createObjectURL(blob);
+const link = document.createElement('a');
+link.href = url;
+link.download = `${note.title || 'not'}.txt`;
+link.click();
+URL.revokeObjectURL(url);
+showSaveStatus('Not dışa aktarıldı! 📤', 'success');
+}
+function importNotes(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedNotes = JSON.parse(e.target.result);
+            if (Array.isArray(importedNotes)) {
+                const countBefore = notes.length;
+                
+                // Aynı ID’li notları tekrar etmesin
+                importedNotes.forEach(n => {
+                    if (!notes.some(x => x.id === n.id)) {
+                        notes.push(n);
+                    }
+                });
+
+                saveNotesToMemory();
+                renderNotesList();
+                updateStats();
+
+                const added = notes.length - countBefore;
+                showSaveStatus(`${added} yeni not içe aktarıldı! ✅`, 'success');
+            } else {
+                alert("Geçersiz dosya formatı!");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Dosya okunurken hata oluştu!");
+        }
+    };
+    reader.readAsText(file);
+}
+
+
+document.getElementById('noteTitle').addEventListener('input', () => {
+if (currentNoteId) {
+const note = notes.find(n => n.id === currentNoteId);
+if (note) {
+note.title = document.getElementById('noteTitle').value;
+}
+}
+});
+
+document.getElementById('noteContent').addEventListener('input', () => {
+if (currentNoteId) {
+const note = notes.find(n => n.id === currentNoteId);
+if (note) {
+note.content = document.getElementById('noteContent').innerHTML;
+}
+}
+updateWordCount();
+});
+
+document.getElementById('noteCategory').addEventListener('change', () => {
+if (currentNoteId) {
+const note = notes.find(n => n.id === currentNoteId);
+if (note) {
+note.category = document.getElementById('noteCategory').value;
+renderNotesList();
+}
+}
+});
+
+window.addEventListener('beforeunload', (e) => {
+if (currentNoteId) {
+saveNote();
+}
+});
+
+if (window.darkMode) {
+document.body.classList.add('dark-mode');
+}
+
+loadNotes();
+
+// --- GELİŞMİŞ JARVIS BAĞLANTISI ---
+window.addEventListener('message', function(event) {
+    const data = event.data;
+
+    if (!data || !data.tur) return;
+
+    // 1. Yeni Not (Eski kodumuz)
+    if (data.tur === 'NOT_YAZ') {
+        createNewNote();
+        document.getElementById('noteContent').innerHTML = data.mesaj;
+        document.getElementById('noteTitle').value = "Jarvis Notu - " + new Date().toLocaleTimeString();
+        saveNote();
+        showSaveStatus('Jarvis yazdı: ' + data.mesaj, 'success');
+    }
+
+    // 2. Mevcut Nota Ekleme Yap
+    else if (data.tur === 'EKLE') {
+        const contentDiv = document.getElementById('noteContent');
+        // Yeni satıra mı yoksa boşluk bırakarak mı eklesin? (Burada boşluk bırakıp ekliyoruz)
+        contentDiv.innerHTML += "&nbsp;" + data.mesaj;
+        saveNote(); // Kaydet
+        showSaveStatus('Eklendi: ' + data.mesaj, 'success');
+    }
+
+    // 3. Kaydet
+    else if (data.tur === 'KAYDET') {
+        saveNote();
+        // Görsel efekt için butonu parlatabiliriz ama status yeterli
+    }
+
+    // 4. Yeni Not Aç (Sadece boş sayfa)
+    else if (data.tur === 'YENI_AC') {
+        createNewNote();
+        showSaveStatus('Yeni sayfa açıldı', 'success');
+    }
+
+    // 5. Notu Sil
+    else if (data.tur === 'SIL') {
+        deleteCurrentNote();
+    }
+
+    // 6. Renk Değiştir (Yazı Rengi)
+    else if (data.tur === 'RENK') {
+        document.getElementById('noteContent').focus();
+        document.execCommand('foreColor', false, data.renk);
+        showSaveStatus('Kalem rengi değişti', 'success');
+    }
+
+    // 7. Boyut Değiştir
+    else if (data.tur === 'BOYUT') {
+        document.getElementById('noteContent').focus();
+        // execCommand 1-7 arası değer alır.
+        // Küçük: 3, Büyük: 6 gibi basit bir mantık kuralım
+        let size = (data.ebat === 'büyük') ? '6' : '3';
+        document.execCommand('fontSize', false, size);
+        showSaveStatus('Yazı boyutu değişti', 'success');
+    }
+});
+// not_alam3 copy 2.html dosyasının sonundaki mevcut window.addEventListener('message'...) 
+// bloğunu tamamen silip yerine bunu yapıştır:
+
+window.addEventListener('message', function(event) {
+    const data = event.data;
+    if (!data || !data.tur) return;
+
+    const contentDiv = document.getElementById('noteContent');
+
+    // 1. Yeni Not Açma (Katip modu açılınca sadece 1 kez çalışır)
+    if (data.tur === 'YENI_AC') {
+        if (typeof createNewNote === 'function') {
+            createNewNote();
+        } else {
+            contentDiv.innerHTML = "";
+        }
+        return; // İşlem bitti, aşağıya geçme
+    }
+    
+    // 2. Kaan'dan gelen metni ekleme (Tekrardan kaçınmak için şartlı ekleme)
+    if (data.tur === 'EKLE' || data.tur === 'NOT_YAZ') {
+        if (contentDiv) {
+            let yeniMesaj = data.mesaj.trim();
+            
+            // Eğer son eklenen şey zaten bu mesajsa (çift yazmayı engellemek için) yazma
+            if (contentDiv.innerText.endsWith(yeniMesaj)) {
+                return; 
+            }
+
+            let mevcut = contentDiv.innerHTML.trim();
+            
+            if (mevcut.length > 0) {
+                // Sadece bir boşluk bırakarak ekle
+                contentDiv.innerHTML = mevcut + " " + yeniMesaj;
+            } else {
+                contentDiv.innerHTML = yeniMesaj;
+            }
+
+            // Hafızayı ve sayacı güncelle
+            if (typeof saveNote === 'function') saveNote();
+            if (typeof updateWordCount === 'function') updateWordCount();
+            
+            showSaveStatus('Kaan yazdı...', 'success');
+        }
+        return; // İşlem bitti
+    }
+    
+    // 3. Diğer Yardımcı Komutlar
+    if (data.tur === 'SIL') { deleteCurrentNote(); }
+    else if (data.tur === 'KAYDET') { saveNote(); }
+    else if (data.tur === 'RENK') {
+        contentDiv.focus();
+        document.execCommand('foreColor', false, data.renk);
+    }
+});
+</script>
+</body>
+</html>

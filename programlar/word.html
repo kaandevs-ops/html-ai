@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microsoft Word - Document1</title>
+    <style>
+        /* ============================================
+           GLOBAL RESET & BASE STYLES
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --ribbon-height: 120px;
+            --quick-access-height: 30px;
+            --tab-height: 28px;
+            --word-blue: #2B579A;
+            --word-hover: #E7F3FF;
+            --border-color: #D1D1D1;
+            --page-shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: #F3F3F3;
+        }
+
+        /* ============================================
+           QUICK ACCESS TOOLBAR
+           ============================================ */
+        .quick-access-toolbar {
+            height: var(--quick-access-height);
+            background: var(--word-blue);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 2px;
+        }
+
+        .quick-access-btn {
+            width: 24px;
+            height: 24px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            border-radius: 2px;
+            transition: background 0.1s;
+        }
+
+        .quick-access-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .quick-access-btn:active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* ============================================
+           RIBBON INTERFACE
+           ============================================ */
+        .ribbon-container {
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ribbon-tabs {
+            height: var(--tab-height);
+            display: flex;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            padding-left: 10px;
+        }
+
+        .ribbon-tab {
+            padding: 6px 16px;
+            cursor: pointer;
+            font-size: 12px;
+            border: none;
+            background: transparent;
+            color: #444;
+            position: relative;
+            transition: background 0.15s;
+        }
+
+        .ribbon-tab:hover {
+            background: var(--word-hover);
+        }
+
+        .ribbon-tab.active {
+            background: white;
+            color: var(--word-blue);
+            font-weight: 600;
+        }
+
+        .ribbon-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--word-blue);
+        }
+
+        .ribbon-content {
+            height: calc(var(--ribbon-height) - var(--tab-height));
+            background: white;
+            overflow: hidden;
+        }
+
+        .ribbon-panel {
+            display: none;
+            padding: 8px 10px;
+            height: 100%;
+        }
+
+        .ribbon-panel.active {
+            display: flex;
+            gap: 2px;
+        }
+
+        .ribbon-group {
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #E5E5E5;
+            padding: 0 8px;
+            min-width: 80px;
+        }
+
+        .ribbon-group:last-child {
+            border-right: none;
+        }
+
+        .ribbon-group-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex-wrap: wrap;
+        }
+
+        .ribbon-group-label {
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        .ribbon-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 2px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.1s;
+            white-space: nowrap;
+        }
+
+        .ribbon-btn:hover {
+            background: var(--word-hover);
+            border-color: #ADADAD;
+        }
+
+        .ribbon-btn:active {
+            background: #C7E0F4;
+        }
+
+        .ribbon-btn.active {
+            background: #CCE8FF;
+            border-color: #9FCFEF;
+        }
+
+        .ribbon-btn-icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .ribbon-btn-large {
+            flex-direction: column;
+            padding: 8px 12px;
+            min-width: 60px;
+        }
+
+        .ribbon-btn-large .ribbon-btn-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 20px;
+        }
+
+        select.ribbon-select {
+            height: 22px;
+            font-size: 11px;
+            border: 1px solid #ADADAD;
+            border-radius: 2px;
+            padding: 2px 20px 2px 6px;
+            background: white;
+            cursor: pointer;
+            min-width: 120px;
+        }
+
+        input.ribbon-input {
+            height: 22px;
+            font-size: 11px;
+            border: 1px solid #ADADAD;
+            border-radius: 2px;
+            padding: 2px 6px;
+            width: 50px;
+        }
+
+        /* ============================================
+           DOCUMENT WORKSPACE
+           ============================================ */
+        .workspace {
+            height: calc(100vh - var(--ribbon-height) - var(--quick-access-height) - 24px);
+            overflow-y: auto;
+            overflow-x: auto;
+            background: #F3F3F3;
+            padding: 20px;
+        }
+
+        .page-container {
+            width: 21cm;
+            min-height: 29.7cm;
+            margin: 0 auto 20px;
+            background: white;
+            box-shadow: 0 0 10px var(--page-shadow);
+            padding: 2.54cm;
+            position: relative;
+        }
+
+        .page-content {
+            min-height: calc(29.7cm - 5.08cm);
+            outline: none;
+            font-family: Calibri, sans-serif;
+            font-size: 11pt;
+            line-height: 1.15;
+            color: #000;
+        }
+
+        .page-content p {
+            margin: 0;
+            min-height: 1.3em;
+        }
+
+        .page-content p:empty::before {
+            content: '\200B';
+        }
+
+        /* ============================================
+           STATUS BAR
+           ============================================ */
+        .status-bar {
+            height: 24px;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 11px;
+            color: #444;
+            gap: 15px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .zoom-controls {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .zoom-slider {
+            width: 100px;
+        }
+
+        /* ============================================
+           TEXT FORMATTING STATES
+           ============================================ */
+        .bold {
+            font-weight: bold;
+        }
+
+        .italic {
+            font-style: italic;
+        }
+
+        .underline {
+            text-decoration: underline;
+        }
+
+        .strikethrough {
+            text-decoration: line-through;
+        }
+
+        .superscript {
+            vertical-align: super;
+            font-size: 0.75em;
+        }
+
+        .subscript {
+            vertical-align: sub;
+            font-size: 0.75em;
+        }
+
+        .align-left {
+            text-align: left;
+        }
+
+        .align-center {
+            text-align: center;
+        }
+
+        .align-right {
+            text-align: right;
+        }
+
+        .align-justify {
+            text-align: justify;
+        }
+
+        /* ============================================
+           LIST STYLES
+           ============================================ */
+        .page-content ul,
+        .page-content ol {
+            margin-left: 40px;
+            padding-left: 0;
+        }
+
+        .page-content li {
+            margin-bottom: 0;
+        }
+
+        /* ============================================
+           HEADING STYLES
+           ============================================ */
+        .heading-1 {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #2E74B5;
+            margin-top: 12pt;
+            margin-bottom: 0pt;
+        }
+
+        .heading-2 {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #2E74B5;
+            margin-top: 10pt;
+            margin-bottom: 0pt;
+        }
+
+        .heading-3 {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #1F4D78;
+            margin-top: 10pt;
+            margin-bottom: 0pt;
+        }
+
+        /* ============================================
+           CONTEXT MENU
+           ============================================ */
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ADADAD;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 10000;
+            min-width: 180px;
+        }
+
+        .context-menu-item {
+            padding: 6px 30px 6px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .context-menu-item:hover {
+            background: var(--word-hover);
+        }
+
+        .context-menu-separator {
+            height: 1px;
+            background: #E5E5E5;
+            margin: 3px 0;
+        }
+
+        /* ============================================
+           SCROLLBAR STYLING
+           ============================================ */
+        .workspace::-webkit-scrollbar {
+            width: 16px;
+            height: 16px;
+        }
+
+        .workspace::-webkit-scrollbar-track {
+            background: #F0F0F0;
+        }
+
+        .workspace::-webkit-scrollbar-thumb {
+            background: #CDCDCD;
+            border: 2px solid #F0F0F0;
+            border-radius: 8px;
+        }
+
+        .workspace::-webkit-scrollbar-thumb:hover {
+            background: #A6A6A6;
+        }
+
+        /* ============================================
+           COLOR PICKER
+           ============================================ */
+        .color-picker-dropdown {
+            position: absolute;
+            background: white;
+            border: 1px solid #ADADAD;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1000;
+            padding: 8px;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 20px);
+            gap: 2px;
+        }
+
+        .color-cell {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            border: 1px solid #D1D1D1;
+        }
+
+        .color-cell:hover {
+            border-color: #000;
+        }
+    </style>
+</head>
+<body>
+    <!-- QUICK ACCESS TOOLBAR -->
+    <div class="quick-access-toolbar">
+        <button class="quick-access-btn" id="qa-save" title="Kaydet">💾</button>
+        <button class="quick-access-btn" id="qa-undo" title="Geri Al">↶</button>
+        <button class="quick-access-btn" id="qa-redo" title="Yinele">↷</button>
+    </div>
+
+    <!-- RIBBON INTERFACE -->
+    <div class="ribbon-container">
+        <!-- TABS -->
+        <div class="ribbon-tabs">
+            <button class="ribbon-tab" data-tab="file">Dosya</button>
+            <button class="ribbon-tab active" data-tab="home">Giriş</button>
+            <button class="ribbon-tab" data-tab="insert">Ekle</button>
+            <button class="ribbon-tab" data-tab="design">Tasarım</button>
+            <button class="ribbon-tab" data-tab="layout">Düzen</button>
+            <button class="ribbon-tab" data-tab="references">Başvurular</button>
+            <button class="ribbon-tab" data-tab="mailings">Postalar</button>
+            <button class="ribbon-tab" data-tab="review">Gözden Geçir</button>
+            <button class="ribbon-tab" data-tab="view">Görünüm</button>
+        </div>
+
+        <!-- RIBBON CONTENT -->
+        <div class="ribbon-content">
+            <!-- HOME PANEL -->
+            <div class="ribbon-panel active" data-panel="home">
+                <!-- Clipboard Group -->
+                <div class="ribbon-group">
+                    <div class="ribbon-group-content">
+                        <button class="ribbon-btn ribbon-btn-large" data-action="paste">
+                            <div class="ribbon-btn-icon">📋</div>
+                            <span>Yapıştır</span>
+                        </button>
+                    </div>
+                    <div class="ribbon-group-label">Pano</div>
+                </div>
+
+                <!-- Font Group -->
+                <div class="ribbon-group" style="min-width: 300px;">
+                    <div class="ribbon-group-content">
+                        <select class="ribbon-select" id="font-family">
+                            <option value="Calibri">Calibri</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="Courier New">Courier New</option>
+                        </select>
+                        <input type="number" class="ribbon-input" id="font-size" value="11" min="8" max="72">
+                        <button class="ribbon-btn" data-action="bold" title="Kalın (Ctrl+B)">
+                            <div class="ribbon-btn-icon">B</div>
+                        </button>
+                        <button class="ribbon-btn" data-action="italic" title="İtalik (Ctrl+I)">
+                            <div class="ribbon-btn-icon" style="font-style: italic;">I</div>
+                        </button>
+                        <button class="ribbon-btn" data-action="underline" title="Altı Çizili (Ctrl+U)">
+                            <div class="ribbon-btn-icon" style="text-decoration: underline;">U</div>
+                        </button>
+                        <button class="ribbon-btn" data-action="strikethrough" title="Üstü Çizili">
+                            <div class="ribbon-btn-icon" style="text-decoration: line-through;">S</div>
+                        </button>
+                        <button class="ribbon-btn" data-action="textcolor" title="Yazı Rengi" id="text-color-btn">
+                            <div class="ribbon-btn-icon">A</div>
+                            <span style="font-size: 10px;">▼</span>
+                        </button>
+                        <button class="ribbon-btn" data-action="highlight" title="Vurgulama Rengi" id="highlight-btn">
+                            <div class="ribbon-btn-icon">🖍</div>
+                            <span style="font-size: 10px;">▼</span>
+                        </button>
+                    </div>
+                    <div class="ribbon-group-label">Yazı Tipi</div>
+                </div>
+
+                <!-- Paragraph Group -->
+                <div class="ribbon-group" style="min-width: 250px;">
+                    <div class="ribbon-group-content">
+                        <button class="ribbon-btn" data-action="bullet" title="Madde İşaretleri">
+                            <div class="ribbon-btn-icon">≡</div>
+                        </button>
+                        <button class="ribbon-btn" data-action="numbering" title="Numaralandırma">
+                            <div class="ribbon-btn-icon">⒈</div>
+                        </button>
+                        <button class="ribbon-btn" data-action="alignleft" title="Sola Hizala">
+                            <div class="ribbon-btn-icon">≣</div>
+                        </button>
+                        <button class="ribbon-btn" data-action="aligncenter" title="Ortala">
+                            <div class="ribbon-btn-icon">☰</div>
+                        </button>
+                        <button class="ribbon-btn" data-action="alignright" title="Sağa Hizala">
+                            <div class="ribbon-btn-icon">≣</div>
+                        </button>
+                        <button class="ribbon-btn" data-action="alignjustify" title="İki Yana Yasla">
+                            <div class="ribbon-btn-icon">▭</div>
+                        </button>
+                    </div>
+                    <div class="ribbon-group-label">Paragraf</div>
+                </div>
+
+                <!-- Styles Group -->
+                <div class="ribbon-group" style="min-width: 200px;">
+                    <div class="ribbon-group-content">
+                        <button class="ribbon-btn" data-action="style-normal">Normal</button>
+                        <button class="ribbon-btn" data-action="style-heading1">Başlık 1</button>
+                        <button class="ribbon-btn" data-action="style-heading2">Başlık 2</button>
+                        <button class="ribbon-btn" data-action="style-heading3">Başlık 3</button>
+                    </div>
+                    <div class="ribbon-group-label">Stiller</div>
+                </div>
+            </div>
+
+            <!-- INSERT PANEL -->
+            <div class="ribbon-panel" data-panel="insert">
+                <div class="ribbon-group">
+                    <div class="ribbon-group-content">
+                        <button class="ribbon-btn ribbon-btn-large" data-action="insert-image">
+                            <div class="ribbon-btn-icon">🖼</div>
+                            <span>Resim</span>
+                        </button>
+                    </div>
+                    <div class="ribbon-group-label">Çizimler</div>
+                </div>
+
+                <div class="ribbon-group">
+                    <div class="ribbon-group-content">
+                        <button class="ribbon-btn ribbon-btn-large" data-action="insert-table">
+                            <div class="ribbon-btn-icon">⊞</div>
+                            <span>Tablo</span>
+                        </button>
+                    </div>
+                    <div class="ribbon-group-label">Tablolar</div>
+                </div>
+
+                <div class="ribbon-group">
+                    <div class="ribbon-group-content">
+                        <button class="ribbon-btn ribbon-btn-large" data-action="page-break">
+                            <div class="ribbon-btn-icon">⌶</div>
+                            <span>Sayfa Sonu</span>
+                        </button>
+                    </div>
+                    <div class="ribbon-group-label">Sayfalar</div>
+                </div>
+            </div>
+
+            <!-- Other panels (simplified structure) -->
+            <div class="ribbon-panel" data-panel="design">
+                <div class="ribbon-group">
+                    <div class="ribbon-group-content">
+                        <button class="ribbon-btn">Tema 1</button>
+                        <button class="ribbon-btn">Tema 2</button>
+                    </div>
+                    <div class="ribbon-group-label">Temalar</div>
+                </div>
+            </div>
+
+            <div class="ribbon-panel" data-panel="layout">
+                <div class="ribbon-group">
+                    <div class="ribbon-group-content">
+                        <button class="ribbon-btn">Kenar Boşlukları</button>
+                        <button class="ribbon-btn">Yönlendirme</button>
+                    </div>
+                    <div class="ribbon-group-label">Sayfa Yapısı</div>
+                </div>
+            </div>
+
+            <div class="ribbon-panel" data-panel="references">
+                <div class="ribbon-group">
+                    <div class="ribbon-group-content">
+                        <button class="ribbon-btn">İçindekiler</button>
+                        <button class="ribbon-btn">Dipnot</button>
+                    </div>
+                    <div class="ribbon-group-label">İçindekiler</div>
+                </div>
+            </div>
+
+            <div class="ribbon-panel" data-panel="mailings">
+                <div class="ribbon-group">
+                    <div class="ribbon-group-content">
+                        <button class="ribbon-btn">Zarflar</button>
+                        <button class="ribbon-btn">Etiketler</button>
+                    </div>
+                    <div class="ribbon-group-label">Oluştur</div>
+                </div>
+            </div>
+
+            <div class="ribbon-panel" data-panel="review">
+                <div class="ribbon-group">
+                    <div class="ribbon-group-content">
+                        <button class="ribbon-btn">Yazım Denetimi</button>
+                        <button class="ribbon-btn">Yorum</button>
+                    </div>
+                    <div class="ribbon-group-label">İnceleme</div>
+                </div>
+            </div>
+
+            <div class="ribbon-panel" data-panel="view">
+                <div class="ribbon-group">
+                    <div class="ribbon-group-content">
+                        <button class="ribbon-btn">Yazdırma Düzeni</button>
+                        <button class="ribbon-btn">Web Düzeni</button>
+                    </div>
+                    <div class="ribbon-group-label">Görünümler</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DOCUMENT WORKSPACE -->
+    <div class="workspace" id="workspace">
+        <div class="page-container">
+            <div class="page-content" id="editor" contenteditable="true">
+                <p></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+        <div class="status-item">
+            <span>Sayfa: <span id="page-number">1</span></span>
+        </div>
+        <div class="status-item">
+            <span>Kelime: <span id="word-count">0</span></span>
+        </div>
+        <div class="zoom-controls">
+            <button>−</button>
+            <input type="range" class="zoom-slider" min="50" max="200" value="100" id="zoom-slider">
+            <button>+</button>
+            <span id="zoom-value">100%</span>
+        </div>
+    </div>
+
+    <!-- COLOR PICKER DROPDOWN -->
+    <div class="color-picker-dropdown" id="color-picker">
+        <div class="color-grid" id="color-grid"></div>
+    </div>
+
+    <!-- CONTEXT MENU -->
+    <div class="context-menu" id="context-menu">
+        <div class="context-menu-item" data-action="cut">✂ Kes</div>
+        <div class="context-menu-item" data-action="copy">📄 Kopyala</div>
+        <div class="context-menu-item" data-action="paste">📋 Yapıştır</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" data-action="selectall">🔲 Tümünü Seç</div>
+    </div>
+
+    <script>
+        // ============================================
+        // DOCUMENT MODEL - Core document structure
+        // ============================================
+        class DocumentModel {
+            constructor() {
+                this.content = [];
+                this.currentParagraph = 0;
+            }
+
+            addParagraph(content = '', style = {}) {
+                this.content.push({ content, style });
+            }
+
+            updateParagraph(index, content, style) {
+                if (this.content[index]) {
+                    this.content[index] = { content, style };
+                }
+            }
+
+            getParagraph(index) {
+                return this.content[index];
+            }
+
+            getAllContent() {
+                return this.content;
+            }
+        }
+
+        // ============================================
+        // SELECTION ENGINE - Manages text selection
+        // ============================================
+        class SelectionEngine {
+            constructor() {
+                this.selection = null;
+                this.range = null;
+            }
+
+            getSelection() {
+                this.selection = window.getSelection();
+                if (this.selection.rangeCount > 0) {
+                    this.range = this.selection.getRangeAt(0);
+                }
+                return this.selection;
+            }
+
+            getRange() {
+                this.getSelection();
+                return this.range;
+            }
+
+            saveSelection() {
+                const sel = this.getSelection();
+                if (sel.rangeCount > 0) {
+                    return sel.getRangeAt(0);
+                }
+                return null;
+            }
+
+            restoreSelection(savedRange) {
+                if (savedRange) {
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(savedRange);
+                }
+            }
+
+            getSelectedText() {
+                const sel = this.getSelection();
+                return sel ? sel.toString() : '';
+            }
+
+            selectAll(element) {
+                const range = document.createRange();
+                range.selectNodeContents(element);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        }
+
+        // ============================================
+        // FORMATTER - Text formatting operations
+        // ============================================
+        class Formatter {
+            constructor(editor) {
+                this.editor = editor;
+                this.selectionEngine = new SelectionEngine();
+            }
+
+            applyInlineStyle(command, value = null) {
+                document.execCommand(command, false, value);
+                this.editor.focus();
+            }
+
+            toggleBold() {
+                this.applyInlineStyle('bold');
+            }
+
+            toggleItalic() {
+                this.applyInlineStyle('italic');
+            }
+
+            toggleUnderline() {
+                this.applyInlineStyle('underline');
+            }
+
+            toggleStrikethrough() {
+                this.applyInlineStyle('strikeThrough');
+            }
+
+            setFontFamily(font) {
+                this.applyInlineStyle('fontName', font);
+            }
+
+            setFontSize(size) {
+                const selection = this.selectionEngine.getSelection();
+                if (!selection.rangeCount) return;
+
+                const range = selection.getRangeAt(0);
+                const span = document.createElement('span');
+                span.style.fontSize = size + 'pt';
+                
+                try {
+                    range.surroundContents(span);
+                } catch (e) {
+                    const contents = range.extractContents();
+                    span.appendChild(contents);
+                    range.insertNode(span);
+                }
+                
+                this.editor.focus();
+            }
+
+            setTextColor(color) {
+                this.applyInlineStyle('foreColor', color);
+            }
+
+            setHighlight(color) {
+                this.applyInlineStyle('backColor', color);
+            }
+
+            setAlignment(align) {
+                const commands = {
+                    'left': 'justifyLeft',
+                    'center': 'justifyCenter',
+                    'right': 'justifyRight',
+                    'justify': 'justifyFull'
+                };
+                this.applyInlineStyle(commands[align]);
+            }
+
+            insertBulletList() {
+                this.applyInlineStyle('insertUnorderedList');
+            }
+
+            insertNumberedList() {
+                this.applyInlineStyle('insertOrderedList');
+            }
+
+            applyHeading(level) {
+                const selection = this.selectionEngine.getSelection();
+                if (!selection.rangeCount) return;
+
+                const range = selection.getRangeAt(0);
+                let container = range.commonAncestorContainer;
+                
+                if (container.nodeType === Node.TEXT_NODE) {
+                    container = container.parentElement;
+                }
+
+                let paragraph = container.closest('p, h1, h2, h3, h4, h5, h6');
+                if (!paragraph) {
+                    paragraph = container;
+                }
+
+                if (paragraph && this.editor.contains(paragraph)) {
+                    const headingClasses = {
+                        1: 'heading-1',
+                        2: 'heading-2',
+                        3: 'heading-3',
+                        'normal': ''
+                    };
+
+                    paragraph.className = headingClasses[level] || '';
+                }
+                
+                this.editor.focus();
+            }
+        }
+
+        // ============================================
+        // HISTORY - Undo/Redo system
+        // ============================================
+        class History {
+            constructor(editor) {
+                this.editor = editor;
+                this.stack = [];
+                this.position = -1;
+                this.maxStack = 100;
+            }
+
+            save() {
+                const state = this.editor.innerHTML;
+                
+                if (this.position < this.stack.length - 1) {
+                    this.stack = this.stack.slice(0, this.position + 1);
+                }
+                
+                this.stack.push(state);
+                
+                if (this.stack.length > this.maxStack) {
+                    this.stack.shift();
+                } else {
+                    this.position++;
+                }
+            }
+
+            undo() {
+                if (this.position > 0) {
+                    this.position--;
+                    this.editor.innerHTML = this.stack[this.position];
+                    this.editor.focus();
+                }
+            }
+
+            redo() {
+                if (this.position < this.stack.length - 1) {
+                    this.position++;
+                    this.editor.innerHTML = this.stack[this.position];
+                    this.editor.focus();
+                }
+            }
+
+            canUndo() {
+                return this.position > 0;
+            }
+
+            canRedo() {
+                return this.position < this.stack.length - 1;
+            }
+        }
+
+        // ============================================
+        // MAIN APPLICATION
+        // ============================================
+        class WordEditor {
+            constructor() {
+                this.editor = document.getElementById('editor');
+                this.documentModel = new DocumentModel();
+                this.selectionEngine = new SelectionEngine();
+                this.formatter = new Formatter(this.editor);
+                this.history = new History(this.editor);
+                
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.setupRibbon();
+                this.setupContextMenu();
+                this.setupColorPicker();
+                this.setupZoom();
+                this.history.save();
+            }
+
+            setupEventListeners() {
+                // Input events
+                this.editor.addEventListener('input', () => {
+                    this.updateWordCount();
+                    this.saveToHistory();
+                });
+
+                // Keyboard shortcuts
+                this.editor.addEventListener('keydown', (e) => {
+                    this.handleKeyboard(e);
+                });
+
+                // Enter key handling
+                this.editor.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        if (!e.shiftKey) {
+                            e.preventDefault();
+                            document.execCommand('insertParagraph');
+                        } else {
+                            e.preventDefault();
+                            document.execCommand('insertLineBreak');
+                        }
+                    }
+                });
+
+                // Paste handling
+                this.editor.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    const text = e.clipboardData.getData('text/plain');
+                    document.execCommand('insertText', false, text);
+                });
+
+                // Selection change
+                document.addEventListener('selectionchange', () => {
+                    this.updateRibbonState();
+                });
+
+                // Focus management
+                this.editor.addEventListener('focus', () => {
+                    if (this.editor.innerHTML.trim() === '') {
+                        this.editor.innerHTML = '<p></p>';
+                        this.placeCursorAtStart();
+                    }
+                });
+            }
+
+            setupRibbon() {
+                // Tab switching
+                document.querySelectorAll('.ribbon-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        this.switchRibbonTab(tab);
+                    });
+                });
+
+                // Font family
+                document.getElementById('font-family').addEventListener('change', (e) => {
+                    this.formatter.setFontFamily(e.target.value);
+                });
+
+                // Font size
+                document.getElementById('font-size').addEventListener('change', (e) => {
+                    this.formatter.setFontSize(e.target.value);
+                });
+
+                // Ribbon buttons
+                document.querySelectorAll('.ribbon-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.handleRibbonAction(btn.dataset.action);
+                    });
+                });
+
+                // Quick access toolbar
+                document.getElementById('qa-save').addEventListener('click', () => {
+                    this.saveDocument();
+                });
+
+                document.getElementById('qa-undo').addEventListener('click', () => {
+                    this.history.undo();
+                });
+
+                document.getElementById('qa-redo').addEventListener('click', () => {
+                    this.history.redo();
+                });
+            }
+
+            setupContextMenu() {
+                const contextMenu = document.getElementById('context-menu');
+
+                this.editor.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    contextMenu.style.display = 'block';
+                    contextMenu.style.left = e.pageX + 'px';
+                    contextMenu.style.top = e.pageY + 'px';
+                });
+
+                document.addEventListener('click', () => {
+                    contextMenu.style.display = 'none';
+                });
+
+                contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        this.handleContextAction(item.dataset.action);
+                    });
+                });
+            }
+
+            setupColorPicker() {
+                const colors = [
+                    '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF',
+                    '#FFFF00', '#FF00FF', '#00FFFF', '#800000', '#008000',
+                    '#000080', '#808000', '#800080', '#008080', '#C0C0C0',
+                    '#808080', '#FFA500', '#A52A2A', '#DEB887', '#5F9EA0'
+                ];
+
+                const colorGrid = document.getElementById('color-grid');
+                colors.forEach(color => {
+                    const cell = document.createElement('div');
+                    cell.className = 'color-cell';
+                    cell.style.backgroundColor = color;
+                    cell.addEventListener('click', () => {
+                        if (this.currentColorAction === 'text') {
+                            this.formatter.setTextColor(color);
+                        } else if (this.currentColorAction === 'highlight') {
+                            this.formatter.setHighlight(color);
+                        }
+                        document.getElementById('color-picker').style.display = 'none';
+                    });
+                    colorGrid.appendChild(cell);
+                });
+
+                document.getElementById('text-color-btn').addEventListener('click', (e) => {
+                    this.showColorPicker(e, 'text');
+                });
+
+                document.getElementById('highlight-btn').addEventListener('click', (e) => {
+                    this.showColorPicker(e, 'highlight');
+                });
+            }
+
+            setupZoom() {
+                const slider = document.getElementById('zoom-slider');
+                const zoomValue = document.getElementById('zoom-value');
+                const workspace = document.getElementById('workspace');
+
+                slider.addEventListener('input', (e) => {
+                    const zoom = e.target.value;
+                    zoomValue.textContent = zoom + '%';
+                    workspace.style.transform = `scale(${zoom / 100})`;
+                    workspace.style.transformOrigin = 'top center';
+                });
+            }
+
+            switchRibbonTab(clickedTab) {
+                document.querySelectorAll('.ribbon-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                clickedTab.classList.add('active');
+
+                const tabName = clickedTab.dataset.tab;
+                document.querySelectorAll('.ribbon-panel').forEach(panel => {
+                    panel.classList.remove('active');
+                });
+                document.querySelector(`[data-panel="${tabName}"]`).classList.add('active');
+            }
+
+            handleRibbonAction(action) {
+                const actions = {
+                    'bold': () => this.formatter.toggleBold(),
+                    'italic': () => this.formatter.toggleItalic(),
+                    'underline': () => this.formatter.toggleUnderline(),
+                    'strikethrough': () => this.formatter.toggleStrikethrough(),
+                    'alignleft': () => this.formatter.setAlignment('left'),
+                    'aligncenter': () => this.formatter.setAlignment('center'),
+                    'alignright': () => this.formatter.setAlignment('right'),
+                    'alignjustify': () => this.formatter.setAlignment('justify'),
+                    'bullet': () => this.formatter.insertBulletList(),
+                    'numbering': () => this.formatter.insertNumberedList(),
+                    'style-normal': () => this.formatter.applyHeading('normal'),
+                    'style-heading1': () => this.formatter.applyHeading(1),
+                    'style-heading2': () => this.formatter.applyHeading(2),
+                    'style-heading3': () => this.formatter.applyHeading(3),
+                    'insert-image': () => this.insertImage(),
+                    'insert-table': () => this.insertTable(),
+                    'page-break': () => this.insertPageBreak(),
+                    'paste': () => this.paste()
+                };
+
+                if (actions[action]) {
+                    actions[action]();
+                    this.saveToHistory();
+                }
+            }
+
+            handleContextAction(action) {
+                const actions = {
+                    'cut': () => document.execCommand('cut'),
+                    'copy': () => document.execCommand('copy'),
+                    'paste': () => this.paste(),
+                    'selectall': () => this.selectionEngine.selectAll(this.editor)
+                };
+
+                if (actions[action]) {
+                    actions[action]();
+                }
+            }
+
+            handleKeyboard(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    const keyActions = {
+                        'b': () => this.formatter.toggleBold(),
+                        'i': () => this.formatter.toggleItalic(),
+                        'u': () => this.formatter.toggleUnderline(),
+                        'z': () => this.history.undo(),
+                        'y': () => this.history.redo()
+                    };
+
+                    const action = keyActions[e.key.toLowerCase()];
+                    if (action) {
+                        e.preventDefault();
+                        action();
+                    }
+                }
+
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    document.execCommand('indent');
+                }
+
+                if (e.key === 'Tab' && e.shiftKey) {
+                    e.preventDefault();
+                    document.execCommand('outdent');
+                }
+            }
+
+            showColorPicker(event, type) {
+                this.currentColorAction = type;
+                const picker = document.getElementById('color-picker');
+                const rect = event.target.getBoundingClientRect();
+                picker.style.display = 'block';
+                picker.style.left = rect.left + 'px';
+                picker.style.top = (rect.bottom + 5) + 'px';
+
+                setTimeout(() => {
+                    const closeHandler = () => {
+                        picker.style.display = 'none';
+                        document.removeEventListener('click', closeHandler);
+                    };
+                    document.addEventListener('click', closeHandler);
+                }, 10);
+            }
+
+            insertImage() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            const img = document.createElement('img');
+                            img.src = event.target.result;
+                            img.style.maxWidth = '100%';
+                            img.style.height = 'auto';
+                            
+                            const selection = this.selectionEngine.getSelection();
+                            if (selection.rangeCount > 0) {
+                                const range = selection.getRangeAt(0);
+                                range.insertNode(img);
+                            }
+                            
+                            this.saveToHistory();
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                };
+                
+                input.click();
+            }
+
+            insertTable() {
+                const rows = prompt('Satır sayısı:', '3');
+                const cols = prompt('Sütun sayısı:', '3');
+                
+                if (rows && cols) {
+                    let tableHTML = '<table border="1" style="border-collapse: collapse; width: 100%;">';
+                    for (let i = 0; i < parseInt(rows); i++) {
+                        tableHTML += '<tr>';
+                        for (let j = 0; j < parseInt(cols); j++) {
+                            tableHTML += '<td style="padding: 8px; border: 1px solid #000;">&nbsp;</td>';
+                        }
+                        tableHTML += '</tr>';
+                    }
+                    tableHTML += '</table>';
+                    
+                    document.execCommand('insertHTML', false, tableHTML);
+                    this.saveToHistory();
+                }
+            }
+
+            insertPageBreak() {
+                const pageBreak = document.createElement('div');
+                pageBreak.style.pageBreakAfter = 'always';
+                pageBreak.style.marginBottom = '20px';
+                pageBreak.style.borderBottom = '1px dashed #ccc';
+                pageBreak.innerHTML = '&nbsp;';
+                
+                const selection = this.selectionEngine.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    range.insertNode(pageBreak);
+                }
+                
+                this.saveToHistory();
+            }
+
+            paste() {
+                navigator.clipboard.readText().then(text => {
+                    document.execCommand('insertText', false, text);
+                });
+            }
+
+            updateWordCount() {
+                const text = this.editor.textContent || '';
+                const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+                document.getElementById('word-count').textContent = words.length;
+            }
+
+            updateRibbonState() {
+                const selection = this.selectionEngine.getSelection();
+                if (!selection || !selection.rangeCount) return;
+
+                const updateButton = (action, command) => {
+                    const btn = document.querySelector(`[data-action="${action}"]`);
+                    if (btn) {
+                        btn.classList.toggle('active', document.queryCommandState(command));
+                    }
+                };
+
+                updateButton('bold', 'bold');
+                updateButton('italic', 'italic');
+                updateButton('underline', 'underline');
+            }
+
+            saveToHistory() {
+                clearTimeout(this.saveTimeout);
+                this.saveTimeout = setTimeout(() => {
+                    this.history.save();
+                }, 500);
+            }
+
+            saveDocument() {
+                const content = this.editor.innerHTML;
+                const blob = new Blob([content], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'document.html';
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            placeCursorAtStart() {
+                const range = document.createRange();
+                const sel = window.getSelection();
+                const firstP = this.editor.querySelector('p');
+                if (firstP) {
+                    range.setStart(firstP, 0);
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+            }
+        }
+
+        // ============================================
+        // INITIALIZE APPLICATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            window.wordEditor = new WordEditor();
+        });
+    </script>
+</body>
+</html>

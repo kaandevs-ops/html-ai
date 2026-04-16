@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeOS Ultimate - Kişisel Kontrol Merkezi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* -------------------------------------------------------------------------- */
+        /* 1. CORE VARIABLES & RESET                                                  */
+        /* -------------------------------------------------------------------------- */
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --dark: #0f172a;
+            --dark-surface: #1e293b;
+            --dark-border: #334155;
+            --light: #f8fafc;
+            --light-surface: #ffffff;
+            --light-border: #e2e8f0;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass: rgba(30, 41, 59, 0.7);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --font-main: 'Inter', sans-serif;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="light"] {
+            --bg-main: var(--light);
+            --bg-surface: var(--light-surface);
+            --border-color: var(--light-border);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --glass: rgba(255, 255, 255, 0.8);
+            --shadow-lg: 0 10px 25px -5px rgb(0 0 0 / 0.05);
+        }
+
+        [data-theme="dark"] {
+            --bg-main: var(--dark);
+            --bg-surface: var(--dark-surface);
+            --border-color: var(--dark-border);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --glass: rgba(30, 41, 59, 0.7);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+        body { font-family: var(--font-main); background: var(--bg-main); color: var(--text-main); height: 100vh; overflow: hidden; transition: background 0.3s, color 0.3s; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; opacity: 0.5; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        /* -------------------------------------------------------------------------- */
+        /* 2. LAYOUT ENGINE                                                           */
+        /* -------------------------------------------------------------------------- */
+        .app-shell { display: flex; height: 100vh; width: 100vw; }
+        
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--bg-surface); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px; z-index: 50; transition: var(--transition); }
+        .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 20px; margin-bottom: 30px; color: var(--primary); }
+        .brand-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; }
+        
+        .nav-menu { list-style: none; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+        .nav-item { padding: 12px 16px; border-radius: var(--radius-md); cursor: pointer; color: var(--text-muted); font-weight: 500; display: flex; align-items: center; gap: 12px; transition: var(--transition); }
+        .nav-item:hover, .nav-item.active { background: var(--primary); color: white; transform: translateX(4px); box-shadow: var(--shadow-lg); }
+        .nav-icon { width: 20px; text-align: center; }
+
+        .user-profile { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-main); border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        /* Main Content */
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        
+        /* Topbar */
+        .topbar { height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; background: var(--bg-main); border-bottom: 1px solid var(--border-color); }
+        .page-title h1 { font-size: 24px; font-weight: 700; }
+        .page-title p { font-size: 13px; color: var(--text-muted); }
+        
+        .topbar-actions { display: flex; gap: 15px; }
+        .btn-icon { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+        .btn-icon:hover { border-color: var(--primary); color: var(--primary); background: rgba(99,102,241,0.1); }
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: var(--transition); }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+
+        /* Content Area */
+        .content-area { flex: 1; overflow-y: auto; padding: 30px; position: relative; }
+        .view-section { display: none; animation: fadeIn 0.3s ease-out; }
+        .view-section.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* -------------------------------------------------------------------------- */
+        /* 3. DASHBOARD WIDGETS                                                       */
+        /* -------------------------------------------------------------------------- */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 30px; }
+        .widget-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; position: relative; overflow: hidden; transition: var(--transition); }
+        .widget-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
+        .widget-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .widget-value { font-size: 32px; font-weight: 800; color: var(--text-main); }
+        .widget-label { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+        .widget-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; opacity: 0.2; }
+        .widget-icon.blue { background: var(--info); color: var(--info); opacity: 1; background: rgba(59,130,246,0.1); }
+        .widget-icon.green { background: var(--success); color: var(--success); opacity: 1; background: rgba(16,185,129,0.1); }
+        .widget-icon.purple { background: var(--secondary); color: var(--secondary); opacity: 1; background: rgba(236,72,153,0.1); }
+        
+        .section-header { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* -------------------------------------------------------------------------- */
+        /* 4. NOTES MODULE                                                            */
+        /* -------------------------------------------------------------------------- */
+        .notes-layout { display: grid; grid-template-columns: 250px 1fr; gap: 24px; height: calc(100vh - 180px); }
+        .notes-sidebar { background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-color); padding: 16px; display: flex; flex-direction: column; }
+        .folder-list { margin-top: 20px; flex: 1; overflow-y: auto; }
+        .folder-item { padding: 10px; margin-bottom: 4px; border-radius: var(--radius-sm); cursor: pointer; display: flex; justify-content: space-between; color: var(--text-muted); font-size: 14px; }
+        .folder-item:hover, .folder-item.active { background: rgba(99,102,241,0.1); color: var(--primary); font-weight: 600; }
+        
+        .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; overflow-y: auto; align-content: start; }
+        .note-card { background: var(--bg-surface); padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); cursor: pointer; transition: var(--transition); display: flex; flex-direction: column; min-height: 180px; }
+        .note-card:hover { border-color: var(--primary); box-shadow: var(--shadow-lg); }
+        .note-title { font-weight: 700; font-size: 16px; margin-bottom: 8px; color: var(--text-main); }
+        .note-preview { font-size: 13px; color: var(--text-muted); flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; }
+        .note-footer { margin-top: 12px; display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); align-items: center; }
+        .tag-pill { background: rgba(99,102,241,0.1); color: var(--primary); padding: 2px 8px; border-radius: 12px; font-weight: 600; }
+
+        /* Rich Editor Modal Overrides */
+        .editor-container { height: 100%; display: flex; flex-direction: column; background: var(--bg-surface); border-radius: var(--radius-lg); }
+        .editor-toolbar { padding: 12px; border-bottom: 1px solid var(--border-color); display: flex; gap: 8px; flex-wrap: wrap; }
+        .toolbar-btn { padding: 6px; border-radius: 4px; border: 1px solid transparent; background: transparent; cursor: pointer; color: var(--text-muted); font-weight: 600; }
+        .toolbar-btn:hover { background: var(--bg-main); color: var(--primary); }
+        .editor-content { flex: 1; padding: 24px; overflow-y: auto; font-size: 16px; line-height: 1.6; color: var(--text-main); }
+        .editor-content:empty:before { content: 'Fikirlerini buraya yaz...'; color: var(--text-muted); }
+
+        /* -------------------------------------------------------------------------- */
+        /* 5. TASKS & KANBAN                                                          */
+        /* -------------------------------------------------------------------------- */
+        .kanban-board { display: flex; gap: 20px; overflow-x: auto; height: 100%; padding-bottom: 10px; }
+        .kanban-col { min-width: 300px; max-width: 300px; background: var(--bg-surface); border-radius: var(--radius-lg); padding: 16px; display: flex; flex-direction: column; border: 1px solid var(--border-color); }
+        .col-header { font-weight: 700; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+        .col-count { background: var(--bg-main); padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+        .task-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; min-height: 100px; }
+        
+        .task-card { background: var(--bg-main); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); cursor: grab; transition: var(--transition); box-shadow: var(--shadow-sm); }
+        .task-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .task-card:active { cursor: grabbing; }
+        .task-tags { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+        .task-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: 700; }
+        .tag-high { background: rgba(239,68,68,0.2); color: var(--danger); }
+        .tag-med { background: rgba(245,158,11,0.2); color: var(--warning); }
+        .tag-low { background: rgba(59,130,246,0.2); color: var(--info); }
+        .task-date { font-size: 11px; color: var(--text-muted); margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+
+        /* -------------------------------------------------------------------------- */
+        /* 6. HABITS & REMINDERS                                                      */
+        /* -------------------------------------------------------------------------- */
+        .habits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+        .habit-card { background: var(--bg-surface); padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); }
+        .habit-header { display: flex; justify-content: space-between; margin-bottom: 16px; }
+        .habit-streak { font-size: 24px; font-weight: 800; color: var(--success); }
+        .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 12px; }
+        .day-box { height: 32px; border-radius: 6px; background: var(--bg-main); display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; transition: var(--transition); border: 1px solid var(--border-color); }
+        .day-box.completed { background: var(--success); color: white; border-color: var(--success); }
+        .day-box:hover { border-color: var(--text-muted); }
+
+        .reminders-list { display: flex; flex-direction: column; gap: 12px; }
+        .reminder-item { display: flex; align-items: center; gap: 16px; background: var(--bg-surface); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
+        .reminder-time { font-size: 18px; font-weight: 700; color: var(--primary); min-width: 60px; }
+        .reminder-content { flex: 1; }
+        .reminder-toggle { transform: scale(1.2); cursor: pointer; accent-color: var(--primary); }
+
+        /* -------------------------------------------------------------------------- */
+        /* 7. MODALS & FORMS                                                          */
+        /* -------------------------------------------------------------------------- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: var(--transition); }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal-window { background: var(--bg-surface); width: 90%; max-width: 600px; max-height: 90vh; border-radius: var(--radius-lg); border: 1px solid var(--border-color); display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); transform: scale(0.95); transition: var(--transition); }
+        .modal-overlay.open .modal-window { transform: scale(1); }
+        
+        .modal-header { padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 18px; }
+        .modal-body { padding: 20px; overflow-y: auto; }
+        .modal-footer { padding: 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px; }
+        
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 12px; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--text-main); font-family: inherit; transition: var(--transition); }
+        .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(99,102,241,0.2); }
+        
+        /* -------------------------------------------------------------------------- */
+        /* 8. UTILS & TOAST                                                           */
+        /* -------------------------------------------------------------------------- */
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: var(--bg-surface); border-left: 4px solid var(--primary); padding: 16px 20px; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); min-width: 300px; display: flex; align-items: center; gap: 12px; animation: slideIn 0.3s ease; border: 1px solid var(--border-color); }
+        .toast.success { border-color: var(--success); }
+        .toast.error { border-color: var(--danger); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-shell { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-color); padding: 10px 20px; flex-direction: row; align-items: center; justify-content: space-between; }
+            .nav-menu { display: none; position: absolute; top: 60px; left: 0; right: 0; background: var(--bg-surface); padding: 20px; border-bottom: 1px solid var(--border-color); box-shadow: var(--shadow-lg); z-index: 100; }
+            .nav-menu.mobile-open { display: flex; }
+            .main-wrapper { height: calc(100vh - 60px); }
+            .notes-layout { grid-template-columns: 1fr; }
+            .notes-sidebar { display: none; } /* Mobile simplification */
+        }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">⚡</div>
+                <span>LifeOS</span>
+            </div>
+            
+            <ul class="nav-menu" id="navMenu">
+                <li class="nav-item active" onclick="Router.navigate('dashboard')">
+                    <span class="nav-icon">📊</span> Genel Bakış
+                </li>
+                <li class="nav-item" onclick="Router.navigate('notes')">
+                    <span class="nav-icon">📝</span> Notlar
+                </li>
+                <li class="nav-item" onclick="Router.navigate('tasks')">
+                    <span class="nav-icon">✅</span> Görevler
+                </li>
+                <li class="nav-item" onclick="Router.navigate('habits')">
+                    <span class="nav-icon">🔥</span> Alışkanlıklar
+                </li>
+                <li class="nav-item" onclick="Router.navigate('reminders')">
+                    <span class="nav-icon">⏰</span> Hatırlatıcılar
+                </li>
+                <li class="nav-item" onclick="Router.navigate('settings')">
+                    <span class="nav-icon">⚙️</span> Ayarlar
+                </li>
+            </ul>
+
+            <div class="user-profile">
+                <div class="avatar">MA</div>
+                <div>
+                    <div style="font-weight: 600; font-size: 14px;">Master Admin</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Pro Hesap</div>
+                </div>
+            </div>
+            <button class="btn-icon" style="display:none; margin-left:auto;" onclick="document.getElementById('navMenu').classList.toggle('mobile-open')">☰</button>
+        </aside>
+
+        <main class="main-wrapper">
+            <header class="topbar">
+                <div class="page-title" id="pageHeader">
+                    <h1>Genel Bakış</h1>
+                    <p>Hoş geldin, günün özeti burada.</p>
+                </div>
+                <div class="topbar-actions">
+                    <button class="btn-icon" onclick="App.toggleTheme()" title="Tema Değiştir">🌓</button>
+                    <button class="btn-primary" onclick="Modal.open('quickAdd')">
+                        <span>➕</span> Hızlı Ekle
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-area" id="contentArea">
+                
+                <div id="view-dashboard" class="view-section active">
+                    <div class="dashboard-grid">
+                        <div class="widget-card">
+                            <div class="widget-header">
+                                <div>
+                                    <div class="widget-value" id="dashTaskCount">0</div>
+                                    <div class="widget-label">Bekleyen Görev</div>
+                                </div>
+                                <div class="widget-icon blue">⚡</div>
+                            </div>
+                            <div style="font-size:12px; color:var(--text-muted);">Öncelikli işleriniz</div>
+                        </div>
+                        <div class="widget-card">
+                            <div class="widget-header">
+                                <div>
+                                    <div class="widget-value" id="dashNoteCount">0</div>
+                                    <div class="widget-label">Toplam Not</div>
+                                </div>
+                                <div class="widget-icon purple">📝</div>
+                            </div>
+                            <div style="font-size:12px; color:var(--text-muted);">Fikirler ve taslaklar</div>
+                        </div>
+                        <div class="widget-card">
+                            <div class="widget-header">
+                                <div>
+                                    <div class="widget-value" id="dashHabitStreak">0</div>
+                                    <div class="widget-label">Günlük Seri</div>
+                                </div>
+                                <div class="widget-icon green">🔥</div>
+                            </div>
+                            <div style="font-size:12px; color:var(--text-muted);">Alışkanlık takibi</div>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
+                        <div class="widget-card">
+                            <div class="section-header">
+                                <span>📅 Bugünün Ajandası</span>
+                            </div>
+                            <div id="dashboardTodayList" style="display:flex; flex-direction:column; gap:10px;">
+                                </div>
+                        </div>
+                        <div class="widget-card">
+                            <div class="section-header">
+                                <span>📌 Sabitlenenler</span>
+                            </div>
+                            <div id="dashboardPinnedNotes" style="display:flex; flex-direction:column; gap:10px;">
+                                </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-notes" class="view-section">
+                    <div class="notes-layout">
+                        <div class="notes-sidebar">
+                            <button class="btn-primary" style="width:100%; justify-content:center; margin-bottom:15px;" onclick="Notes.create()">+ Yeni Not</button>
+                            <div class="folder-list" id="folderList">
+                                <div class="folder-item active" onclick="Notes.filter(null)">📂 Tüm Notlar</div>
+                                <div class="folder-item" onclick="Notes.filter('personal')">👤 Kişisel</div>
+                                <div class="folder-item" onclick="Notes.filter('work')">💼 İş</div>
+                                <div class="folder-item" onclick="Notes.filter('ideas')">💡 Fikirler</div>
+                            </div>
+                        </div>
+                        <div class="notes-grid" id="notesGrid">
+                            </div>
+                    </div>
+                </div>
+
+                <div id="view-tasks" class="view-section" style="height: 100%;">
+                    <div style="margin-bottom:20px; display:flex; gap:10px;">
+                        <button class="btn-primary" onclick="Tasks.create()">+ Görev Ekle</button>
+                    </div>
+                    <div class="kanban-board">
+                        <div class="kanban-col" ondragover="Tasks.allowDrop(event)" ondrop="Tasks.drop(event, 'todo')">
+                            <div class="col-header">
+                                <span>Bekleyenler</span>
+                                <span class="col-count" id="count-todo">0</span>
+                            </div>
+                            <div class="task-list" id="col-todo"></div>
+                        </div>
+                        <div class="kanban-col" ondragover="Tasks.allowDrop(event)" ondrop="Tasks.drop(event, 'inprogress')">
+                            <div class="col-header">
+                                <span style="color:var(--info)">Devam Edenler</span>
+                                <span class="col-count" id="count-inprogress">0</span>
+                            </div>
+                            <div class="task-list" id="col-inprogress"></div>
+                        </div>
+                        <div class="kanban-col" ondragover="Tasks.allowDrop(event)" ondrop="Tasks.drop(event, 'done')">
+                            <div class="col-header">
+                                <span style="color:var(--success)">Tamamlananlar</span>
+                                <span class="col-count" id="count-done">0</span>
+                            </div>
+                            <div class="task-list" id="col-done"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-habits" class="view-section">
+                    <div style="margin-bottom:20px;">
+                        <button class="btn-primary" onclick="Habits.create()">+ Yeni Alışkanlık</button>
+                    </div>
+                    <div class="habits-grid" id="habitsGrid">
+                        </div>
+                </div>
+
+                <div id="view-reminders" class="view-section">
+                    <div class="widget-card" style="max-width: 800px; margin: 0 auto;">
+                        <div class="section-header">
+                            <span>Aktif Hatırlatıcılar</span>
+                            <button class="btn-primary" onclick="Reminders.create()">Alarm Kur</button>
+                        </div>
+                        <div class="reminders-list" id="remindersList"></div>
+                    </div>
+                </div>
+
+                <div id="view-settings" class="view-section">
+                    <div class="widget-card" style="max-width: 600px; margin: 0 auto;">
+                        <div class="section-header">Sistem Ayarları</div>
+                        <div class="form-group">
+                            <label class="form-label">Uygulama Teması</label>
+                            <select class="form-select" onchange="App.setTheme(this.value)">
+                                <option value="dark">Karanlık Mod (Dark)</option>
+                                <option value="light">Aydınlık Mod (Light)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Veri Yönetimi</label>
+                            <div style="display:flex; gap:10px;">
+                                <button class="btn-icon" style="width:auto; padding:0 15px;" onclick="App.exportData()">📥 Yedek İndir (JSON)</button>
+                                <button class="btn-icon" style="width:auto; padding:0 15px; border-color:var(--danger); color:var(--danger);" onclick="App.resetData()">🗑️ Fabrika Ayarlarına Dön</button>
+                            </div>
+                        </div>
+                        <div style="margin-top:20px; font-size:12px; color:var(--text-muted); text-align:center;">
+                            LifeOS Ultimate v2.0 - Build 2026.01<br>
+                            Yerel tarayıcı depolama kullanır. Sunucuya veri göndermez.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-window" id="modalWindow">
+            <div class="modal-header">
+                <span id="modalTitle">Başlık</span>
+                <button class="btn-icon" style="width:30px; height:30px;" onclick="Modal.close()">✕</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                </div>
+            <div class="modal-footer" id="modalFooter">
+                </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        /**
+         * LIFE OS ULTIMATE - CORE LOGIC
+         * Mimari: State-Based Management, LocalStorage Persistence, Modular Components
+         */
+
+        // 1. HELPERS
+        const Utils = {
+            id: () => Date.now().toString(36) + Math.random().toString(36).substr(2),
+            dateStr: (d) => new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }),
+            timeStr: (d) => new Date(d).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+            delay: (ms) => new Promise(res => setTimeout(res, ms)),
+        };
+
+        const Toast = {
+            show: (msg, type = 'success') => {
+                const container = document.getElementById('toastContainer');
+                const el = document.createElement('div');
+                el.className = `toast ${type}`;
+                el.innerHTML = `<span>${type === 'success' ? '✅' : '⚠️'}</span><span>${msg}</span>`;
+                container.appendChild(el);
+                setTimeout(() => {
+                    el.style.animation = 'slideIn 0.3s ease reverse forwards';
+                    setTimeout(() => el.remove(), 300);
+                }, 3000);
+            }
+        };
+
+        // 2. STATE & STORAGE
+        const Store = {
+            data: {
+                theme: 'dark',
+                notes: [],
+                tasks: [],
+                habits: [],
+                reminders: [],
+                user: { name: 'Master', plan: 'Pro' }
+            },
+            init() {
+                const saved = localStorage.getItem('lifeos_v2');
+                if (saved) this.data = JSON.parse(saved);
+                
+                // Tema ayarı
+                document.body.setAttribute('data-theme', this.data.theme);
+                
+                // Varsayılan veriler (ilk açılış)
+                if (this.data.notes.length === 0 && this.data.tasks.length === 0) {
+                    this.seedData();
+                }
+            },
+            save() {
+                localStorage.setItem('lifeos_v2', JSON.stringify(this.data));
+                App.renderAll(); // Re-render affected parts
+            },
+            seedData() {
+                this.data.notes.push({ id: Utils.id(), title: 'Hoş Geldin!', content: 'LifeOS sistemine hoş geldin. Burası senin not alanın.', folder: 'personal', pinned: true });
+                this.data.tasks.push({ id: Utils.id(), title: 'Sistemi incele', status: 'todo', priority: 'high', dueDate: new Date().toISOString().split('T')[0] });
+                this.data.habits.push({ id: Utils.id(), title: 'Su içmek (2L)', history: {} });
+                this.save();
+            }
+        };
+
+        // 3. ROUTER
+        const Router = {
+            routes: {
+                'dashboard': { title: 'Genel Bakış', subtitle: 'Günün özeti ve metrikler' },
+                'notes': { title: 'Notlar', subtitle: 'Dijital beynin ve arşivin' },
+                'tasks': { title: 'Görevler', subtitle: 'Kanban panosu ile işlerini yönet' },
+                'habits': { title: 'Alışkanlıklar', subtitle: 'Zinciri kırma, istikrarlı ol' },
+                'reminders': { title: 'Hatırlatıcılar', subtitle: 'Zamanlanmış bildirimler' },
+                'settings': { title: 'Ayarlar', subtitle: 'Sistem tercihlerini yapılandır' }
+            },
+            navigate(route) {
+                // UI Güncelle
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll(`.nav-item[onclick*="'${route}'"]`).forEach(el => el.classList.add('active')); // Basit selector
+
+                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+                document.getElementById(`view-${route}`).classList.add('active');
+
+                // Header Güncelle
+                const meta = this.routes[route];
+                document.getElementById('pageHeader').innerHTML = `<h1>${meta.title}</h1><p>${meta.subtitle}</p>`;
+                
+                // Mobil menüyü kapat
+                document.getElementById('navMenu').classList.remove('mobile-open');
+
+                // Özel renderlar
+                if (route === 'dashboard') Dashboard.render();
+                if (route === 'notes') Notes.render();
+                if (route === 'tasks') Tasks.render();
+                if (route === 'habits') Habits.render();
+                if (route === 'reminders') Reminders.render();
+            }
+        };
+
+        // 4. MODULES
+
+        // --- DASHBOARD ---
+        const Dashboard = {
+            render() {
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Stats
+                document.getElementById('dashTaskCount').textContent = Store.data.tasks.filter(t => t.status === 'todo').length;
+                document.getElementById('dashNoteCount').textContent = Store.data.notes.length;
+                
+                // Habit Streak (Basit mantık: bugün yapıldıysa +1)
+                const activeHabits = Store.data.habits.length;
+                document.getElementById('dashHabitStreak').textContent = activeHabits;
+
+                // Today's Agenda (Tasks due today)
+                const todayTasks = Store.data.tasks.filter(t => t.dueDate === today && t.status !== 'done');
+                const listEl = document.getElementById('dashboardTodayList');
+                listEl.innerHTML = todayTasks.length ? '' : '<div style="color:var(--text-muted); font-style:italic;">Bugün için planlanan görev yok.</div>';
+                
+                todayTasks.forEach(t => {
+                    listEl.innerHTML += `
+                        <div style="background:var(--bg-main); padding:10px; border-radius:8px; border:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                            <span>${t.title}</span>
+                            <span class="tag-pill">${t.priority}</span>
+                        </div>
+                    `;
+                });
+
+                // Pinned Notes
+                const pinned = Store.data.notes.filter(n => n.pinned).slice(0, 3);
+                const pinEl = document.getElementById('dashboardPinnedNotes');
+                pinEl.innerHTML = pinned.length ? '' : '<div style="color:var(--text-muted);">Sabitlenmiş not yok.</div>';
+                
+                pinned.forEach(n => {
+                    pinEl.innerHTML += `
+                        <div onclick="Notes.edit('${n.id}')" style="cursor:pointer; background:var(--bg-main); padding:10px; border-radius:8px; border:1px solid var(--border-color);">
+                            <div style="font-weight:600;">📌 ${n.title}</div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${n.content.replace(/<[^>]*>?/gm, '').substring(0, 50)}...</div>
+                        </div>
+                    `;
+                });
+            }
+        };
+
+        // --- NOTES ---
+        const Notes = {
+            currentFilter: null,
+            filter(folder) {
+                this.currentFilter = folder;
+                document.querySelectorAll('.folder-item').forEach(el => el.classList.remove('active'));
+                event.target.classList.add('active');
+                this.render();
+            },
+            render() {
+                const grid = document.getElementById('notesGrid');
+                grid.innerHTML = '';
+                
+                let filtered = Store.data.notes;
+                if (this.currentFilter) filtered = filtered.filter(n => n.folder === this.currentFilter);
+
+                filtered.forEach(note => {
+                    // HTML taglerini temizle (preview için)
+                    const plainText = note.content.replace(/<[^>]*>?/gm, '').substring(0, 100);
+                    
+                    grid.innerHTML += `
+                        <div class="note-card" onclick="Notes.edit('${note.id}')">
+                            <div class="note-title">${note.pinned ? '📌 ' : ''}${note.title}</div>
+                            <div class="note-preview">${plainText || 'İçerik yok...'}</div>
+                            <div class="note-footer">
+                                <span>${Utils.dateStr(note.updatedAt || Date.now())}</span>
+                                <span class="tag-pill">${note.folder || 'Genel'}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            },
+            create() {
+                const newNote = {
+                    id: Utils.id(),
+                    title: 'Yeni Not',
+                    content: '',
+                    folder: this.currentFilter || 'personal',
+                    updatedAt: Date.now()
+                };
+                Store.data.notes.unshift(newNote);
+                Store.save();
+                this.edit(newNote.id);
+            },
+            edit(id) {
+                const note = Store.data.notes.find(n => n.id === id);
+                if (!note) return;
+
+                const contentHtml = `
+                    <div class="editor-container">
+                        <div style="padding:15px; border-bottom:1px solid var(--border-color);">
+                            <input id="noteTitleInput" class="form-input" style="font-size:18px; font-weight:bold; border:none; padding:0; background:transparent;" value="${note.title}">
+                        </div>
+                        <div class="editor-toolbar">
+                            <button class="toolbar-btn" onclick="document.execCommand('bold')">B</button>
+                            <button class="toolbar-btn" onclick="document.execCommand('italic')">I</button>
+                            <button class="toolbar-btn" onclick="document.execCommand('underline')">U</button>
+                            <button class="toolbar-btn" onclick="document.execCommand('insertUnorderedList')">• Liste</button>
+                            <select class="form-select" style="width:auto; padding:4px;" onchange="note.folder = this.value; Store.save();">
+                                <option value="personal" ${note.folder==='personal'?'selected':''}>Kişisel</option>
+                                <option value="work" ${note.folder==='work'?'selected':''}>İş</option>
+                                <option value="ideas" ${note.folder==='ideas'?'selected':''}>Fikirler</option>
+                            </select>
+                            <button class="toolbar-btn" style="color:var(--danger); margin-left:auto;" onclick="Notes.delete('${id}')">Sil</button>
+                        </div>
+                        <div id="noteEditor" class="editor-content" contenteditable="true" oninput="Notes.autoSave('${id}')">${note.content}</div>
+                    </div>
+                `;
+
+                Modal.openCustom(contentHtml, () => {
+                   // Modal kapanırken son kez kaydet
+                   Notes.autoSave(id);
+                });
+            },
+            autoSave(id) {
+                const note = Store.data.notes.find(n => n.id === id);
+                if (note) {
+                    note.title = document.getElementById('noteTitleInput').value;
+                    note.content = document.getElementById('noteEditor').innerHTML;
+                    note.updatedAt = Date.now();
+                    Store.save(); // LocalStorage çok hızlıdır, her inputta çağırmak modern browserlarda sorun yaratmaz.
+                }
+            },
+            delete(id) {
+                if(confirm('Notu silmek istiyor musun?')) {
+                    Store.data.notes = Store.data.notes.filter(n => n.id !== id);
+                    Store.save();
+                    Modal.close();
+                    this.render();
+                    Toast.show('Not silindi.');
+                }
+            }
+        };
+
+        // --- TASKS ---
+        const Tasks = {
+            render() {
+                ['todo', 'inprogress', 'done'].forEach(status => {
+                    const col = document.getElementById(`col-${status}`);
+                    col.innerHTML = '';
+                    const tasks = Store.data.tasks.filter(t => t.status === status);
+                    document.getElementById(`count-${status}`).textContent = tasks.length;
+
+                    tasks.forEach(t => {
+                        const priorityClass = t.priority === 'high' ? 'tag-high' : (t.priority === 'medium' ? 'tag-med' : 'tag-low');
+                        col.innerHTML += `
+                            <div class="task-card" draggable="true" ondragstart="Tasks.dragStart(event, '${t.id}')">
+                                <div style="display:flex; justify-content:space-between;">
+                                    <div style="font-weight:600;">${t.title}</div>
+                                    <button onclick="Tasks.delete('${t.id}')" style="background:none; border:none; cursor:pointer; color:var(--text-muted);">✕</button>
+                                </div>
+                                <div class="task-tags" style="margin-top:8px;">
+                                    <span class="task-tag ${priorityClass}">${t.priority}</span>
+                                </div>
+                                <div class="task-date">📅 ${t.dueDate || 'Tarih yok'}</div>
+                            </div>
+                        `;
+                    });
+                });
+            },
+            create() {
+                Modal.open('addTask');
+            },
+            saveNew(e) {
+                e.preventDefault();
+                const form = e.target;
+                const newTask = {
+                    id: Utils.id(),
+                    title: form.title.value,
+                    status: 'todo',
+                    priority: form.priority.value,
+                    dueDate: form.dueDate.value
+                };
+                Store.data.tasks.push(newTask);
+                Store.save();
+                this.render();
+                Modal.close();
+                Toast.show('Görev eklendi');
+            },
+            delete(id) {
+                if(confirm('Görevi sil?')) {
+                    Store.data.tasks = Store.data.tasks.filter(t => t.id !== id);
+                    Store.save();
+                    this.render();
+                }
+            },
+            // Drag & Drop
+            dragStart(ev, id) {
+                ev.dataTransfer.setData("text", id);
+            },
+            allowDrop(ev) {
+                ev.preventDefault();
+            },
+            drop(ev, status) {
+                ev.preventDefault();
+                const id = ev.dataTransfer.getData("text");
+                const task = Store.data.tasks.find(t => t.id === id);
+                if (task && task.status !== status) {
+                    task.status = status;
+                    Store.save();
+                    this.render();
+                    Toast.show('Durum güncellendi');
+                }
+            }
+        };
+
+        // --- HABITS ---
+        const Habits = {
+            render() {
+                const grid = document.getElementById('habitsGrid');
+                grid.innerHTML = '';
+                
+                // Son 7 günün tarihleri
+                const dates = [];
+                for(let i=6; i>=0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    dates.push(d.toISOString().split('T')[0]);
+                }
+
+                Store.data.habits.forEach(h => {
+                    let boxes = '';
+                    let streak = 0;
+                    
+                    // Streak hesapla (geriye doğru zincir)
+                    // Basit implementasyon: bugün veya dün yapıldıysa zincir devam ediyor sayabiliriz.
+                    
+                    dates.forEach(date => {
+                        const isDone = h.history[date];
+                        boxes += `<div class="day-box ${isDone ? 'completed' : ''}" onclick="Habits.toggle('${h.id}', '${date}')" title="${date}">${date.slice(-2)}</div>`;
+                        if(isDone) streak++;
+                    });
+
+                    grid.innerHTML += `
+                        <div class="habit-card">
+                            <div class="habit-header">
+                                <div style="font-weight:700; font-size:16px;">${h.title}</div>
+                                <div class="habit-streak">${streak} <span style="font-size:12px; font-weight:400; color:var(--text-muted);">gün</span></div>
+                            </div>
+                            <div class="week-grid">${boxes}</div>
+                            <button onclick="Habits.delete('${h.id}')" style="margin-top:15px; width:100%; padding:6px; background:var(--bg-main); border:1px solid var(--border-color); color:var(--danger); border-radius:6px; cursor:pointer;">Sil</button>
+                        </div>
+                    `;
+                });
+            },
+            toggle(id, date) {
+                const habit = Store.data.habits.find(h => h.id === id);
+                if (habit) {
+                    if (habit.history[date]) delete habit.history[date];
+                    else habit.history[date] = true;
+                    Store.save();
+                    this.render();
+                }
+            },
+            create() {
+                const title = prompt("Alışkanlık adı:");
+                if (title) {
+                    Store.data.habits.push({ id: Utils.id(), title, history: {} });
+                    Store.save();
+                    this.render();
+                    Toast.show('Alışkanlık oluşturuldu');
+                }
+            },
+            delete(id) {
+                if(confirm('Alışkanlığı sil?')) {
+                    Store.data.habits = Store.data.habits.filter(h => h.id !== id);
+                    Store.save();
+                    this.render();
+                }
+            }
+        };
+
+        // --- REMINDERS ---
+        const Reminders = {
+            interval: null,
+            init() {
+                // Her dakika kontrol et
+                this.interval = setInterval(() => this.check(), 60000);
+            },
+            check() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                
+                Store.data.reminders.forEach(r => {
+                    if (r.active && r.time === timeStr) {
+                        // Basit bildirim
+                        if (Notification.permission === "granted") {
+                            new Notification("Hatırlatıcı: " + r.title);
+                        } else {
+                            alert("🔔 HATIRLATICI: " + r.title);
+                        }
+                    }
+                });
+            },
+            render() {
+                const list = document.getElementById('remindersList');
+                list.innerHTML = '';
+                
+                if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+                    list.innerHTML = '<button class="btn-primary" onclick="Notification.requestPermission()">🔔 Bildirim İzni Ver</button><br><br>';
+                }
+
+                Store.data.reminders.forEach(r => {
+                    list.innerHTML += `
+                        <div class="reminder-item">
+                            <div class="reminder-time">${r.time}</div>
+                            <div class="reminder-content">
+                                <div style="font-weight:600;">${r.title}</div>
+                                <div style="font-size:12px; color:var(--text-muted);">${r.days ? 'Tekrarlı' : 'Tek Seferlik'}</div>
+                            </div>
+                            <input type="checkbox" class="reminder-toggle" ${r.active ? 'checked' : ''} onchange="Reminders.toggle('${r.id}')">
+                            <button class="btn-icon" style="border-color:transparent; color:var(--danger);" onclick="Reminders.delete('${r.id}')">🗑️</button>
+                        </div>
+                    `;
+                });
+            },
+            create() {
+                Modal.open('addReminder');
+            },
+            saveNew(e) {
+                e.preventDefault();
+                const form = e.target;
+                Store.data.reminders.push({
+                    id: Utils.id(),
+                    title: form.title.value,
+                    time: form.time.value,
+                    active: true
+                });
+                Store.save();
+                this.render();
+                Modal.close();
+                Toast.show('Alarm kuruldu');
+            },
+            toggle(id) {
+                const r = Store.data.reminders.find(x => x.id === id);
+                if(r) { r.active = !r.active; Store.save(); }
+            },
+            delete(id) {
+                Store.data.reminders = Store.data.reminders.filter(x => x.id !== id);
+                Store.save();
+                this.render();
+            }
+        };
+
+        // --- MODAL SYSTEM ---
+        const Modal = {
+            elOverlay: document.getElementById('modalOverlay'),
+            elTitle: document.getElementById('modalTitle'),
+            elBody: document.getElementById('modalBody'),
+            elFooter: document.getElementById('modalFooter'),
+            elWindow: document.getElementById('modalWindow'),
+            
+            open(type) {
+                this.elBody.innerHTML = '';
+                this.elFooter.innerHTML = '';
+                
+                if (type === 'quickAdd') {
+                    this.elTitle.textContent = 'Hızlı Ekle';
+                    this.elBody.innerHTML = `
+                        <div style="display:grid; gap:10px;">
+                            <button class="btn-primary" onclick="Modal.close(); Notes.create(); Router.navigate('notes');">📝 Yeni Not</button>
+                            <button class="btn-primary" onclick="Modal.close(); Tasks.create(); Router.navigate('tasks');">✅ Yeni Görev</button>
+                            <button class="btn-primary" onclick="Modal.close(); Habits.create(); Router.navigate('habits');">🔥 Yeni Alışkanlık</button>
+                        </div>
+                    `;
+                }
+                else if (type === 'addTask') {
+                    this.elTitle.textContent = 'Yeni Görev';
+                    this.elBody.innerHTML = `
+                        <form id="addTaskForm" onsubmit="Tasks.saveNew(event)">
+                            <div class="form-group">
+                                <label class="form-label">Görev Başlığı</label>
+                                <input name="title" required class="form-input" placeholder="Ne yapacaksın?">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Son Tarih</label>
+                                <input type="date" name="dueDate" required class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Öncelik</label>
+                                <select name="priority" class="form-select">
+                                    <option value="high">Yüksek 🔥</option>
+                                    <option value="medium" selected>Orta ⚡</option>
+                                    <option value="low">Düşük ☕</option>
+                                </select>
+                            </div>
+                            <div style="text-align:right;">
+                                <button type="submit" class="btn-primary" style="width:100%">Oluştur</button>
+                            </div>
+                        </form>
+                    `;
+                }
+                else if (type === 'addReminder') {
+                    this.elTitle.textContent = 'Yeni Alarm';
+                    this.elBody.innerHTML = `
+                        <form onsubmit="Reminders.saveNew(event)">
+                            <div class="form-group">
+                                <label class="form-label">Başlık</label>
+                                <input name="title" required class="form-input" placeholder="Su iç, İlaç al...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Saat</label>
+                                <input type="time" name="time" required class="form-input">
+                            </div>
+                            <button type="submit" class="btn-primary" style="width:100%">Kur</button>
+                        </form>
+                    `;
+                }
+
+                this.elOverlay.classList.add('open');
+            },
+            openCustom(html, onCloseCallback) {
+                this.elTitle.textContent = 'Düzenle';
+                this.elBody.innerHTML = html;
+                this.elFooter.innerHTML = '<button class="btn-primary" onclick="Modal.close()">Kapat</button>';
+                this.onClose = onCloseCallback;
+                
+                // Geniş modal için stil override
+                this.elWindow.style.maxWidth = "800px";
+                this.elWindow.style.height = "80vh";
+                
+                this.elOverlay.classList.add('open');
+            },
+            close() {
+                if(this.onClose) { this.onClose(); this.onClose = null; }
+                this.elOverlay.classList.remove('open');
+                // Reset styles
+                setTimeout(() => {
+                    this.elWindow.style.maxWidth = "600px";
+                    this.elWindow.style.height = "auto";
+                }, 300);
+            }
+        };
+
+        // --- APP CONTROLLER ---
+        const App = {
+            init() {
+                Store.init();
+                Reminders.init();
+                
+                // Varsayılan sayfa
+                Router.navigate('dashboard');
+                
+                // Klavye kısayolları (Ctrl+S engelleme vb.)
+                document.addEventListener('keydown', (e) => {
+                    if((e.ctrlKey || e.metaKey) && e.key === 's') {
+                        e.preventDefault();
+                        Toast.show('Otomatik kaydedildi');
+                    }
+                });
+            },
+            toggleTheme() {
+                const current = document.body.getAttribute('data-theme');
+                const next = current === 'dark' ? 'light' : 'dark';
+                this.setTheme(next);
+            },
+            setTheme(theme) {
+                document.body.setAttribute('data-theme', theme);
+                Store.data.theme = theme;
+                Store.save();
+            },
+            renderAll() {
+                // Mevcut sayfanın render fonksiyonunu tekrar tetikle
+                const activePage = document.querySelector('.nav-item.active');
+                if (activePage) activePage.click();
+            },
+            resetData() {
+                if(confirm('TÜM VERİLERİN SİLİNECEK! Emin misin?')) {
+                    localStorage.removeItem('lifeos_v2');
+                    location.reload();
+                }
+            },
+            exportData() {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(Store.data));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", "lifeos_backup.json");
+                document.body.appendChild(downloadAnchorNode); // required for firefox
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            }
+        };
+
+        // Başlat
+        document.addEventListener('DOMContentLoaded', () => App.init());
+
+    </script>
+</body>
+</html>

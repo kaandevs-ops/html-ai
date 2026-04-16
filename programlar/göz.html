@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Eye Control UI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --glass: rgba(255, 255, 255, 0.08);
+            --accent: #8b5cf6;
+            --text: #e5e7eb;
+        }
+
+        body {
+            margin: 0;
+            background: linear-gradient(160deg, #0b0f19, #111827);
+            font-family: system-ui, sans-serif;
+            color: var(--text);
+            min-height: 200vh;
+        }
+
+        header {
+            padding: 40px;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        section {
+            max-width: 900px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(14px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button.active {
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.4);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            border-radius: 12px;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+        }
+
+        #keyboard {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .key {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .key.focus {
+            background: var(--accent);
+        }
+
+        #gazeDot {
+            position: fixed;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #22d3ee;
+            pointer-events: none;
+            z-index: 9999;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="gazeDot"></div>
+
+    <header>👁️ Eye Controlled Web App</header>
+
+    <section>
+
+        <div class="card">
+            <h2>Göz ile Buton Kontrol</h2>
+            <button class="eye-btn">Onayla</button>
+            <button class="eye-btn">İptal</button>
+        </div>
+
+        <div class="card">
+            <h2>Göz ile Yazı Yazma</h2>
+            <textarea id="output" placeholder="Gözünle yaz..."></textarea>
+
+            <div id="keyboard"></div>
+        </div>
+
+        <div class="card">
+            <h2>Scroll Test Alanı</h2>
+            <p>Yukarı bak → yukarı kay</p>
+            <p>Aşağı bak → aşağı kay</p>
+        </div>
+
+    </section>
+
+    <script>
+        /* ================================
+           EYE CONTROL CORE
+        ================================ */
+        const Eye = {
+            x: 0,
+            y: 0,
+            dwellTarget: null,
+            dwellStart: 0,
+            dwellTime: 900
+        };
+
+        /* ---------- KEYBOARD ---------- */
+        const keys = "ABCDEF GHIJKL MNOPQR STUVWX YZ⌫␣".split(" ");
+        const keyboard = document.getElementById("keyboard");
+        const output = document.getElementById("output");
+
+        keys.forEach(k => {
+            const d = document.createElement("div");
+            d.className = "key eye-target";
+            d.innerText = k;
+            d.dataset.key = k;
+            keyboard.appendChild(d);
+        });
+
+        /* ---------- EYE TRACK ---------- */
+        const video = document.createElement("video");
+        video.style.display = "none";
+        document.body.appendChild(video);
+
+        const faceMesh = new FaceMesh({
+            locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+        });
+
+        faceMesh.setOptions({
+            maxNumFaces: 1,
+            refineLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        faceMesh.onResults(res => {
+            if (!res.multiFaceLandmarks?.length) return;
+
+            const iris = res.multiFaceLandmarks[0][468];
+            Eye.x = iris.x * window.innerWidth;
+            Eye.y = iris.y * window.innerHeight;
+
+            const dot = document.getElementById("gazeDot");
+            dot.style.left = Eye.x + "px";
+            dot.style.top = Eye.y + "px";
+
+            handleScroll();
+            handleDwell();
+        });
+
+        const camera = new Camera(video, {
+            onFrame: async () => {
+                await faceMesh.send({ image: video });
+            },
+            width: 640,
+            height: 480
+        });
+        camera.start();
+
+        /* ---------- SCROLL ---------- */
+        function handleScroll() {
+            if (Eye.y < window.innerHeight * 0.15) {
+                window.scrollBy(0, -6);
+            } else if (Eye.y > window.innerHeight * 0.85) {
+                window.scrollBy(0, 6);
+            }
+        }
+
+        /* ---------- DWELL CLICK ---------- */
+        function handleDwell() {
+            const el = document.elementFromPoint(Eye.x, Eye.y);
+            if (!el || !el.classList.contains("eye-target") && !el.classList.contains("eye-btn")) {
+                clearFocus();
+                return;
+            }
+
+            if (Eye.dwellTarget !== el) {
+                clearFocus();
+                Eye.dwellTarget = el;
+                Eye.dwellStart = Date.now();
+                el.classList.add("focus");
+            } else {
+                if (Date.now() - Eye.dwellStart > Eye.dwellTime) {
+                    activate(el);
+                    clearFocus();
+                }
+            }
+        }
+
+        function clearFocus() {
+            if (Eye.dwellTarget) Eye.dwellTarget.classList.remove("focus");
+            Eye.dwellTarget = null;
+        }
+
+        function activate(el) {
+            if (el.classList.contains("eye-btn")) {
+                alert("Buton tıklandı: " + el.innerText);
+            }
+
+            if (el.classList.contains("key")) {
+                const k = el.dataset.key;
+                if (k === "⌫") output.value = output.value.slice(0, -1);
+                else if (k === "␣") output.value += " ";
+                else output.value += k;
+            }
+        }
+    </script>
+
+</body>
+
+</html>

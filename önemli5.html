@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>İnşa Uygulaması</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <style>
+        body { margin: 0; background-color: #121212; overflow: hidden; font-family: 'Segoe UI', sans-serif; user-select: none; }
+        #container { position: relative; width: 100vw; height: 100vh; }
+        
+        video {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; transform: scaleX(-1); opacity: 0.3; z-index: 1; filter: grayscale(40%);
+        }
+        canvas { position: absolute; top: 0; left: 0; z-index: 2; pointer-events: none; }
+
+        .hud-panel {
+            position: absolute; z-index: 10; color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+        }
+
+        #status-bar {
+            top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 25px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex; align-items: center; gap: 15px;
+        }
+        
+        .mode-indicator {
+            font-weight: 800; font-size: 18px; letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        #controls-hint {
+            bottom: 30px; left: 30px; text-align: left;
+            font-size: 14px; opacity: 0.8; line-height: 1.6;
+        }
+        
+        .key { color: #00ffff; font-weight: bold; }
+        .key-zoom { color: #ff00ff; font-weight: bold; }
+        
+        .cursor-box {
+            position: absolute; width: 20px; height: 20px; 
+            border: 2px solid white; border-radius: 50%;
+            transform: translate(-50%, -50%); display: none; z-index: 20;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="container">
+        <div id="status-bar" class="hud-panel">
+            <span style="font-size:20px;">SYSTEM:</span>
+            <span id="system-mode" class="mode-indicator" style="color:#aaa;">SCANNING...</span>
+        </div>
+
+        <div id="controls-hint" class="hud-panel">
+            <div><span class="key-zoom">👐 İKİ EL</span> : Mesafe ile Zoom (Kararlı)</div>
+            <div><span class="key">✊ TEK EL YUMRUK</span> : Döndür</div>
+            <div><span class="key">👌 TEK EL PINCH</span> : İnşa Et</div>
+        </div>
+
+        <video id="input_video" playsinline></video>
+        <div id="ui-cursor" class="cursor-box"></div>
+    </div>
+
+    <script>
+        const videoElement = document.getElementById('input_video');
+        const modeEl = document.getElementById('system-mode');
+
+        // --- GLOBAL DEĞİŞKENLER ---
+        let scene, camera, renderer, raycaster;
+        let worldGroup; 
+        let voxels = []; 
+        
+        let selectionBox; 
+        let ghostVoxel;   
+        
+        const STATE = { IDLE: 'IDLE', ROTATING: 'ROTATING', BUILDING: 'BUILDING', ZOOMING: 'ZOOMING' };
+        
+        // Mevcut durumu saklayan değişken
+        let activeState = STATE.IDLE;
+        
+        let gestureBuffer = []; 
+        const BUFFER_SIZE = 5; 
+
+        // İnşa Mantığı
+        let selectedVoxel = null; 
+        let lastHandPos = new THREE.Vector2();
+        
+        const CUBE_SIZE = 1.0;
+
+        // Dönüş Değişkenleri
+        let targetRotationX = 0;
+        let targetRotationY = 0;
+        
+        // Zoom Değişkenleri
+        let targetCameraZ = 12; 
+        const MIN_ZOOM = 2;
+        const MAX_ZOOM = 50;
+        
+        let currentHandDistance = 0;
+        let rawHandDistance = 0;
+        
+        let zoomStabilityFrames = 0; 
+        const ZOOM_TRIGGER_THRESHOLD = 8; 
+        const ZOOM_DEADZONE = 0.005; 
+        const TWO_HAND_ZOOM_SPEED = 35.0; 
+
+        // İmleç Yumuşatma
+        let smoothedX = 0;
+        let smoothedY = 0;
+        const INPUT_LERP = 0.15; 
+        const ROTATION_SPEED = 2.5;
+        
+        const BUILD_THRESHOLD = 0.09; 
+
+        // --- 1. THREE.JS SAHNE KURULUMU ---
+        function initThree() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x121212, 0.03);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, targetCameraZ);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true; 
+            document.getElementById('container').appendChild(renderer.domElement);
+
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
+            scene.add(hemiLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(10, 20, 10);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            worldGroup = new THREE.Group();
+            scene.add(worldGroup);
+
+            const grid = new THREE.GridHelper(30, 30, 0x444444, 0x222222);
+            worldGroup.add(grid);
+
+            raycaster = new THREE.Raycaster();
+
+            const selGeo = new THREE.BoxGeometry(CUBE_SIZE * 1.05, CUBE_SIZE * 1.05, CUBE_SIZE * 1.05);
+            const selMat = new THREE.MeshBasicMaterial({ color: 0xffff00, wireframe: true, transparent: true, opacity: 0.5 });
+            selectionBox = new THREE.Mesh(selGeo, selMat);
+            selectionBox.visible = false;
+            worldGroup.add(selectionBox);
+
+            const ghostGeo = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
+            const ghostMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true, transparent: true, opacity: 0.3 });
+            ghostVoxel = new THREE.Mesh(ghostGeo, ghostMat);
+            ghostVoxel.visible = false;
+            worldGroup.add(ghostVoxel);
+
+            createVoxel(0, CUBE_SIZE/2, 0);
+
+            animate();
+        }
+
+        function createVoxel(x, y, z) {
+            const geometry = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: 0x0088ff, 
+                roughness: 0.2, 
+                metalness: 0.1,
+                transparent: true, opacity: 0.9 
+            });
+            
+            const voxel = new THREE.Mesh(geometry, material);
+            voxel.position.set(x, y, z);
+            voxel.castShadow = true;
+            voxel.receiveShadow = true;
+
+            const edges = new THREE.EdgesGeometry(geometry);
+            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x00ffff }));
+            voxel.add(line);
+
+            worldGroup.add(voxel);
+            voxels.push(voxel); 
+            return voxel;
+        }
+
+        // --- 2. PROFESYONEL JEST ALGILAMA (HYSTERESIS & LOCKING) ---
+        function detectGestureState(landmarks, previousState) {
+            const wrist = landmarks[0];
+            const thumbTip = landmarks[4];
+            const indexTip = landmarks[8];
+            const middleMcp = landmarks[9]; 
+            const middleTip = landmarks[12];
+            const ringTip = landmarks[16];
+            const pinkyTip = landmarks[20];
+
+            // 1. Dinamik Ölçek
+            const scale = Math.hypot(middleMcp.x - wrist.x, middleMcp.y - wrist.y);
+
+            // 2. Parmakların Kapalılık Durumu (Normalized)
+            const indexFold = Math.hypot(indexTip.x - wrist.x, indexTip.y - wrist.y) / scale;
+            const middleFold = Math.hypot(middleTip.x - wrist.x, middleTip.y - wrist.y) / scale;
+            const ringFold = Math.hypot(ringTip.x - wrist.x, ringTip.y - wrist.y) / scale;
+            const pinkyFold = Math.hypot(pinkyTip.x - wrist.x, pinkyTip.y - wrist.y) / scale;
+
+            // 3. Pinch Mesafesi
+            const pinchDist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y) / scale;
+
+            // --- KARAR MEKANİZMASI (HYSTERESIS) ---
+            
+            // YUMRUK TANIMI: 4 parmak da (İşaret dahil) avuca yakın olmalı.
+            // İşaret parmağını da dahil ederek Pinch ile karışmasını engelliyoruz.
+            const isFistFormed = (indexFold < 1.3 && middleFold < 1.3 && ringFold < 1.3 && pinkyFold < 1.3);
+            
+            // EL AÇIK TANIMI: Parmaklar uzaklaşmış
+            const isHandOpen = (middleFold > 1.6 && ringFold > 1.6);
+
+            // PINCH TANIMI:
+            // "Giriş" (Enter) Eşiği: 0.20 (Çok yakın olmalı)
+            // "Çıkış" (Exit) Eşiği: 0.35 (Biraz gevşese bile bırakma)
+            const pinchEnter = 0.20; 
+            const pinchExit = 0.35; 
+
+            let detected = STATE.IDLE;
+
+            // STATE LOCKING: Önceki duruma göre karar ver
+            
+            if (previousState === STATE.ROTATING) {
+                // Eğer zaten döndürüyorsak, el tamamen açılana kadar döndürmeye devam et.
+                // Bu sayede yanlışlıkla pinch'e geçiş yapmaz.
+                if (isHandOpen) {
+                    detected = STATE.IDLE;
+                } else {
+                    detected = STATE.ROTATING;
+                }
+            } 
+            else if (previousState === STATE.BUILDING) {
+                // Eğer zaten inşa ediyorsak, pinch mesafesi 'Exit' değerini geçene kadar inşada kal.
+                if (pinchDist > pinchExit) {
+                    detected = STATE.IDLE;
+                } else {
+                    detected = STATE.BUILDING;
+                }
+            } 
+            else {
+                // Eğer IDLE isek, yeni duruma girmek için "Enter" eşiklerini kullan (Daha katı kurallar)
+                if (isFistFormed) {
+                    detected = STATE.ROTATING;
+                } 
+                else if (pinchDist < pinchEnter) {
+                    // Sadece yumruk değilse Pinch olabilir
+                    // Ayrıca Pinch yaparken diğer parmaklar çok sıkı olmamalı
+                    if (!isFistFormed) { 
+                        detected = STATE.BUILDING;
+                    }
+                }
+            }
+
+            const cursorX = (thumbTip.x + indexTip.x) / 2;
+            const cursorY = (thumbTip.y + indexTip.y) / 2;
+
+            return { state: detected, x: cursorX, y: cursorY };
+        }
+
+        function getStabilizedState(newState) {
+            gestureBuffer.push(newState);
+            if (gestureBuffer.length > BUFFER_SIZE) gestureBuffer.shift();
+
+            const counts = {};
+            gestureBuffer.forEach(s => counts[s] = (counts[s] || 0) + 1);
+            
+            const dominantState = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+            
+            // Eğer buffer'ın hepsi aynıysa değişim yap (Çok katı stabilite)
+            // Bu, "arada bir kafayı yeme" durumunu engeller.
+            if (counts[dominantState] === gestureBuffer.length) {
+                return dominantState;
+            }
+            return activeState; 
+        }
+
+        // --- 3. MEDIAPIPE LOOP ---
+        function onResults(results) {
+            const uiCursor = document.getElementById('ui-cursor');
+            
+            let isTwoHandsPresent = (results.multiHandLandmarks && results.multiHandLandmarks.length === 2);
+
+            if (isTwoHandsPresent) {
+                zoomStabilityFrames++;
+            } else {
+                zoomStabilityFrames = 0; 
+            }
+
+            // --- A: ZOOM MODU ---
+            if (zoomStabilityFrames > ZOOM_TRIGGER_THRESHOLD) {
+                
+                const hand1 = results.multiHandLandmarks[0][0];
+                const hand2 = results.multiHandLandmarks[1][0];
+                const newDist = Math.hypot(hand1.x - hand2.x, hand1.y - hand2.y);
+
+                if (activeState !== STATE.ZOOMING) {
+                    currentHandDistance = newDist;
+                    activeState = STATE.ZOOMING;
+                    updateUI(activeState);
+                    uiCursor.style.display = 'none';
+                    selectionBox.visible = false;
+                    ghostVoxel.visible = false;
+                }
+
+                currentHandDistance += (newDist - currentHandDistance) * 0.2;
+                
+                if (Math.abs(newDist - currentHandDistance) > ZOOM_DEADZONE) {
+                     const frameDelta = newDist - rawHandDistance;
+                     if (Math.abs(frameDelta) > ZOOM_DEADZONE) {
+                         targetCameraZ -= frameDelta * TWO_HAND_ZOOM_SPEED;
+                     }
+                }
+                rawHandDistance = newDist;
+                targetCameraZ = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, targetCameraZ));
+            } 
+            // --- B: TEK EL MODU ---
+            else if (results.multiHandLandmarks && results.multiHandLandmarks.length === 1) {
+                
+                const landmarks = results.multiHandLandmarks[0];
+                
+                // Algılamaya mevcut durumu (activeState) gönderiyoruz ki kilitleme yapabilsin
+                const rawData = detectGestureState(landmarks, activeState);
+                const nextState = getStabilizedState(rawData.state);
+
+                const rawX = ((1 - rawData.x) * 2 - 1);
+                const rawY = -(rawData.y * 2 - 1);
+
+                smoothedX += (rawX - smoothedX) * INPUT_LERP;
+                smoothedY += (rawY - smoothedY) * INPUT_LERP;
+
+                handleInteraction(nextState, smoothedX, smoothedY);
+
+                uiCursor.style.display = 'block';
+                uiCursor.style.left = `${(smoothedX + 1) / 2 * 100}%`;
+                uiCursor.style.top = `${(-smoothedY + 1) / 2 * 100}%`;
+
+                if (nextState === STATE.ROTATING) uiCursor.style.borderColor = "#00ffff"; 
+                else if (nextState === STATE.BUILDING) uiCursor.style.borderColor = "#00ff00"; 
+                else uiCursor.style.borderColor = "white";
+
+            } 
+            // --- C: BOŞ ---
+            else {
+                handleInteraction(STATE.IDLE, smoothedX, smoothedY);
+                uiCursor.style.display = 'none';
+            }
+        }
+
+        // --- 4. ETKİLEŞİM YÖNETİMİ ---
+        function handleInteraction(newState, x, y) {
+            
+            if (newState !== activeState) {
+                if (newState !== STATE.ZOOMING) {
+                    if (activeState === STATE.BUILDING) ghostVoxel.visible = false;
+                    activeState = newState;
+                    updateUI(activeState);
+                    lastHandPos.set(x, y); 
+                }
+            }
+
+            // Duruma göre işlem yap
+            if (activeState === STATE.IDLE) {
+                selectionBox.visible = false;
+                raycastAndSelect(x, y);
+                lastHandPos.set(x, y);
+            } 
+            else if (activeState === STATE.ROTATING) {
+                selectionBox.visible = false;
+                ghostVoxel.visible = false;
+                
+                const deltaX = x - lastHandPos.x;
+                const deltaY = y - lastHandPos.y;
+
+                targetRotationY += deltaX * ROTATION_SPEED;
+                targetRotationX -= deltaY * ROTATION_SPEED;
+
+                lastHandPos.set(x, y);
+            }
+            else if (activeState === STATE.BUILDING) {
+                if (selectedVoxel) {
+                    selectionBox.visible = true;
+                    selectionBox.position.copy(selectedVoxel.position);
+                    selectionBox.rotation.copy(selectedVoxel.rotation);
+
+                    const dx = x - lastHandPos.x;
+                    const dy = y - lastHandPos.y;
+
+                    if (Math.abs(dx) > BUILD_THRESHOLD || Math.abs(dy) > BUILD_THRESHOLD) { 
+                        
+                        const moveVec = new THREE.Vector3(dx, dy, 0);
+                        moveVec.applyQuaternion(camera.quaternion); 
+                        
+                        const camRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+                        const camUp = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+                        
+                        let targetDir = new THREE.Vector3();
+                        
+                        if (Math.abs(dx) > Math.abs(dy)) {
+                            targetDir.copy(camRight).multiplyScalar(Math.sign(dx));
+                        } else {
+                            targetDir.copy(camUp).multiplyScalar(Math.sign(dy));
+                        }
+
+                        targetDir.applyQuaternion(worldGroup.quaternion.clone().invert());
+                        const snapDir = snapToAxis(targetDir);
+                        const newPos = selectedVoxel.position.clone().add(snapDir);
+                        
+                        ghostVoxel.position.copy(newPos);
+                        ghostVoxel.visible = true;
+
+                        if (!isVoxelAt(newPos)) {
+                            const newVoxel = createVoxel(newPos.x, newPos.y, newPos.z);
+                            selectedVoxel = newVoxel; 
+                            selectionBox.position.copy(newVoxel.position);
+                            lastHandPos.set(x, y); 
+                        }
+                    }
+                } else {
+                    raycastAndSelect(x, y);
+                    lastHandPos.set(x, y);
+                }
+            }
+        }
+
+        function raycastAndSelect(ndcX, ndcY) {
+            raycaster.setFromCamera({ x: ndcX, y: ndcY }, camera);
+            const intersects = raycaster.intersectObjects(voxels);
+
+            if (intersects.length > 0) {
+                selectedVoxel = intersects[0].object;
+                selectionBox.visible = true;
+                selectionBox.position.copy(selectedVoxel.position);
+                selectionBox.rotation.copy(selectedVoxel.rotation);
+            } else {
+                selectedVoxel = null;
+                selectionBox.visible = false;
+            }
+        }
+
+        function snapToAxis(v) {
+            const ax = Math.abs(v.x);
+            const ay = Math.abs(v.y);
+            const az = Math.abs(v.z);
+            
+            if (ax >= ay && ax >= az) return new THREE.Vector3(Math.sign(v.x) * CUBE_SIZE, 0, 0);
+            if (ay >= ax && ay >= az) return new THREE.Vector3(0, Math.sign(v.y) * CUBE_SIZE, 0);
+            return new THREE.Vector3(0, 0, Math.sign(v.z) * CUBE_SIZE);
+        }
+
+        function isVoxelAt(pos) {
+            return voxels.some(v => v.position.distanceTo(pos) < 0.1);
+        }
+
+        function updateUI(state) {
+            modeEl.innerText = state;
+            if (state === STATE.IDLE) modeEl.style.color = "#aaa";
+            if (state === STATE.ROTATING) modeEl.style.color = "#00ffff";
+            if (state === STATE.BUILDING) modeEl.style.color = "#00ff00";
+            if (state === STATE.ZOOMING) modeEl.style.color = "#ff00ff";
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const smoothFactor = 0.08; 
+            worldGroup.rotation.y += (targetRotationY - worldGroup.rotation.y) * smoothFactor;
+            worldGroup.rotation.x += (targetRotationX - worldGroup.rotation.x) * smoothFactor;
+            camera.position.z += (targetCameraZ - camera.position.z) * smoothFactor;
+
+            renderer.render(scene, camera);
+        }
+
+        const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+        
+        hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.8, minTrackingConfidence: 0.8 }); 
+        hands.onResults(onResults);
+
+        const cam = new Camera(videoElement, { onFrame: async () => { await hands.send({image: videoElement}); }, width: 1280, height: 720 });
+        cam.start();
+        initThree();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dr. Strange</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #050505;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        video, canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); 
+        }
+        
+        #instruction {
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffcc00;
+            font-size: 24px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            z-index: 10;
+            text-shadow: 0 0 10px #ff6600;
+            background: rgba(0,0,0,0.6);
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 165, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .charged {
+            color: #ffffff !important;
+            text-shadow: 0 0 20px #00ff00;
+            border-color: #00ff00;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+    <div class="container">
+        <div id="instruction">Elleri Birleştir • Enerjiyi Hisset</div>
+        <video id="input_video" autoplay playsinline></video>
+        <canvas id="output_canvas"></canvas>
+    </div>
+
+<script>
+    const videoElement = document.getElementById('input_video');
+    const canvasElement = document.getElementById('output_canvas');
+    const ctx = canvasElement.getContext('2d');
+    const instructionBox = document.getElementById('instruction');
+
+    let time = 0; 
+    let spellState = 0; // 0: Idle, 1: Charging, 2: Active
+    let chargeLevel = 0;
+    
+    // --- PARÇACIK SİSTEMİ (KIVILCIMLAR) ---
+    const particles = [];
+    class Particle {
+        constructor(x, y, type) {
+            this.x = x;
+            this.y = y;
+            this.size = Math.random() * 3 + 1;
+            // Rastgele yönlere saçılma
+            this.speedX = (Math.random() - 0.5) * (type === 'charge' ? 2 : 10);
+            this.speedY = (Math.random() - 0.5) * (type === 'charge' ? 2 : 10);
+            this.life = 1.0; // Ömür
+            this.color = `hsl(${Math.random()*40 + 30}, 100%, 60%)`; // Turuncu/Sarı tonları
+        }
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+            this.life -= 0.03; // Yavaşça sön
+            this.size *= 0.95;
+        }
+        draw(ctx) {
+            ctx.fillStyle = this.color;
+            ctx.globalAlpha = this.life;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
+    }
+
+    function createParticles(x, y, amount, type) {
+        for(let i=0; i<amount; i++) {
+            particles.push(new Particle(x, y, type));
+        }
+    }
+
+    function handleParticles() {
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update();
+            particles[i].draw(ctx);
+            if (particles[i].life <= 0) {
+                particles.splice(i, 1);
+                i--;
+            }
+        }
+    }
+
+    // --- GELİŞMİŞ MANDALA ÇİZİMİ (DR. STRANGE TARZI) ---
+    function drawComplexMandala(x, y, size, rotation) {
+        ctx.save();
+        ctx.translate(x, y);
+        
+        const colorPrimary = "#ffaa00"; // Turuncu
+        const colorSecondary = "#ffdd00"; // Altın Sarısı
+        
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#ff4400";
+
+        // 1. Katman: Ana Dış Çember (Saat yönü)
+        ctx.rotate(rotation * Math.PI / 180);
+        ctx.strokeStyle = colorPrimary;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, size/2, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Runik Yazı Efekti (Kesik çizgiler)
+        ctx.setLineDash([10, 15]); 
+        ctx.beginPath();
+        ctx.arc(0, 0, size/2.1, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]); // Normale dön
+
+        // 2. Katman: Kare (Ters Saat yönü)
+        ctx.save();
+        ctx.rotate(-rotation * 2.5 * Math.PI / 180); // Daha hızlı ters dön
+        ctx.strokeStyle = colorSecondary;
+        ctx.strokeRect(-size/3.2, -size/3.2, size/1.6, size/1.6);
+        ctx.restore();
+
+        // 3. Katman: Baklava Dilimi (Kare 45 derece)
+        ctx.save();
+        ctx.rotate(rotation * 1.5 * Math.PI / 180 + 45); 
+        ctx.strokeStyle = colorPrimary;
+        ctx.strokeRect(-size/3.2, -size/3.2, size/1.6, size/1.6);
+        ctx.restore();
+
+        // 4. Katman: İç Çember ve Mistik Semboller
+        ctx.beginPath();
+        ctx.arc(0, 0, size/4, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255, 100, 0, 0.1)"; // Hafif dolgu
+        ctx.fill();
+        ctx.stroke();
+
+        // Merkezden yayılan ışınlar
+        for(let i=0; i<4; i++) {
+            ctx.save();
+            ctx.rotate((rotation + i * 90) * Math.PI / 180);
+            ctx.beginPath();
+            ctx.moveTo(0, size/6);
+            ctx.lineTo(0, size/2.5);
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        ctx.restore();
+    }
+
+    // --- ŞARJ TOPU EFEKTİ ---
+    function drawChargingEffect(x, y, progress) {
+        const size = 30 + progress * 1.2;
+        const pulse = Math.sin(time * 0.2) * 10; // Nefes alma efekti
+        
+        ctx.save();
+        ctx.translate(x, y);
+        
+        // Enerji Küresi
+        const gradient = ctx.createRadialGradient(0, 0, 5, 0, 0, size);
+        gradient.addColorStop(0, "white");
+        gradient.addColorStop(0.4, "orange");
+        gradient.addColorStop(1, "rgba(255, 69, 0, 0)");
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, size + pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Etrafında dönen halkalar
+        ctx.rotate(time * 0.1);
+        ctx.strokeStyle = "#ffd700";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, size * 1.5, size * 0.5, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.rotate(Math.PI / 2);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, size * 1.5, size * 0.5, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        ctx.restore();
+        
+        // Şarj sırasında partikül üret
+        createParticles(x, y, 2, 'charge');
+    }
+
+
+    function onResults(results) {
+        canvasElement.width = window.innerWidth;
+        canvasElement.height = window.innerHeight;
+        
+        ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        
+        // Videoyu çiz
+        ctx.save();
+        ctx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+        ctx.restore();
+
+        // Parçacıkları güncelle (her karede)
+        handleParticles();
+
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length === 2) {
+            const h1 = results.multiHandLandmarks[0];
+            const h2 = results.multiHandLandmarks[1];
+
+            // Koordinatlar
+            const h1x = h1[9].x * canvasElement.width;
+            const h1y = h1[9].y * canvasElement.height;
+            const h2x = h2[9].x * canvasElement.width;
+            const h2y = h2[9].y * canvasElement.height;
+
+            const centerX = (h1x + h2x) / 2;
+            const centerY = (h1y + h2y) / 2;
+            const distance = Math.hypot(h2x - h1x, h2y - h1y);
+
+            // --- STATE MACHINE ---
+            
+            // 1. ŞARJ MODU (Eller yakın)
+            if (distance < 200) {
+                if (spellState !== 2) {
+                    spellState = 1;
+                    if (chargeLevel < 100) {
+                        chargeLevel += 1.5;
+                        instructionBox.innerText = `Güç Toplanıyor... %${Math.floor(chargeLevel)}`;
+                        instructionBox.classList.remove("charged");
+                    } else {
+                        instructionBox.innerText = "GÜÇ HAZIR! AYIR!";
+                        instructionBox.classList.add("charged");
+                    }
+                    drawChargingEffect(centerX, centerY, chargeLevel);
+                }
+            } 
+            // 2. AKTİVASYON (Şarj %100 ve eller ayrıldı)
+            else {
+                if (chargeLevel >= 100) {
+                    spellState = 2;
+                    instructionBox.innerText = "";
+                    instructionBox.style.display = "none";
+
+                    // Her iki el için Mandala çiz
+                    [h1, h2].forEach(hand => {
+                        const px = hand[9].x * canvasElement.width;
+                        const py = hand[9].y * canvasElement.height;
+                        
+                        // Derinlik hesabı
+                        const size = Math.abs(hand[5].x - hand[17].x) * canvasElement.width * 10;
+                        
+                        // Mandaları çiz
+                        drawComplexMandala(px, py, size, time * 2);
+                        
+                        // Rastgele kıvılcımlar
+                        if(Math.random() > 0.8) createParticles(px, py, 1, 'spark');
+                    });
+
+                } else {
+                    // Yetersiz şarj, sıfırla
+                    spellState = 0;
+                    chargeLevel = Math.max(0, chargeLevel - 5); // Yavaşça sön
+                    instructionBox.innerText = "Elleri Birleştir";
+                    instructionBox.style.display = "block";
+                    instructionBox.classList.remove("charged");
+                }
+            }
+        } else {
+            // Eller yoksa
+            spellState = 0;
+            chargeLevel = 0;
+            instructionBox.innerText = "Ellerini Kameraya Göster";
+            instructionBox.classList.remove("charged");
+        }
+
+        time++;
+    }
+
+    const hands = new Hands({locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+    }});
+
+    hands.setOptions({
+        maxNumHands: 2,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.6,
+        minTrackingConfidence: 0.6
+    });
+
+    hands.onResults(onResults);
+
+    const camera = new Camera(videoElement, {
+        onFrame: async () => {
+            await hands.send({image: videoElement});
+        },
+        width: 1280,
+        height: 720
+    });
+
+    camera.start();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galeri Uygulaması</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Rajdhani', sans-serif; }
+        
+        /* --- YENİLENMİŞ UI KATMANI --- */
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.8) 120%);
+            overflow: hidden;
+        }
+
+        /* Köşe Dekorasyonları (Vignette) */
+        .vignette-lines {
+            position: absolute;
+            width: 100%; height: 100%;
+            background: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.5;
+        }
+
+        /* Üst Panel (Header) */
+        .hud-top {
+            position: absolute;
+            top: 20px; left: 40px; right: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .sys-badge {
+            background: rgba(0, 20, 30, 0.7);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            backdrop-filter: blur(8px);
+            padding: 10px 20px;
+            border-radius: 4px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+        
+        .sys-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 2px;
+        }
+        .sys-subtitle {
+            font-size: 12px;
+            color: #00f3ff;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        /* Sağ Üst İstatistikler */
+        .stats-box {
+            text-align: right;
+        }
+        .stat-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        .stat-label { font-size: 10px; color: rgba(255,255,255,0.5); letter-spacing: 1px; }
+        .stat-val { font-family: 'Share Tech Mono'; color: #00f3ff; font-size: 14px; }
+        
+        /* Modern Pusula (Alt Navigasyon) */
+        #compass-container {
+            position: absolute;
+            bottom: 30px; left: 50%;
+            transform: translateX(-50%);
+            width: 500px; height: 60px;
+            /* Köşeleri kesik cam panel */
+            background: linear-gradient(90deg, transparent 0%, rgba(0, 243, 255, 0.05) 20%, rgba(0, 243, 255, 0.05) 80%, transparent 100%);
+            border-top: 1px solid rgba(0, 243, 255, 0.2);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            backdrop-filter: blur(2px);
+            overflow: hidden;
+            mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent);
+        }
+        
+        #compass-strip {
+            position: absolute;
+            top: 15px; left: 0;
+            width: 2000px; height: 30px;
+            /* Cetvel çizgileri */
+            background: repeating-linear-gradient(
+                90deg,
+                transparent 0px,
+                transparent 19px,
+                rgba(0, 243, 255, 0.6) 20px
+            );
+            transition: transform 0.1s linear;
+        }
+        
+        #compass-marker {
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 2px; height: 100%;
+            background: #ff3333;
+            box-shadow: 0 0 10px #ff3333;
+            z-index: 5;
+        }
+        #compass-marker::before {
+            content: 'NAV'; position: absolute; top: -15px; left: -10px;
+            font-size: 10px; color: #ff3333; font-weight: bold;
+        }
+
+        /* Modern Zoom Rayı (Sol Taraf) */
+        #zoom-rail {
+            position: absolute;
+            left: 30px; top: 50%;
+            transform: translateY(-50%);
+            height: 250px; width: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        /* Ray Çizgisi */
+        #zoom-rail::before {
+            content: ''; position: absolute; left: 50%; top: 0; width: 1px; height: 100%;
+            background: rgba(255,255,255,0.2);
+        }
+        
+        /* Hareketli Puck */
+        #zoom-puck {
+            position: absolute;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px; height: 20px;
+            border: 1px solid #00f3ff;
+            background: rgba(0, 243, 255, 0.2);
+            transform: rotate(45deg); /* Elmas şekli */
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+            transition: top 0.2s ease-out;
+        }
+        /* Zoom Değeri */
+        .zoom-label {
+            position: absolute;
+            left: 40px; top: 50%;
+            transform: translateY(-50%);
+            color: #fff;
+            font-family: 'Share Tech Mono';
+            font-size: 12px;
+            text-shadow: 0 0 5px #00f3ff;
+            opacity: 0.8;
+            transition: top 0.2s ease-out; 
+            /* JavaScript ile bu label'ın top değeri de güncellenebilir ama css ile puck'ın yanında dursun diye sabit tuttum şimdilik */
+        }
+
+        /* --- MODERN RETICLE (NİŞANGAH) --- */
+        #reticle-group {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 80px; height: 80px;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+            display: flex;
+            align-items: center; justify-content: center;
+        }
+        
+        /* Dış Dönen Halka */
+        .reticle-ring {
+            position: absolute;
+            width: 100%; height: 100%;
+            border: 1px dashed rgba(0, 243, 255, 0.4);
+            border-radius: 50%;
+            animation: rotateSlow 10s linear infinite;
+        }
+        
+        /* İç Nokta */
+        .reticle-dot {
+            width: 4px; height: 4px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fff;
+        }
+        
+        /* Köşe İşaretleri */
+        .reticle-corner {
+            position: absolute;
+            width: 15px; height: 15px;
+            border: 2px solid rgba(0, 243, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+        .rc-tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+        .rc-tr { top: 0; right: 0; border-left: none; border-bottom: none; }
+        .rc-bl { bottom: 0; left: 0; border-right: none; border-top: none; }
+        .rc-br { bottom: 0; right: 0; border-left: none; border-top: none; }
+
+        /* KİLİTLENME MODU (ZOOM) - KIRMIZI */
+        #reticle-group.locked .reticle-ring {
+            border-color: #ff3333;
+            border-style: solid;
+            width: 60%; height: 60%;
+            animation: rotateFast 2s linear infinite;
+        }
+        #reticle-group.locked .reticle-corner {
+            border-color: #ff3333;
+            width: 10px; height: 10px;
+            margin: 20px; /* Merkeze yaklaş */
+        }
+        #reticle-group.locked .reticle-dot {
+            background: #ff3333;
+            box-shadow: 0 0 15px #ff3333;
+        }
+
+        /* Kamera Feed (Hologram Stili) */
+        #cam-feed {
+            position: absolute;
+            bottom: 30px; right: 30px;
+            width: 160px; height: 120px;
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            /* Hologram efekti */
+            filter: sepia(100%) hue-rotate(130deg) saturate(200%) brightness(0.8);
+            opacity: 0.5;
+            transform: scaleX(-1);
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+        #cam-label {
+            position: absolute; bottom: 155px; right: 30px;
+            color: #00f3ff; font-size: 10px; font-family: 'Share Tech Mono';
+        }
+
+        /* Animasyonlar */
+        @keyframes rotateSlow { 100% { transform: rotate(360deg); } }
+        @keyframes rotateFast { 100% { transform: rotate(-360deg); } }
+        
+    </style>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div class="vignette-lines"></div>
+
+        <div class="hud-top">
+            <div class="sys-badge">
+                <div style="width:10px; height:10px; background:#00f3ff; border-radius:50%; box-shadow:0 0 10px #00f3ff;"></div>
+                <div>
+                    <div class="sys-title">KAAN<span style="font-weight:300">.UI</span></div>
+                    <div class="sys-subtitle">HOLOGRAPHIC NAVIGATION SYSTEM</div>
+                </div>
+            </div>
+
+            <div class="stats-box">
+                <div class="stat-row">
+                    <span class="stat-label">CPU LOAD</span>
+                    <span class="stat-val">12%</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">TRACKING</span>
+                    <span class="stat-val" id="disp-status">SCANNING...</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">TIME</span>
+                    <span class="stat-val" id="sys-clock">00:00</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="reticle-group">
+            <div class="reticle-ring"></div>
+            <div class="reticle-dot"></div>
+            <div class="reticle-corner rc-tl"></div>
+            <div class="reticle-corner rc-tr"></div>
+            <div class="reticle-corner rc-bl"></div>
+            <div class="reticle-corner rc-br"></div>
+        </div>
+
+        <div id="zoom-rail">
+            <div style="font-size:10px; color:rgba(255,255,255,0.5); margin-bottom:10px;">MAX</div>
+            <div id="zoom-puck"></div>
+            <div class="zoom-label" id="disp-zoom">14m</div>
+            <div style="font-size:10px; color:rgba(255,255,255,0.5); margin-top:230px;">MIN</div>
+        </div>
+
+        <div id="compass-container">
+            <div id="compass-strip"></div>
+            <div id="compass-marker"></div>
+        </div>
+
+    </div>
+
+    <div id="canvas-container"></div>
+    <div id="cam-label">LIVE FEED [RAW]</div>
+    <video id="cam-feed" autoplay playsinline muted></video>
+
+    <script>
+        // --- SİSTEMLER VE MANTIK (AYNEN KORUNDU) ---
+        
+        const SETTINGS = {
+            baseSpeed: 0.003,
+            maxSpeed: 0.06,
+            inertia: 0.97,
+            zoomSmooth: 0.08,
+            pinchDist: 0.05,
+            releaseDist: 0.12
+        };
+
+        let currentRot = 0;
+        let velocity = 0;
+        let targetZoom = 14;
+        let currentZoom = 14;
+
+        let handX = 0.5, handY = 0.5;
+        let isHandVisible = false;
+        
+        let isZooming = false;
+        let zoomStartY = 0;
+        let zoomStartVal = 0;
+
+        // UI Referansları
+        const uiStrip = document.getElementById('compass-strip');
+        const uiReticle = document.getElementById('reticle-group');
+        const uiPuck = document.getElementById('zoom-puck');
+        const uiDist = document.getElementById('disp-zoom');
+        const uiStatus = document.getElementById('disp-status');
+
+        // Saat
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('sys-clock').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+        }, 1000);
+
+        // --- THREE.JS ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020205, 0.025);
+
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.z = 14;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.1));
+        const mainLight = new THREE.PointLight(0x00f3ff, 1.5, 40);
+        mainLight.position.set(0, 5, 10);
+        scene.add(mainLight);
+
+        const gallery = new THREE.Group();
+        scene.add(gallery);
+
+        // Kartlar
+        const count = 10;
+        const radius = 9;
+
+        for (let i = 0; i < count; i++) {
+            const group = new THREE.Group();
+            const w = 3, h = 4.5;
+            const geom = new THREE.PlaneGeometry(w, h);
+            const tex = new THREE.TextureLoader().load(`https://picsum.photos/id/${i * 15 + 40}/600/900`);
+            
+            const mat = new THREE.MeshPhysicalMaterial({
+                map: tex,
+                roughness: 0.2,
+                metalness: 0.1,
+                side: THREE.DoubleSide
+            });
+            const mesh = new THREE.Mesh(geom, mat);
+
+            const borderGeom = new THREE.EdgesGeometry(geom);
+            const borderMat = new THREE.LineBasicMaterial({ color: 0x0088ff, transparent: true, opacity: 0.5 });
+            const border = new THREE.LineSegments(borderGeom, borderMat);
+
+            const infoW = 3, infoH = 1;
+            const infoGeom = new THREE.PlaneGeometry(infoW, infoH);
+            const infoMat = new THREE.MeshBasicMaterial({ color: 0x001122, transparent: true, opacity: 0.8 });
+            const infoMesh = new THREE.Mesh(infoGeom, infoMat);
+            infoMesh.position.y = - (h/2 + infoH/2 + 0.1);
+
+            group.add(mesh);
+            group.add(border);
+            group.add(infoMesh);
+
+            const angle = (i / count) * Math.PI * 2;
+            group.position.x = Math.sin(angle) * radius;
+            group.position.z = Math.cos(angle) * radius;
+            group.rotation.y = angle + Math.PI;
+
+            gallery.add(group);
+        }
+
+        const particlesGeom = new THREE.BufferGeometry();
+        const particlesCnt = 1000;
+        const posArray = new Float32Array(particlesCnt * 3);
+        for(let i=0; i<particlesCnt*3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 50;
+        }
+        particlesGeom.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMat = new THREE.PointsMaterial({ size: 0.05, color: 0x00f3ff, transparent: true, opacity: 0.4 });
+        const particlesMesh = new THREE.Points(particlesGeom, particlesMat);
+        scene.add(particlesMesh);
+
+        // --- MEDIAPIPE ---
+        function onResults(results) {
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                isHandVisible = true;
+                uiStatus.innerText = "LOCKED";
+                uiStatus.style.color = "#00f3ff";
+
+                const lm = results.multiHandLandmarks[0];
+                const p9 = lm[9];
+                const p4 = lm[4];
+                const p8 = lm[8];
+
+                handX = p9.x;
+                handY = p9.y;
+
+                const dist = Math.hypot(p8.x - p4.x, p8.y - p4.y);
+
+                if (isZooming) {
+                    if (dist > SETTINGS.releaseDist) {
+                        isZooming = false;
+                        uiReticle.classList.remove('locked');
+                    }
+                } else {
+                    if (dist < SETTINGS.pinchDist) {
+                        isZooming = true;
+                        uiReticle.classList.add('locked');
+                        zoomStartY = handY;
+                        zoomStartVal = targetZoom;
+                        velocity = 0;
+                    }
+                }
+
+                uiReticle.style.left = (handX * 100) + '%';
+                uiReticle.style.top = (handY * 100) + '%';
+
+            } else {
+                isHandVisible = false;
+                uiStatus.innerText = "SCANNING...";
+                uiStatus.style.color = "rgba(255,255,255,0.5)";
+                uiReticle.classList.remove('locked');
+                isZooming = false;
+            }
+        }
+
+        // --- ANIMASYON ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isHandVisible && !isZooming) {
+                const deltaX = handX - 0.5;
+                if (Math.abs(deltaX) > 0.05) {
+                    const force = Math.sign(deltaX) * Math.pow(Math.abs(deltaX), 1.5);
+                    velocity += force * SETTINGS.baseSpeed;
+                }
+            }
+
+            velocity *= SETTINGS.inertia;
+            
+            if (velocity > SETTINGS.maxSpeed) velocity = SETTINGS.maxSpeed;
+            if (velocity < -SETTINGS.maxSpeed) velocity = -SETTINGS.maxSpeed;
+
+            currentRot += velocity;
+            gallery.rotation.y = currentRot;
+
+            if (isZooming) {
+                const deltaY = (handY - zoomStartY);
+                let newZ = zoomStartVal + (deltaY * 30);
+                newZ = Math.max(6, Math.min(25, newZ));
+                targetZoom = newZ;
+            }
+
+            currentZoom += (targetZoom - currentZoom) * SETTINGS.zoomSmooth;
+            camera.position.z = currentZoom;
+
+            // UI Güncellemeleri
+            const compassOffset = (currentRot * 100) % 2000;
+            uiStrip.style.transform = `translateX(${-compassOffset}px)`;
+
+            const zoomPercent = ((currentZoom - 6) / (25 - 6)) * 100;
+            uiPuck.style.top = zoomPercent + "%";
+            uiDist.style.top = zoomPercent + "%"; // Yazı da puku takip etsin
+            uiDist.innerText = Math.round(currentZoom) + "m";
+
+            particlesMesh.rotation.y = currentRot * 0.5;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // --- KAMERA BAŞLAT ---
+        const videoElement = document.getElementById('cam-feed');
+        const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+        hands.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.7,
+            minTrackingConfidence: 0.7
+        });
+        hands.onResults(onResults);
+        
+        const cameraFeed = new Camera(videoElement, {
+            onFrame: async () => { await hands.send({image: videoElement}); },
+            width: 320, height: 240
+        });
+        cameraFeed.start();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+</html>

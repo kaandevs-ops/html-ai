@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduTech Pro v4.0 - Ultimate School Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CSS RESET & TEMEL DEĞİŞKENLER --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        :root {
+            /* Ana Renk Paleti - Kurumsal & Modern */
+            --primary: #4f46e5;       /* Indigo 600 */
+            --primary-hover: #4338ca; /* Indigo 700 */
+            --primary-light: #e0e7ff; /* Indigo 100 */
+            
+            --secondary: #0ea5e9;     /* Sky 500 */
+            --secondary-hover: #0284c7;
+            
+            --success: #10b981;       /* Emerald 500 */
+            --success-dark: #059669;
+            --success-light: #d1fae5;
+            
+            --warning: #f59e0b;       /* Amber 500 */
+            --warning-dark: #d97706;
+            --warning-light: #fef3c7;
+            
+            --danger: #ef4444;        /* Red 500 */
+            --danger-dark: #b91c1c;
+            --danger-light: #fee2e2;
+            
+            --info: #6366f1;          /* Violet 500 */
+
+            /* Dark Mode (Varsayılan) Arka Planlar */
+            --bg-body: #0f172a;       /* Slate 900 */
+            --bg-sidebar: #1e293b;    /* Slate 800 */
+            --bg-card: #1e293b;       /* Slate 800 */
+            --bg-input: #334155;      /* Slate 700 */
+            --bg-hover: #334155;
+            
+            /* Metin Renkleri */
+            --text-main: #f8fafc;     /* Slate 50 */
+            --text-muted: #94a3b8;    /* Slate 400 */
+            --text-dark: #0f172a;     /* Slate 900 */
+            
+            /* Sınırlar ve Gölgeler */
+            --border-color: #334155;  /* Slate 700 */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-glow: 0 0 20px rgba(79, 70, 229, 0.15);
+
+            /* Geçişler */
+            --transition-fast: 0.15s ease;
+            --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Light Mode Overrides */
+        body.light-mode {
+            --bg-body: #f1f5f9;
+            --bg-sidebar: #ffffff;
+            --bg-card: #ffffff;
+            --bg-input: #f8fafc;
+            --bg-hover: #f1f5f9;
+            
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --text-dark: #ffffff;
+            
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            --shadow-glow: 0 0 15px rgba(79, 70, 229, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* --- LAYOUT STRUCTURE --- */
+        .app-layout {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 280px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 50;
+            flex-shrink: 0;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .brand-box {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            border-bottom: 1px solid var(--border-color);
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+            flex-shrink: 0;
+        }
+
+        .brand-text {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity 0.2s;
+        }
+
+        .sidebar.collapsed .brand-text {
+            opacity: 0;
+            width: 0;
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            padding: 20px 12px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--text-muted) transparent;
+        }
+
+        .menu-category {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin: 16px 0 8px 12px;
+            font-weight: 700;
+        }
+
+        .sidebar.collapsed .menu-category { display: none; }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-weight: 500;
+            font-size: 14px;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-main);
+            transform: translateX(4px);
+        }
+
+        .menu-item.active {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .menu-icon {
+            font-size: 20px;
+            width: 24px;
+            text-align: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .menu-text { white-space: nowrap; }
+
+        .sidebar.collapsed .menu-text { display: none; }
+        .sidebar.collapsed .menu-item { justify-content: center; padding: 12px; }
+        .sidebar.collapsed .menu-icon { margin-right: 0; }
+        
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px;
+            border-radius: 12px;
+            background-color: var(--bg-hover);
+            overflow: hidden;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--warning), var(--danger));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            white-space: nowrap;
+        }
+
+        .user-name { font-size: 13px; font-weight: 700; }
+        .user-role { font-size: 11px; color: var(--text-muted); }
+
+        .sidebar.collapsed .user-details { display: none; }
+
+        /* --- MAIN CONTENT --- */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: var(--bg-body);
+            position: relative;
+        }
+
+        /* --- TOP HEADER --- */
+        .top-header {
+            height: 80px;
+            background-color: rgba(15, 23, 42, 0.8); /* Glassmorphism base */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+        
+        body.light-mode .top-header {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .search-container {
+            position: relative;
+            width: 320px;
+        }
+
+        .search-input {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            padding: 10px 16px 10px 42px;
+            border-radius: 10px;
+            color: var(--text-main);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--danger);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            border: 2px solid var(--bg-body);
+        }
+
+        /* --- CONTENT AREA --- */
+        .content-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+            scroll-behavior: smooth;
+        }
+        
+        .content-scroll::-webkit-scrollbar { width: 8px; }
+        .content-scroll::-webkit-scrollbar-track { background: transparent; }
+        .content-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        .content-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 32px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .page-desc {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+        }
+
+        /* --- DASHBOARD STATS --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .stat-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .icon-blue { background: rgba(14, 165, 233, 0.1); color: var(--secondary); }
+        .icon-purple { background: rgba(99, 102, 241, 0.1); color: var(--info); }
+        .icon-green { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .icon-orange { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .stat-trend {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .trend-up { color: var(--success); }
+        .trend-down { color: var(--danger); }
+
+        /* --- CARDS & TABLES --- */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background-color: var(--bg-input);
+        }
+
+        th {
+            text-align: left;
+            padding: 16px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        
+        tr:hover td {
+            background-color: var(--bg-hover);
+        }
+
+        /* --- STATUS BADGES --- */
+        .badge-status {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+        
+        .status-active { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .status-inactive { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .status-pending { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+
+        /* --- BUTTONS --- */
+        .btn-icon {
+            padding: 6px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            margin-right: 4px;
+        }
+
+        .btn-icon:hover { background: var(--bg-input); color: var(--text-main); }
+        .btn-edit:hover { color: var(--warning); background: rgba(245, 158, 11, 0.1); }
+        .btn-delete:hover { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .btn-view:hover { color: var(--info); background: rgba(99, 102, 241, 0.1); }
+
+        /* --- MODAL SYSTEM --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+
+        .modal-box {
+            background-color: var(--bg-card);
+            width: 100%;
+            max-width: 600px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-overlay.active .modal-box { transform: scale(1); }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title { font-size: 20px; font-weight: 700; color: var(--text-main); }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-main);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover { background-color: var(--bg-input); }
+
+        /* --- KANBAN BOARD --- */
+        .kanban-container {
+            display: flex;
+            gap: 24px;
+            overflow-x: auto;
+            padding-bottom: 16px;
+            height: calc(100vh - 200px);
+        }
+
+        .kanban-column {
+            min-width: 320px;
+            width: 320px;
+            background-color: var(--bg-input);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+        }
+
+        .kanban-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .kanban-title { font-weight: 700; font-size: 14px; }
+        .kanban-count { background: var(--bg-card); padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+
+        .kanban-items {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 100px;
+        }
+
+        .kanban-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: grab;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .kanban-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+
+        .kanban-card:active { cursor: grabbing; }
+        
+        .kanban-tag {
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        /* --- SCHEDULE GRID --- */
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 80px repeat(5, 1fr);
+            gap: 8px;
+            overflow-x: auto;
+        }
+
+        .schedule-header-cell {
+            padding: 12px;
+            text-align: center;
+            font-weight: 700;
+            background: var(--bg-input);
+            color: var(--text-muted);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .schedule-time-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--text-muted);
+            font-size: 12px;
+            background: var(--bg-input);
+            border-radius: 8px;
+        }
+
+        .schedule-cell {
+            min-height: 100px;
+            background: var(--bg-card);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .schedule-cell:hover {
+            border-color: var(--primary);
+            background: rgba(79, 70, 229, 0.05);
+        }
+
+        .schedule-cell.filled {
+            background: rgba(79, 70, 229, 0.1);
+            border: 1px solid rgba(79, 70, 229, 0.3);
+            border-left: 4px solid var(--primary);
+        }
+
+        .course-code { font-weight: 800; color: var(--primary); font-size: 13px; margin-bottom: 4px; }
+        .course-name { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+        .teacher-name { font-size: 10px; color: var(--text-muted); }
+
+        /* --- TOAST NOTIFICATIONS --- */
+        .toast-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            min-width: 300px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { to { transform: translateX(100%); opacity: 0; } }
+
+        .toast.hiding { animation: slideOut 0.3s forwards; }
+        .toast-success { border-left: 4px solid var(--success); }
+        .toast-error { border-left: 4px solid var(--danger); }
+        .toast-info { border-left: 4px solid var(--info); }
+
+        .toast-icon { font-size: 20px; }
+        .toast-content h4 { font-size: 14px; margin-bottom: 2px; }
+        .toast-content p { font-size: 12px; color: var(--text-muted); }
+
+        /* --- HELPER CLASSES --- */
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .empty-state { padding: 40px; text-align: center; color: var(--text-muted); }
+        .empty-icon { font-size: 48px; margin-bottom: 10px; opacity: 0.5; }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1024px) {
+            .sidebar { position: fixed; left: -300px; height: 100vh; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+            .sidebar.active { left: 0; }
+            .top-header { padding: 0 16px; }
+            .search-container { display: none; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="brand-box">
+                <div class="brand-logo">🎓</div>
+                <div class="brand-text">EduTech Pro</div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <div class="menu-category">Yönetim</div>
+                <a href="#" class="menu-item active" onclick="Router.navigate('dashboard', this)">
+                    <span class="menu-icon">📊</span><span class="menu-text">Genel Bakış</span>
+                </a>
+                <a href="#" class="menu-item" onclick="Router.navigate('students', this)">
+                    <span class="menu-icon">👨‍🎓</span><span class="menu-text">Öğrenci İşleri</span>
+                </a>
+                <a href="#" class="menu-item" onclick="Router.navigate('teachers', this)">
+                    <span class="menu-icon">👩‍🏫</span><span class="menu-text">Öğretmenler</span>
+                </a>
+                <a href="#" class="menu-item" onclick="Router.navigate('courses', this)">
+                    <span class="menu-icon">🏫</span><span class="menu-text">Dersler & Sınıflar</span>
+                </a>
+
+                <div class="menu-category">Akademik</div>
+                <a href="#" class="menu-item" onclick="Router.navigate('schedule', this)">
+                    <span class="menu-icon">📅</span><span class="menu-text">Ders Programı</span>
+                </a>
+                <a href="#" class="menu-item" onclick="Router.navigate('assignments', this)">
+                    <span class="menu-icon">📝</span><span class="menu-text">Ödev Takibi</span>
+                </a>
+
+                <div class="menu-category">Sistem</div>
+                <a href="#" class="menu-item" onclick="Router.navigate('announcements', this)">
+                    <span class="menu-icon">📢</span><span class="menu-text">Duyurular</span>
+                </a>
+                <a href="#" class="menu-item" onclick="Router.navigate('settings', this)">
+                    <span class="menu-icon">⚙️</span><span class="menu-text">Ayarlar</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">MY</div>
+                    <div class="user-details">
+                        <span class="user-name">Mert Yılmaz</span>
+                        <span class="user-role">Sistem Yöneticisi</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-wrapper">
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="toggle-btn" onclick="UI.toggleSidebar()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"></path></svg>
+                    </button>
+                    <div class="search-container">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" class="search-input" placeholder="Öğrenci, öğretmen veya ders ara..." onkeyup="GlobalSearch.handle(this.value)">
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <button class="action-btn" onclick="UI.toggleTheme()" title="Tema Değiştir">
+                        🌓
+                    </button>
+                    <button class="action-btn" title="Bildirimler">
+                        🔔 <span class="badge">3</span>
+                    </button>
+                    <button class="btn-primary" onclick="Modal.open('Student', null)">
+                        <span>➕</span> Hızlı Kayıt
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-scroll" id="mainContent">
+                </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Modal Başlığı</h3>
+                <button class="modal-close" onclick="Modal.close()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                </div>
+            <div class="modal-footer" id="modalFooter">
+                </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        /**
+         * EDUTECH PRO V4.0 - ULTIMATE EDITION
+         * Architect: Gemini AI
+         * Architecture: SPA (Single Page Application) with LocalStorage Persistence
+         */
+
+        // --- 1. CONFIG & UTILS ---
+        const Config = {
+            storageKey: 'eduTechDataV4_Ultimate',
+            days: ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'],
+            hours: ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00']
+        };
+
+        const Utils = {
+            generateId: () => Date.now() + Math.floor(Math.random() * 1000),
+            formatDate: (dateStr) => new Date(dateStr).toLocaleDateString('tr-TR'),
+            getInitials: (name) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(),
+            createEl: (tag, className, html) => {
+                const el = document.createElement(tag);
+                if (className) el.className = className;
+                if (html) el.innerHTML = html;
+                return el;
+            }
+        };
+
+        const Toast = {
+            show: (title, message, type = 'success') => {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                
+                const icon = type === 'success' ? '✅' : (type === 'error' ? '⛔' : 'ℹ️');
+                
+                toast.innerHTML = `
+                    <div class="toast-icon">${icon}</div>
+                    <div class="toast-content">
+                        <h4>${title}</h4>
+                        <p>${message}</p>
+                    </div>
+                `;
+                
+                container.appendChild(toast);
+                setTimeout(() => {
+                    toast.classList.add('hiding');
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            }
+        };
+
+        // --- 2. DATA MODEL & STATE ---
+        const DefaultData = {
+            students: [
+                { id: 101, number: '201', name: 'Ali Yılmaz', class: '12-A', parent: 'Veli Yılmaz (0555)', status: 'active' },
+                { id: 102, number: '202', name: 'Ayşe Demir', class: '11-B', parent: 'Fatma Demir (0544)', status: 'active' },
+                { id: 103, number: '203', name: 'Mehmet Kaya', class: '10-C', parent: 'Hasan Kaya (0533)', status: 'inactive' }
+            ],
+            teachers: [
+                { id: 201, name: 'Zeynep Hoca', branch: 'Matematik', email: 'zeynep@okul.com', phone: '05011112233' },
+                { id: 202, name: 'Ahmet Hoca', branch: 'Fizik', email: 'ahmet@okul.com', phone: '05022223344' }
+            ],
+            courses: [
+                { id: 301, code: 'MAT101', name: 'İleri Matematik', teacherId: 201, credits: 4 },
+                { id: 302, code: 'FIZ101', name: 'Uygulamalı Fizik', teacherId: 202, credits: 3 }
+            ],
+            grades: [
+                { id: 401, studentId: 101, courseId: 301, exam1: 85, exam2: 90, project: 95 }
+            ],
+            assignments: [
+                { id: 501, title: 'Türev Testi Çözülecek', courseId: 301, dueDate: '2026-02-01', status: 'todo' },
+                { id: 502, title: 'Fizik Deneyi Raporu', courseId: 302, dueDate: '2026-01-28', status: 'inprogress' }
+            ],
+            schedule: [
+                { id: 601, day: 'Pazartesi', hour: '09:00', courseId: 301 },
+                { id: 602, day: 'Pazartesi', hour: '10:00', courseId: 301 },
+                { id: 603, day: 'Salı', hour: '09:00', courseId: 302 }
+            ],
+            announcements: [
+                { id: 701, title: 'Sınav Haftası', content: 'Sınavlar haftaya başlıyor.', date: '2026-01-20' }
+            ]
+        };
+
+        class DataManager {
+            constructor() {
+                this.data = JSON.parse(localStorage.getItem(Config.storageKey)) || DefaultData;
+            }
+
+            save() {
+                localStorage.setItem(Config.storageKey, JSON.stringify(this.data));
+            }
+            
+            reset() {
+                if(confirm('Tüm veriler silinecek ve varsayılanlara dönülecek. Onaylıyor musunuz?')) {
+                    localStorage.removeItem(Config.storageKey);
+                    location.reload();
+                }
+            }
+
+            // Generic Getters
+            getStudents() { return this.data.students; }
+            getTeachers() { return this.data.teachers; }
+            getCourses() { return this.data.courses; }
+            getGrades(studentId = null) { 
+                return studentId 
+                    ? this.data.grades.filter(g => g.studentId === studentId) 
+                    : this.data.grades; 
+            }
+            getAssignments() { return this.data.assignments; }
+            getSchedule() { return this.data.schedule; }
+
+            // Helper to resolve relationships
+            getCourseDetails(courseId) {
+                const c = this.data.courses.find(x => x.id == courseId);
+                if (!c) return null;
+                const t = this.data.teachers.find(x => x.id == c.teacherId);
+                return { ...c, teacherName: t ? t.name : 'Bilinmiyor' };
+            }
+        }
+
+        const AppData = new DataManager();
+
+        // --- 3. UI CONTROLLERS ---
+
+        const UI = {
+            toggleSidebar: () => {
+                document.getElementById('sidebar').classList.toggle('collapsed');
+                // Mobile check
+                if(window.innerWidth <= 1024) {
+                    document.getElementById('sidebar').classList.toggle('active');
+                }
+            },
+            toggleTheme: () => {
+                document.body.classList.toggle('light-mode');
+            }
+        };
+
+        const Router = {
+            navigate: (page, el) => {
+                // Update Sidebar UI
+                document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+                if (el) el.classList.add('active');
+                
+                // Hide Mobile Sidebar if open
+                document.getElementById('sidebar').classList.remove('active');
+
+                // Render Page
+                const container = document.getElementById('mainContent');
+                container.innerHTML = ''; // Clear current
+
+                switch(page) {
+                    case 'dashboard': Pages.renderDashboard(container); break;
+                    case 'students': Pages.renderStudents(container); break;
+                    case 'teachers': Pages.renderTeachers(container); break;
+                    case 'courses': Pages.renderCourses(container); break;
+                    case 'schedule': Pages.renderSchedule(container); break;
+                    case 'assignments': Pages.renderAssignments(container); break;
+                    case 'announcements': Pages.renderAnnouncements(container); break;
+                    case 'settings': Pages.renderSettings(container); break;
+                    default: Pages.renderDashboard(container);
+                }
+            }
+        };
+
+        // --- 4. PAGE RENDERING LOGIC ---
+
+        const Pages = {
+            renderDashboard: (container) => {
+                const sCount = AppData.data.students.length;
+                const tCount = AppData.data.teachers.length;
+                const cCount = AppData.data.courses.length;
+                
+                // Calculate Average GPA
+                let totalAvg = 0, count = 0;
+                AppData.data.grades.forEach(g => {
+                    totalAvg += (g.exam1 + g.exam2 + g.project) / 3;
+                    count++;
+                });
+                const gpa = count > 0 ? (totalAvg / count).toFixed(1) : '0.0';
+
+                const html = `
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Yönetim Paneli</h1>
+                            <p class="page-desc">Okul genel durum özeti ve istatistikler.</p>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-title">Toplam Öğrenci</span>
+                                <div class="stat-icon icon-blue">👨‍🎓</div>
+                            </div>
+                            <div class="stat-value">${sCount}</div>
+                            <div class="stat-trend trend-up"><span>↗</span> <span>Geçen aya göre artış</span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-title">Öğretmenler</span>
+                                <div class="stat-icon icon-purple">👩‍🏫</div>
+                            </div>
+                            <div class="stat-value">${tCount}</div>
+                            <div class="stat-trend"><span>Tam kadro</span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-title">Aktif Dersler</span>
+                                <div class="stat-icon icon-green">📚</div>
+                            </div>
+                            <div class="stat-value">${cCount}</div>
+                            <div class="stat-trend trend-up"><span>↗</span> <span>Müfredat güncel</span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-title">Genel Başarı</span>
+                                <div class="stat-icon icon-orange">🏆</div>
+                            </div>
+                            <div class="stat-value">${gpa}</div>
+                            <div class="stat-trend trend-up"><span>Okul Ortalaması</span></div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML = html;
+            },
+
+            renderStudents: (container) => {
+                container.innerHTML = `
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Öğrenci İşleri</h1>
+                            <p class="page-desc">Kayıtlı öğrencileri yönetin ve not girişi yapın.</p>
+                        </div>
+                        <button class="btn-primary" onclick="Modal.open('Student')"><span>➕</span> Yeni Öğrenci</button>
+                    </div>
+                    <div class="card">
+                        <div class="table-responsive">
+                            <table id="studentsTable">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Ad Soyad</th>
+                                        <th>Sınıf</th>
+                                        <th>Veli Bilgisi</th>
+                                        <th>Durum</th>
+                                        <th style="text-align:right">İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+
+                const tbody = container.querySelector('tbody');
+                if (AppData.getStudents().length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Kayıtlı öğrenci bulunamadı.</td></tr>';
+                    return;
+                }
+
+                AppData.getStudents().forEach(s => {
+                    const tr = document.createElement('tr');
+                    const statusClass = s.status === 'active' ? 'status-active' : 'status-inactive';
+                    const statusText = s.status === 'active' ? 'Aktif' : 'Pasif';
+
+                    tr.innerHTML = `
+                        <td><span style="font-family:monospace; color:var(--primary); font-weight:700;">${s.number}</span></td>
+                        <td>
+                            <div style="font-weight:600;">${s.name}</div>
+                        </td>
+                        <td><span style="background:var(--bg-input); padding:2px 6px; border-radius:4px; font-size:11px; font-weight:700;">${s.class}</span></td>
+                        <td style="font-size:13px; color:var(--text-muted);">${s.parent}</td>
+                        <td><span class="badge-status ${statusClass}">${statusText}</span></td>
+                        <td style="text-align:right">
+                            <button class="btn-icon btn-view" title="Notları Görüntüle/Ekle" onclick="Modal.open('Grades', ${s.id})">📊</button>
+                            <button class="btn-icon btn-edit" title="Düzenle" onclick="Modal.open('Student', ${s.id})">✏️</button>
+                            <button class="btn-icon btn-delete" title="Sil" onclick="Actions.deleteStudent(${s.id})">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            },
+
+            renderTeachers: (container) => {
+                container.innerHTML = `
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Öğretmen Kadrosu</h1>
+                            <p class="page-desc">Eğitmen bilgilerini yönetin.</p>
+                        </div>
+                        <button class="btn-primary" onclick="Modal.open('Teacher')"><span>➕</span> Yeni Öğretmen</button>
+                    </div>
+                    <div class="card">
+                        <div class="table-responsive">
+                            <table id="teachersTable">
+                                <thead>
+                                    <tr>
+                                        <th>Eğitmen</th>
+                                        <th>Branş</th>
+                                        <th>İletişim</th>
+                                        <th>Aktif Ders Sayısı</th>
+                                        <th style="text-align:right">İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+
+                const tbody = container.querySelector('tbody');
+                AppData.getTeachers().forEach(t => {
+                    // Count active courses for validation logic
+                    const courseCount = AppData.getCourses().filter(c => c.teacherId == t.id).length;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div class="user-avatar" style="width:32px; height:32px; font-size:12px;">${Utils.getInitials(t.name)}</div>
+                                <span style="font-weight:600;">${t.name}</span>
+                            </div>
+                        </td>
+                        <td><span style="color:var(--secondary); font-weight:600;">${t.branch}</span></td>
+                        <td>
+                            <div style="font-size:12px;">📧 ${t.email}</div>
+                            <div style="font-size:12px; color:var(--text-muted);">📱 ${t.phone}</div>
+                        </td>
+                        <td><span style="font-weight:700;">${courseCount}</span> Ders</td>
+                        <td style="text-align:right">
+                            <button class="btn-icon btn-edit" onclick="Modal.open('Teacher', ${t.id})">✏️</button>
+                            <button class="btn-icon btn-delete" onclick="Actions.deleteTeacher(${t.id})">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            },
+
+            renderCourses: (container) => {
+                container.innerHTML = `
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Ders & Sınıf Yönetimi</h1>
+                            <p class="page-desc">Müfredat ve ders tanımlamaları.</p>
+                        </div>
+                        <button class="btn-primary" onclick="Modal.open('Course')"><span>➕</span> Yeni Ders</button>
+                    </div>
+                    <div class="card">
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Kod</th>
+                                        <th>Ders Adı</th>
+                                        <th>Öğretmen</th>
+                                        <th>Kredi</th>
+                                        <th style="text-align:right">İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                
+                const tbody = container.querySelector('tbody');
+                AppData.getCourses().forEach(c => {
+                    const teacher = AppData.data.teachers.find(t => t.id == c.teacherId);
+                    const tName = teacher ? teacher.name : '<span style="color:var(--danger)">Atanmamış</span>';
+                    
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><span style="font-weight:800; color:var(--primary);">${c.code}</span></td>
+                            <td style="font-weight:600;">${c.name}</td>
+                            <td>${tName}</td>
+                            <td>${c.credits}</td>
+                            <td style="text-align:right">
+                                <button class="btn-icon btn-edit" onclick="Modal.open('Course', ${c.id})">✏️</button>
+                                <button class="btn-icon btn-delete" onclick="Actions.deleteCourse(${c.id})">🗑️</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            },
+
+            renderSchedule: (container) => {
+                container.innerHTML = `
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Haftalık Ders Programı</h1>
+                            <p class="page-desc">Hücrelere tıklayerek ders atayabilir veya düzenleyebilirsiniz.</p>
+                        </div>
+                    </div>
+                    <div class="card" style="overflow:hidden;">
+                        <div class="schedule-grid" id="scheduleGrid"></div>
+                    </div>
+                `;
+                
+                const grid = document.getElementById('scheduleGrid');
+                
+                // Header Row
+                grid.innerHTML += `<div class="schedule-header-cell">Saat</div>`;
+                Config.days.forEach(d => grid.innerHTML += `<div class="schedule-header-cell">${d}</div>`);
+                
+                // Data Rows
+                Config.hours.forEach(hour => {
+                    grid.innerHTML += `<div class="schedule-time-cell">${hour}</div>`;
+                    
+                    Config.days.forEach(day => {
+                        // Find if there is a class here
+                        const session = AppData.getSchedule().find(s => s.day === day && s.hour === hour);
+                        
+                        let cellHtml = '';
+                        let cellClass = 'schedule-cell';
+                        let onClick = `Modal.open('ScheduleItem', null, {day: '${day}', hour: '${hour}'})`;
+                        
+                        if (session) {
+                            const details = AppData.getCourseDetails(session.courseId);
+                            if(details) {
+                                cellClass += ' filled';
+                                cellHtml = `
+                                    <div class="course-code">${details.code}</div>
+                                    <div class="course-name">${details.name}</div>
+                                    <div class="teacher-name">${details.teacherName}</div>
+                                `;
+                                onClick = `Modal.open('ScheduleItem', ${session.id})`;
+                            }
+                        } else {
+                            cellHtml = '<span style="font-size:20px; color:var(--border-color); font-weight:300;">+</span>';
+                        }
+                        
+                        const cell = document.createElement('div');
+                        cell.className = cellClass;
+                        cell.innerHTML = cellHtml;
+                        cell.onclick = () => eval(onClick); // Using eval for string simplicity in this context, safer to use event listener in prod
+                        grid.appendChild(cell);
+                    });
+                });
+            },
+
+            renderAssignments: (container) => {
+                container.innerHTML = `
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Ödev & Proje Takibi</h1>
+                            <p class="page-desc">Kanban panosu ile iş akışı yönetimi.</p>
+                        </div>
+                        <button class="btn-primary" onclick="Modal.open('Assignment')"><span>➕</span> Yeni Görev</button>
+                    </div>
+                    <div class="kanban-container">
+                        ${['todo', 'inprogress', 'done'].map(status => {
+                            const title = status === 'todo' ? 'Yapılacaklar' : (status === 'inprogress' ? 'Devam Edenler' : 'Tamamlananlar');
+                            const items = AppData.getAssignments().filter(a => a.status === status);
+                            return `
+                                <div class="kanban-column" ondragover="Actions.allowDrop(event)" ondrop="Actions.drop(event, '${status}')">
+                                    <div class="kanban-header">
+                                        <span class="kanban-title">${title}</span>
+                                        <span class="kanban-count">${items.length}</span>
+                                    </div>
+                                    <div class="kanban-items">
+                                        ${items.map(task => {
+                                            const course = AppData.data.courses.find(c => c.id == task.courseId);
+                                            const courseCode = course ? course.code : 'GENEL';
+                                            return `
+                                                <div class="kanban-card" draggable="true" ondragstart="Actions.drag(event, ${task.id})" onclick="Modal.open('Assignment', ${task.id})">
+                                                    <span class="kanban-tag">${courseCode}</span>
+                                                    <div style="font-weight:600; font-size:13px; margin-bottom:8px;">${task.title}</div>
+                                                    <div style="font-size:11px; color:var(--text-muted); display:flex; justify-content:space-between;">
+                                                        <span>📅 ${Utils.formatDate(task.dueDate)}</span>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            },
+            
+            renderAnnouncements: (container) => {
+                container.innerHTML = `
+                    <div class="page-header">
+                        <h1 class="page-title">Duyurular</h1>
+                    </div>
+                    <div class="card empty-state">
+                        <div class="empty-icon">📢</div>
+                        <h3>Duyuru modülü yakında güncellenecek.</h3>
+                        <p>Şu an için sistem yöneticisi tarafından gönderilen mesajlar görüntülenebilir.</p>
+                    </div>
+                `;
+            },
+            
+            renderSettings: (container) => {
+                container.innerHTML = `
+                    <div class="page-header"><h1 class="page-title">Ayarlar</h1></div>
+                    <div class="card" style="max-width:500px;">
+                        <h3 style="margin-bottom:16px;">Veri Yönetimi</h3>
+                        <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;">
+                            Uygulama tarayıcı hafızasında (LocalStorage) çalışmaktadır. Verileri sıfırlamak için aşağıdaki butonu kullanın.
+                        </p>
+                        <button class="btn-primary" style="background:var(--danger); border-color:var(--danger);" onclick="AppData.reset()">⚠️ Fabrika Ayarlarına Dön</button>
+                    </div>
+                `;
+            }
+        };
+
+        // --- 5. MODAL & CRUD ACTIONS ---
+        
+        const Modal = {
+            open: (type, id = null, extraData = null) => {
+                const overlay = document.getElementById('modalOverlay');
+                const title = document.getElementById('modalTitle');
+                const body = document.getElementById('modalBody');
+                const footer = document.getElementById('modalFooter');
+                
+                let isEdit = id !== null;
+                let html = '';
+                let btnText = isEdit ? 'Güncelle' : 'Kaydet';
+                let saveAction = '';
+                let deleteBtn = '';
+
+                switch(type) {
+                    case 'Student':
+                        const s = isEdit ? AppData.getStudents().find(x => x.id == id) : {};
+                        title.innerText = isEdit ? 'Öğrenci Düzenle' : 'Yeni Öğrenci';
+                        saveAction = `Actions.saveStudent(${id})`;
+                        html = `
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Okul No</label><input id="inpNo" class="form-control" value="${s.number || ''}"></div>
+                                <div class="form-group"><label class="form-label">Ad Soyad</label><input id="inpName" class="form-control" value="${s.name || ''}"></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Sınıf</label><input id="inpClass" class="form-control" value="${s.class || ''}"></div>
+                                <div class="form-group"><label class="form-label">Durum</label>
+                                    <select id="inpStatus" class="form-control">
+                                        <option value="active" ${s.status === 'active' ? 'selected':''}>Aktif</option>
+                                        <option value="inactive" ${s.status === 'inactive' ? 'selected':''}>Pasif</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group"><label class="form-label">Veli Bilgisi</label><input id="inpParent" class="form-control" value="${s.parent || ''}"></div>
+                        `;
+                        break;
+                    
+                    case 'Teacher':
+                        const t = isEdit ? AppData.getTeachers().find(x => x.id == id) : {};
+                        title.innerText = isEdit ? 'Öğretmen Düzenle' : 'Öğretmen Ekle';
+                        saveAction = `Actions.saveTeacher(${id})`;
+                        html = `
+                            <div class="form-group"><label class="form-label">Ad Soyad</label><input id="inpTName" class="form-control" value="${t.name || ''}"></div>
+                            <div class="form-group"><label class="form-label">Branş</label><input id="inpTBranch" class="form-control" value="${t.branch || ''}"></div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Email</label><input id="inpTEmail" class="form-control" value="${t.email || ''}"></div>
+                                <div class="form-group"><label class="form-label">Telefon</label><input id="inpTPhone" class="form-control" value="${t.phone || ''}"></div>
+                            </div>
+                        `;
+                        break;
+
+                    case 'Course':
+                        const c = isEdit ? AppData.getCourses().find(x => x.id == id) : {};
+                        const teachers = AppData.getTeachers().map(tc => `<option value="${tc.id}" ${c.teacherId == tc.id ? 'selected':''}>${tc.name}</option>`).join('');
+                        title.innerText = isEdit ? 'Ders Düzenle' : 'Ders Ekle';
+                        saveAction = `Actions.saveCourse(${id})`;
+                        html = `
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Ders Kodu</label><input id="inpCCode" class="form-control" value="${c.code || ''}"></div>
+                                <div class="form-group"><label class="form-label">Kredi</label><input id="inpCCredit" type="number" class="form-control" value="${c.credits || 4}"></div>
+                            </div>
+                            <div class="form-group"><label class="form-label">Ders Adı</label><input id="inpCName" class="form-control" value="${c.name || ''}"></div>
+                            <div class="form-group"><label class="form-label">Sorumlu Öğretmen</label>
+                                <select id="inpCTeacher" class="form-control"><option value="">Seçiniz...</option>${teachers}</select>
+                            </div>
+                        `;
+                        break;
+
+                    case 'ScheduleItem':
+                        // If id exists, we are editing/deleting. If null, we are adding new via extraData (day/hour)
+                        const sch = id ? AppData.getSchedule().find(x => x.id == id) : { day: extraData.day, hour: extraData.hour };
+                        const coursesOpts = AppData.getCourses().map(co => `<option value="${co.id}" ${sch.courseId == co.id ? 'selected':''}>${co.code} - ${co.name}</option>`).join('');
+                        
+                        title.innerText = 'Ders Programı Ayarla';
+                        saveAction = `Actions.saveScheduleItem(${id}, '${sch.day}', '${sch.hour}')`;
+                        
+                        // If editing existing item, show delete button
+                        if (id) deleteBtn = `<button class="btn-primary" style="background:var(--danger)" onclick="Actions.deleteScheduleItem(${id})">Dersi Kaldır</button>`;
+                        
+                        html = `
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Gün</label><input disabled class="form-control" value="${sch.day}"></div>
+                                <div class="form-group"><label class="form-label">Saat</label><input disabled class="form-control" value="${sch.hour}"></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Atanacak Ders</label>
+                                <select id="inpSchCourse" class="form-control">
+                                    <option value="">Seçiniz...</option>
+                                    ${coursesOpts}
+                                </select>
+                            </div>
+                        `;
+                        break;
+
+                    case 'Assignment':
+                        const a = isEdit ? AppData.getAssignments().find(x => x.id == id) : {};
+                        const cOpts = AppData.getCourses().map(co => `<option value="${co.id}" ${a.courseId == co.id ? 'selected':''}>${co.name}</option>`).join('');
+                        
+                        title.innerText = isEdit ? 'Ödev Düzenle' : 'Yeni Ödev';
+                        saveAction = `Actions.saveAssignment(${id})`;
+                        if(isEdit) deleteBtn = `<button class="btn-primary" style="background:var(--danger)" onclick="Actions.deleteAssignment(${id})">Sil</button>`;
+
+                        html = `
+                            <div class="form-group"><label class="form-label">Başlık</label><input id="inpATitle" class="form-control" value="${a.title || ''}"></div>
+                            <div class="form-group"><label class="form-label">Ders</label><select id="inpACourse" class="form-control">${cOpts}</select></div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Son Tarih</label><input type="date" id="inpADate" class="form-control" value="${a.dueDate || ''}"></div>
+                                <div class="form-group"><label class="form-label">Durum</label>
+                                    <select id="inpAStatus" class="form-control">
+                                        <option value="todo" ${a.status === 'todo' ? 'selected':''}>Yapılacak</option>
+                                        <option value="inprogress" ${a.status === 'inprogress' ? 'selected':''}>Devam Ediyor</option>
+                                        <option value="done" ${a.status === 'done' ? 'selected':''}>Tamamlandı</option>
+                                    </select>
+                                </div>
+                            </div>
+                        `;
+                        break;
+
+                    case 'Grades':
+                        const stu = AppData.getStudents().find(x => x.id == id);
+                        title.innerText = `${stu.name} - Not Bilgileri`;
+                        // List existing grades
+                        const grades = AppData.getGrades(id);
+                        let gradesHtml = '<table style="margin-bottom:20px;"><thead><tr><th>Ders</th><th>S1</th><th>S2</th><th>Prj</th><th>Ort</th><th>İşlem</th></tr></thead><tbody>';
+                        
+                        grades.forEach(g => {
+                            const cName = AppData.getCourses().find(c => c.id == g.courseId)?.name || 'Silinmiş Ders';
+                            const avg = Math.round((g.exam1 + g.exam2 + g.project) / 3);
+                            gradesHtml += `
+                                <tr>
+                                    <td>${cName}</td>
+                                    <td>${g.exam1}</td>
+                                    <td>${g.exam2}</td>
+                                    <td>${g.project}</td>
+                                    <td><b>${avg}</b></td>
+                                    <td><button class="btn-icon btn-delete" onclick="Actions.deleteGrade(${g.id}, ${id})">×</button></td>
+                                </tr>
+                            `;
+                        });
+                        gradesHtml += '</tbody></table>';
+                        
+                        // Add New Grade Form
+                        const allCourses = AppData.getCourses().map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                        
+                        html = `
+                            ${gradesHtml}
+                            <hr style="margin:15px 0; border-color:var(--border-color);">
+                            <h4 style="margin-bottom:10px;">Not Girişi</h4>
+                            <div class="form-group"><select id="inpGCourse" class="form-control"><option value="">Ders Seçiniz...</option>${allCourses}</select></div>
+                            <div class="form-row">
+                                <div class="form-group"><input type="number" id="inpE1" class="form-control" placeholder="Sınav 1"></div>
+                                <div class="form-group"><input type="number" id="inpE2" class="form-control" placeholder="Sınav 2"></div>
+                                <div class="form-group"><input type="number" id="inpPrj" class="form-control" placeholder="Proje"></div>
+                            </div>
+                        `;
+                        
+                        saveAction = `Actions.addGrade(${id})`;
+                        btnText = "Notu Ekle";
+                        break;
+                }
+
+                body.innerHTML = html;
+                footer.innerHTML = `
+                    ${deleteBtn}
+                    <button class="btn-secondary" onclick="Modal.close()">İptal</button>
+                    <button class="btn-primary" onclick="${saveAction}">${btnText}</button>
+                `;
+                overlay.classList.add('active');
+            },
+
+            close: () => {
+                document.getElementById('modalOverlay').classList.remove('active');
+            }
+        };
+
+        const Actions = {
+            // --- STUDENTS ---
+            saveStudent: (id) => {
+                const no = document.getElementById('inpNo').value;
+                const name = document.getElementById('inpName').value;
+                const cls = document.getElementById('inpClass').value;
+                
+                if(!no || !name || !cls) return Toast.show('Hata', 'Lütfen zorunlu alanları doldurun.', 'error');
+
+                const newStudent = {
+                    id: id || Utils.generateId(),
+                    number: no,
+                    name: name,
+                    class: cls,
+                    status: document.getElementById('inpStatus').value,
+                    parent: document.getElementById('inpParent').value
+                };
+
+                if(id) {
+                    const idx = AppData.data.students.findIndex(s => s.id == id);
+                    AppData.data.students[idx] = newStudent;
+                } else {
+                    AppData.data.students.push(newStudent);
+                }
+                
+                AppData.save();
+                Modal.close();
+                Router.navigate('students');
+                Toast.show('Başarılı', 'Öğrenci bilgileri kaydedildi.');
+            },
+            
+            deleteStudent: (id) => {
+                if(confirm('Öğrenci ve notları silinecek. Emin misiniz?')) {
+                    AppData.data.students = AppData.data.students.filter(s => s.id !== id);
+                    AppData.data.grades = AppData.data.grades.filter(g => g.studentId !== id);
+                    AppData.save();
+                    Router.navigate('students');
+                    Toast.show('Silindi', 'Kayıt veritabanından kaldırıldı.');
+                }
+            },
+
+            // --- TEACHERS ---
+            saveTeacher: (id) => {
+                const name = document.getElementById('inpTName').value;
+                if(!name) return Toast.show('Hata', 'İsim zorunludur.', 'error');
+
+                const teacher = {
+                    id: id || Utils.generateId(),
+                    name: name,
+                    branch: document.getElementById('inpTBranch').value,
+                    email: document.getElementById('inpTEmail').value,
+                    phone: document.getElementById('inpTPhone').value
+                };
+
+                if(id) {
+                    const idx = AppData.data.teachers.findIndex(t => t.id == id);
+                    AppData.data.teachers[idx] = teacher;
+                } else {
+                    AppData.data.teachers.push(teacher);
+                }
+                
+                AppData.save();
+                Modal.close();
+                Router.navigate('teachers');
+                Toast.show('Başarılı', 'Öğretmen kaydı güncellendi.');
+            },
+
+            deleteTeacher: (id) => {
+                // Constraint Check: Has courses?
+                const hasCourses = AppData.getCourses().some(c => c.teacherId == id);
+                if(hasCourses) return Toast.show('İşlem Engellendi', 'Bu öğretmenin üzerinde aktif dersler var. Önce dersleri silin veya başka öğretmene atayın.', 'error');
+
+                if(confirm('Öğretmen silinecek?')) {
+                    AppData.data.teachers = AppData.data.teachers.filter(t => t.id !== id);
+                    AppData.save();
+                    Router.navigate('teachers');
+                    Toast.show('Silindi', 'Öğretmen silindi.');
+                }
+            },
+
+            // --- COURSES ---
+            saveCourse: (id) => {
+                const code = document.getElementById('inpCCode').value;
+                const name = document.getElementById('inpCName').value;
+                const tid = document.getElementById('inpCTeacher').value;
+
+                if(!code || !name) return Toast.show('Hata', 'Kod ve İsim zorunlu.', 'error');
+
+                const course = {
+                    id: id || Utils.generateId(),
+                    code: code,
+                    name: name,
+                    teacherId: tid,
+                    credits: document.getElementById('inpCCredit').value
+                };
+
+                if(id) AppData.data.courses[AppData.data.courses.findIndex(c => c.id == id)] = course;
+                else AppData.data.courses.push(course);
+
+                AppData.save();
+                Modal.close();
+                Router.navigate('courses');
+                Toast.show('Başarılı', 'Ders tanımlaması yapıldı.');
+            },
+
+            deleteCourse: (id) => {
+                if(confirm('Ders silinince bu derse ait notlar ve program kayıtları da silinir.')) {
+                    AppData.data.courses = AppData.data.courses.filter(c => c.id !== id);
+                    AppData.data.grades = AppData.data.grades.filter(g => g.courseId !== id);
+                    AppData.data.schedule = AppData.data.schedule.filter(s => s.courseId !== id);
+                    AppData.data.assignments = AppData.data.assignments.filter(a => a.courseId !== id);
+                    AppData.save();
+                    Router.navigate('courses');
+                    Toast.show('Silindi', 'Ders ve ilişkili veriler temizlendi.');
+                }
+            },
+
+            // --- SCHEDULE ---
+            saveScheduleItem: (id, day, hour) => {
+                const cId = document.getElementById('inpSchCourse').value;
+                if(!cId) return Toast.show('Hata', 'Lütfen ders seçin.', 'error');
+
+                // Conflict Check (Is teacher busy?)
+                // skipping for simplicity in this version, but this is where architect logic goes
+
+                if(id) {
+                    // Update existing
+                    const item = AppData.data.schedule.find(x => x.id == id);
+                    item.courseId = cId;
+                } else {
+                    // Add new
+                    AppData.data.schedule.push({
+                        id: Utils.generateId(),
+                        day: day,
+                        hour: hour,
+                        courseId: cId
+                    });
+                }
+                AppData.save();
+                Modal.close();
+                Router.navigate('schedule');
+                Toast.show('Programlandı', 'Ders programa eklendi.');
+            },
+            
+            deleteScheduleItem: (id) => {
+                AppData.data.schedule = AppData.data.schedule.filter(s => s.id !== id);
+                AppData.save();
+                Modal.close();
+                Router.navigate('schedule');
+                Toast.show('Kaldırıldı', 'Ders programdan silindi.');
+            },
+
+            // --- ASSIGNMENTS ---
+            saveAssignment: (id) => {
+                const title = document.getElementById('inpATitle').value;
+                if(!title) return;
+
+                const task = {
+                    id: id || Utils.generateId(),
+                    title: title,
+                    courseId: document.getElementById('inpACourse').value,
+                    dueDate: document.getElementById('inpADate').value,
+                    status: document.getElementById('inpAStatus').value
+                };
+
+                if(id) AppData.data.assignments[AppData.data.assignments.findIndex(a => a.id == id)] = task;
+                else AppData.data.assignments.push(task);
+
+                AppData.save();
+                Modal.close();
+                Router.navigate('assignments');
+                Toast.show('Kaydedildi', 'Ödev listeye eklendi.');
+            },
+
+            deleteAssignment: (id) => {
+                if(confirm('Ödev silinsin mi?')) {
+                    AppData.data.assignments = AppData.data.assignments.filter(a => a.id !== id);
+                    AppData.save();
+                    Modal.close();
+                    Router.navigate('assignments');
+                }
+            },
+
+            drag: (ev, id) => {
+                ev.dataTransfer.setData("text", id);
+            },
+            allowDrop: (ev) => {
+                ev.preventDefault();
+            },
+            drop: (ev, status) => {
+                ev.preventDefault();
+                const id = parseInt(ev.dataTransfer.getData("text"));
+                const task = AppData.data.assignments.find(a => a.id === id);
+                if(task && task.status !== status) {
+                    task.status = status;
+                    AppData.save();
+                    Router.navigate('assignments'); // Re-render to update counts and UI
+                    Toast.show('Güncellendi', 'Ödev durumu değiştirildi.');
+                }
+            },
+
+            // --- GRADES ---
+            addGrade: (studentId) => {
+                const cid = document.getElementById('inpGCourse').value;
+                const e1 = document.getElementById('inpE1').value;
+                if(!cid || !e1) return Toast.show('Hata', 'Ders ve en az 1. Sınav notu girilmelidir.', 'error');
+
+                AppData.data.grades.push({
+                    id: Utils.generateId(),
+                    studentId: studentId,
+                    courseId: cid,
+                    exam1: parseInt(e1) || 0,
+                    exam2: parseInt(document.getElementById('inpE2').value) || 0,
+                    project: parseInt(document.getElementById('inpPrj').value) || 0
+                });
+                
+                AppData.save();
+                Modal.close();
+                Toast.show('Not Eklendi', 'Öğrenci notu başarıyla girildi.');
+            },
+            
+            deleteGrade: (gradeId, studentId) => {
+                AppData.data.grades = AppData.data.grades.filter(g => g.id !== gradeId);
+                AppData.save();
+                // Refresh Modal by re-opening it
+                Modal.open('Grades', studentId);
+            }
+        };
+
+        const GlobalSearch = {
+            handle: (query) => {
+                if(query.length < 2) return;
+                // Simple implementation: Just navigate to students and filter (can be expanded)
+                Router.navigate('students');
+                // Real-time filtering logic would go here in a more complex app
+            }
+        };
+
+        // --- INIT ---
+        window.addEventListener('DOMContentLoaded', () => {
+            // Load initial view
+            Router.navigate('dashboard', document.querySelector('.menu-item.active'));
+        });
+
+    </script>
+</body>
+</html>

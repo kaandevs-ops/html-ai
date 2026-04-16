@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Web - Spreadsheet</title>
+    <style>
+        /* ==================== RESET & BASE ==================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 11px;
+            color: #000;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        /* ==================== RIBBON ==================== */
+        .ribbon {
+            background: #f3f3f3;
+            border-bottom: 1px solid #d4d4d4;
+            padding: 5px 10px 0 10px;
+            user-select: none;
+        }
+
+        .ribbon-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: -1px;
+        }
+
+        .ribbon-tab {
+            padding: 6px 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 11px;
+            color: #444;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .ribbon-tab:hover {
+            background: #e5e5e5;
+        }
+
+        .ribbon-tab.active {
+            border-bottom-color: #0078d4;
+            color: #0078d4;
+            font-weight: 600;
+        }
+
+        .ribbon-content {
+            display: none;
+            padding: 8px 0;
+            background: #fff;
+            border-top: 1px solid #d4d4d4;
+        }
+
+        .ribbon-content.active {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .ribbon-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            padding-right: 15px;
+            border-right: 1px solid #d4d4d4;
+        }
+
+        .ribbon-group:last-child {
+            border-right: none;
+        }
+
+        .ribbon-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 10px;
+            border: 1px solid transparent;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 2px;
+            min-width: 50px;
+            transition: all 0.1s;
+        }
+
+        .ribbon-button:hover {
+            background: #e5f3ff;
+            border-color: #cce8ff;
+        }
+
+        .ribbon-button:active {
+            background: #cce8ff;
+        }
+
+        .ribbon-button.active {
+            background: #cce8ff;
+            border-color: #99d1ff;
+        }
+
+        .ribbon-icon {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        .ribbon-label {
+            font-size: 10px;
+            color: #444;
+        }
+
+        .format-button {
+            width: 32px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #d4d4d4;
+            background: #fff;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: all 0.1s;
+        }
+
+        .format-button:hover {
+            background: #e5f3ff;
+            border-color: #0078d4;
+        }
+
+        .format-button.active {
+            background: #cce8ff;
+            border-color: #0078d4;
+        }
+
+        .color-picker {
+            width: 24px;
+            height: 24px;
+            border: 1px solid #d4d4d4;
+            cursor: pointer;
+        }
+
+        .select-input {
+            height: 24px;
+            padding: 0 8px;
+            border: 1px solid #d4d4d4;
+            font-size: 11px;
+            font-family: inherit;
+        }
+
+        /* ==================== FORMULA BAR ==================== */
+        .formula-bar {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            background: #fff;
+            border-bottom: 1px solid #d4d4d4;
+            gap: 8px;
+        }
+
+        .cell-reference {
+            width: 80px;
+            height: 24px;
+            padding: 0 8px;
+            border: 1px solid #d4d4d4;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            background: #f9f9f9;
+        }
+
+        .fx-label {
+            font-style: italic;
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+            width: 20px;
+            text-align: center;
+        }
+
+        .formula-input {
+            flex: 1;
+            height: 24px;
+            padding: 0 8px;
+            border: 1px solid #d4d4d4;
+            font-size: 11px;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        .formula-input:focus {
+            outline: none;
+            border-color: #0078d4;
+        }
+
+        /* ==================== SPREADSHEET CONTAINER ==================== */
+        .spreadsheet-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 140px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grid-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ==================== COLUMN HEADERS ==================== */
+        .column-headers-container {
+            display: flex;
+            position: relative;
+        }
+
+        .corner-cell {
+            width: 50px;
+            height: 24px;
+            background: #f3f3f3;
+            border: 1px solid #d4d4d4;
+            border-top: none;
+            border-left: none;
+            flex-shrink: 0;
+        }
+
+        .column-headers {
+            display: flex;
+            overflow: hidden;
+            flex: 1;
+            position: relative;
+        }
+
+        .column-header {
+            min-width: 80px;
+            height: 24px;
+            background: #f3f3f3;
+            border: 1px solid #d4d4d4;
+            border-top: none;
+            border-left: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 10px;
+            user-select: none;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .column-header:hover {
+            background: #e5e5e5;
+        }
+
+        .column-header.selected {
+            background: #0078d4;
+            color: #fff;
+        }
+
+        /* ==================== ROW HEADERS ==================== */
+        .row-headers {
+            width: 50px;
+            overflow: hidden;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .row-header {
+            width: 50px;
+            height: 24px;
+            background: #f3f3f3;
+            border: 1px solid #d4d4d4;
+            border-top: none;
+            border-left: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 10px;
+            user-select: none;
+            cursor: pointer;
+        }
+
+        .row-header:hover {
+            background: #e5e5e5;
+        }
+
+        .row-header.selected {
+            background: #0078d4;
+            color: #fff;
+        }
+
+        /* ==================== CELLS GRID ==================== */
+        .cells-viewport {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+            background: #fff;
+        }
+
+        .cells-grid {
+            position: relative;
+        }
+
+        .cell {
+            position: absolute;
+            width: 80px;
+            height: 24px;
+            border: 1px solid #d4d4d4;
+            border-top: none;
+            border-left: none;
+            padding: 2px 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            background: #fff;
+            cursor: cell;
+        }
+
+        .cell.selected {
+            border: 2px solid #0078d4;
+            z-index: 10;
+        }
+
+        .cell.editing {
+            border: 2px solid #0078d4;
+            z-index: 100;
+            overflow: visible;
+            white-space: normal;
+        }
+
+        .cell-input {
+            position: absolute;
+            border: 2px solid #0078d4;
+            padding: 2px 4px;
+            font-size: 11px;
+            font-family: inherit;
+            z-index: 100;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .cell-input:focus {
+            outline: none;
+        }
+
+        .selection-range {
+            position: absolute;
+            border: 2px solid #0078d4;
+            background: rgba(0, 120, 212, 0.1);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* ==================== STATUS BAR ==================== */
+        .status-bar {
+            height: 24px;
+            background: #f3f3f3;
+            border-top: 1px solid #d4d4d4;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 20px;
+            font-size: 10px;
+            color: #666;
+        }
+
+        .status-item {
+            display: flex;
+            gap: 5px;
+        }
+
+        /* ==================== UTILITY CLASSES ==================== */
+        .text-bold { font-weight: bold; }
+        .text-italic { font-style: italic; }
+        .text-underline { text-decoration: underline; }
+        .text-left { text-align: left; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+
+        /* ==================== SCROLLBAR STYLING ==================== */
+        ::-webkit-scrollbar {
+            width: 17px;
+            height: 17px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border: 4px solid #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+    <!-- RIBBON -->
+    <div class="ribbon">
+        <div class="ribbon-tabs">
+            <button class="ribbon-tab active" data-tab="home">Giriş</button>
+            <button class="ribbon-tab" data-tab="insert">Ekle</button>
+            <button class="ribbon-tab" data-tab="formulas">Formüller</button>
+            <button class="ribbon-tab" data-tab="data">Veri</button>
+        </div>
+        
+        <!-- HOME TAB -->
+        <div class="ribbon-content active" data-content="home">
+            <div class="ribbon-group">
+                <button class="format-button" data-format="bold" title="Kalın (Ctrl+B)">B</button>
+                <button class="format-button" data-format="italic" title="İtalik (Ctrl+I)">I</button>
+                <button class="format-button" data-format="underline" title="Altı Çizili (Ctrl+U)">U</button>
+            </div>
+            <div class="ribbon-group">
+                <select class="select-input" id="fontFamily" title="Yazı Tipi">
+                    <option value="Arial">Arial</option>
+                    <option value="Calibri" selected>Calibri</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                </select>
+                <select class="select-input" id="fontSize" title="Yazı Boyutu">
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11" selected>11</option>
+                    <option value="12">12</option>
+                    <option value="14">14</option>
+                    <option value="16">16</option>
+                    <option value="18">18</option>
+                    <option value="20">20</option>
+                </select>
+            </div>
+            <div class="ribbon-group">
+                <label>Arka Plan: <input type="color" class="color-picker" id="bgColor" value="#ffffff"></label>
+                <label>Metin: <input type="color" class="color-picker" id="textColor" value="#000000"></label>
+            </div>
+            <div class="ribbon-group">
+                <button class="format-button" data-align="left" title="Sola Hizala">≡</button>
+                <button class="format-button" data-align="center" title="Ortala">≡</button>
+                <button class="format-button" data-align="right" title="Sağa Hizala">≡</button>
+            </div>
+            <div class="ribbon-group">
+                <select class="select-input" id="numberFormat" title="Sayı Formatı">
+                    <option value="general">Genel</option>
+                    <option value="number">Sayı</option>
+                    <option value="currency">Para Birimi</option>
+                    <option value="percentage">Yüzde</option>
+                    <option value="date">Tarih</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- INSERT TAB -->
+        <div class="ribbon-content" data-content="insert">
+            <div class="ribbon-group">
+                <button class="ribbon-button">
+                    <span class="ribbon-icon">📊</span>
+                    <span class="ribbon-label">Grafik</span>
+                </button>
+                <button class="ribbon-button">
+                    <span class="ribbon-icon">🖼️</span>
+                    <span class="ribbon-label">Resim</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- FORMULAS TAB -->
+        <div class="ribbon-content" data-content="formulas">
+            <div class="ribbon-group">
+                <button class="ribbon-button" data-formula="SUM">
+                    <span class="ribbon-icon">Σ</span>
+                    <span class="ribbon-label">TOPLA</span>
+                </button>
+                <button class="ribbon-button" data-formula="AVERAGE">
+                    <span class="ribbon-icon">μ</span>
+                    <span class="ribbon-label">ORTALAMA</span>
+                </button>
+                <button class="ribbon-button" data-formula="COUNT">
+                    <span class="ribbon-icon">#</span>
+                    <span class="ribbon-label">SAY</span>
+                </button>
+                <button class="ribbon-button" data-formula="IF">
+                    <span class="ribbon-icon">?</span>
+                    <span class="ribbon-label">EĞER</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- DATA TAB -->
+        <div class="ribbon-content" data-content="data">
+            <div class="ribbon-group">
+                <button class="ribbon-button">
+                    <span class="ribbon-icon">⬇️</span>
+                    <span class="ribbon-label">A-Z Sırala</span>
+                </button>
+                <button class="ribbon-button">
+                    <span class="ribbon-icon">⬆️</span>
+                    <span class="ribbon-label">Z-A Sırala</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FORMULA BAR -->
+    <div class="formula-bar">
+        <input type="text" class="cell-reference" id="cellReference" value="A1" readonly>
+        <span class="fx-label">fx</span>
+        <input type="text" class="formula-input" id="formulaInput" placeholder="Formül girin...">
+    </div>
+
+    <!-- SPREADSHEET -->
+    <div class="spreadsheet-container">
+        <!-- COLUMN HEADERS -->
+        <div class="column-headers-container">
+            <div class="corner-cell"></div>
+            <div class="column-headers" id="columnHeaders"></div>
+        </div>
+
+        <!-- GRID -->
+        <div class="grid-container">
+            <div class="row-headers" id="rowHeaders"></div>
+            <div class="cells-viewport" id="cellsViewport">
+                <div class="cells-grid" id="cellsGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+        <div class="status-item">
+            <span>Hazır</span>
+        </div>
+        <div class="status-item">
+            <span id="statusSelection"></span>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CORE ENGINE ====================
+        
+        class SpreadsheetEngine {
+            constructor() {
+                this.cols = 100;
+                this.rows = 1000;
+                this.cellWidth = 80;
+                this.cellHeight = 24;
+                this.cells = new Map();
+                this.selectedCell = { row: 0, col: 0 };
+                this.editingCell = null;
+                this.selectionRange = null;
+                this.clipboard = null;
+                this.formulaDependencies = new Map();
+                this.history = [];
+                this.historyIndex = -1;
+                
+                this.init();
+            }
+
+            init() {
+                this.renderColumnHeaders();
+                this.renderRowHeaders();
+                this.renderCells();
+                this.attachEventListeners();
+                this.selectCell(0, 0);
+            }
+
+            // ==================== COLUMN FUNCTIONS ====================
+            
+            colToLetter(col) {
+                let letter = '';
+                while (col >= 0) {
+                    letter = String.fromCharCode(65 + (col % 26)) + letter;
+                    col = Math.floor(col / 26) - 1;
+                }
+                return letter;
+            }
+
+            letterToCol(letter) {
+                let col = 0;
+                for (let i = 0; i < letter.length; i++) {
+                    col = col * 26 + letter.charCodeAt(i) - 64;
+                }
+                return col - 1;
+            }
+
+            // ==================== RENDERING ====================
+            
+            renderColumnHeaders() {
+                const container = document.getElementById('columnHeaders');
+                container.innerHTML = '';
+                for (let col = 0; col < this.cols; col++) {
+                    const header = document.createElement('div');
+                    header.className = 'column-header';
+                    header.textContent = this.colToLetter(col);
+                    header.dataset.col = col;
+                    container.appendChild(header);
+                }
+            }
+
+            renderRowHeaders() {
+                const container = document.getElementById('rowHeaders');
+                container.innerHTML = '';
+                for (let row = 0; row < this.rows; row++) {
+                    const header = document.createElement('div');
+                    header.className = 'row-header';
+                    header.textContent = row + 1;
+                    header.dataset.row = row;
+                    container.appendChild(header);
+                }
+            }
+
+            renderCells() {
+                const container = document.getElementById('cellsGrid');
+                container.innerHTML = '';
+                container.style.width = (this.cols * this.cellWidth) + 'px';
+                container.style.height = (this.rows * this.cellHeight) + 'px';
+
+                // Render visible cells only (virtual scrolling)
+                const viewport = document.getElementById('cellsViewport');
+                const startRow = Math.floor(viewport.scrollTop / this.cellHeight);
+                const endRow = Math.min(startRow + Math.ceil(viewport.clientHeight / this.cellHeight) + 1, this.rows);
+                const startCol = Math.floor(viewport.scrollLeft / this.cellWidth);
+                const endCol = Math.min(startCol + Math.ceil(viewport.clientWidth / this.cellWidth) + 1, this.cols);
+
+                for (let row = startRow; row < endRow; row++) {
+                    for (let col = startCol; col < endCol; col++) {
+                        const cellKey = `${row}-${col}`;
+                        let cellDiv = document.getElementById(`cell-${cellKey}`);
+                        
+                        if (!cellDiv) {
+                            cellDiv = document.createElement('div');
+                            cellDiv.id = `cell-${cellKey}`;
+                            cellDiv.className = 'cell';
+                            cellDiv.dataset.row = row;
+                            cellDiv.dataset.col = col;
+                            cellDiv.style.left = (col * this.cellWidth) + 'px';
+                            cellDiv.style.top = (row * this.cellHeight) + 'px';
+                            container.appendChild(cellDiv);
+                        }
+
+                        const cellData = this.cells.get(cellKey) || {};
+                        this.updateCellDisplay(cellDiv, cellData);
+                    }
+                }
+            }
+
+            updateCellDisplay(cellDiv, cellData) {
+                const value = cellData.displayValue !== undefined ? cellData.displayValue : (cellData.value || '');
+                cellDiv.textContent = value;
+                
+                // Apply formatting
+                if (cellData.style) {
+                    const style = cellData.style;
+                    cellDiv.style.fontWeight = style.bold ? 'bold' : 'normal';
+                    cellDiv.style.fontStyle = style.italic ? 'italic' : 'normal';
+                    cellDiv.style.textDecoration = style.underline ? 'underline' : 'none';
+                    cellDiv.style.backgroundColor = style.bgColor || '#fff';
+                    cellDiv.style.color = style.textColor || '#000';
+                    cellDiv.style.textAlign = style.align || 'left';
+                    cellDiv.style.fontFamily = style.fontFamily || 'Segoe UI';
+                    cellDiv.style.fontSize = (style.fontSize || 11) + 'px';
+                }
+                
+                // Error styling
+                if (typeof value === 'string' && value.startsWith('#')) {
+                    cellDiv.style.color = '#ff0000';
+                }
+            }
+
+            // ==================== CELL SELECTION ====================
+            
+            selectCell(row, col) {
+                // Remove previous selection
+                document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
+                document.querySelectorAll('.column-header.selected').forEach(h => h.classList.remove('selected'));
+                document.querySelectorAll('.row-header.selected').forEach(h => h.classList.remove('selected'));
+
+                this.selectedCell = { row, col };
+                
+                const cellKey = `${row}-${col}`;
+                const cellDiv = document.getElementById(`cell-${cellKey}`);
+                if (cellDiv) {
+                    cellDiv.classList.add('selected');
+                }
+
+                // Update cell reference
+                document.getElementById('cellReference').value = this.colToLetter(col) + (row + 1);
+                
+                // Update formula bar
+                const cellData = this.cells.get(cellKey) || {};
+                document.getElementById('formulaInput').value = cellData.formula || cellData.value || '';
+                
+                // Scroll into view if needed
+                this.scrollCellIntoView(row, col);
+            }
+
+            scrollCellIntoView(row, col) {
+                const viewport = document.getElementById('cellsViewport');
+                const cellLeft = col * this.cellWidth;
+                const cellTop = row * this.cellHeight;
+                const cellRight = cellLeft + this.cellWidth;
+                const cellBottom = cellTop + this.cellHeight;
+
+                if (cellLeft < viewport.scrollLeft) {
+                    viewport.scrollLeft = cellLeft;
+                } else if (cellRight > viewport.scrollLeft + viewport.clientWidth) {
+                    viewport.scrollLeft = cellRight - viewport.clientWidth;
+                }
+
+                if (cellTop < viewport.scrollTop) {
+                    viewport.scrollTop = cellTop;
+                } else if (cellBottom > viewport.scrollTop + viewport.clientHeight) {
+                    viewport.scrollTop = cellBottom - viewport.clientHeight;
+                }
+            }
+
+            // ==================== CELL EDITING ====================
+            
+            startEditing(row, col) {
+                this.editingCell = { row, col };
+                const cellKey = `${row}-${col}`;
+                const cellData = this.cells.get(cellKey) || {};
+                
+                const cellDiv = document.getElementById(`cell-${cellKey}`);
+                if (!cellDiv) return;
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'cell-input';
+                input.value = cellData.formula || cellData.value || '';
+                input.style.left = cellDiv.style.left;
+                input.style.top = cellDiv.style.top;
+                input.style.width = this.cellWidth + 'px';
+                input.style.height = this.cellHeight + 'px';
+
+                const container = document.getElementById('cellsGrid');
+                container.appendChild(input);
+                input.focus();
+                input.select();
+
+                // Update formula bar
+                document.getElementById('formulaInput').value = input.value;
+                document.getElementById('formulaInput').focus();
+            }
+
+            finishEditing(save = true) {
+                if (!this.editingCell) return;
+
+                const input = document.querySelector('.cell-input');
+                if (input && save) {
+                    const value = input.value;
+                    this.setCellValue(this.editingCell.row, this.editingCell.col, value);
+                    input.remove();
+                }
+
+                this.editingCell = null;
+            }
+
+            setCellValue(row, col, value) {
+                const cellKey = `${row}-${col}`;
+                let cellData = this.cells.get(cellKey) || {};
+
+                if (value.startsWith('=')) {
+                    cellData.formula = value;
+                    cellData.value = value;
+                    const result = this.evaluateFormula(value.substring(1), row, col);
+                    cellData.displayValue = result;
+                } else {
+                    cellData.value = value;
+                    cellData.formula = null;
+                    cellData.displayValue = value;
+                }
+
+                this.cells.set(cellKey, cellData);
+                
+                // Recalculate dependent cells
+                this.recalculateDependents(cellKey);
+                
+                // Re-render
+                this.renderCells();
+            }
+
+            // ==================== FORMULA ENGINE ====================
+            
+            evaluateFormula(formula, currentRow, currentCol) {
+                try {
+                    // Parse and evaluate formula
+                    formula = formula.trim();
+                    
+                    // Handle function calls
+                    if (formula.includes('(')) {
+                        return this.evaluateFunction(formula, currentRow, currentCol);
+                    }
+                    
+                    // Handle cell references
+                    if (/^[A-Z]+[0-9]+$/.test(formula)) {
+                        return this.getCellValue(formula);
+                    }
+                    
+                    // Handle operators
+                    return this.evaluateExpression(formula, currentRow, currentCol);
+                    
+                } catch (error) {
+                    return '#VALUE!';
+                }
+            }
+
+            evaluateFunction(formula, currentRow, currentCol) {
+                const funcMatch = formula.match(/^([A-Z]+)\((.*)\)$/);
+                if (!funcMatch) return '#NAME?';
+
+                const funcName = funcMatch[1];
+                const args = this.parseArguments(funcMatch[2]);
+
+                switch (funcName) {
+                    case 'SUM':
+                        return this.funcSum(args, currentRow, currentCol);
+                    case 'AVERAGE':
+                        return this.funcAverage(args, currentRow, currentCol);
+                    case 'MIN':
+                        return this.funcMin(args, currentRow, currentCol);
+                    case 'MAX':
+                        return this.funcMax(args, currentRow, currentCol);
+                    case 'COUNT':
+                        return this.funcCount(args, currentRow, currentCol);
+                    case 'IF':
+                        return this.funcIf(args, currentRow, currentCol);
+                    default:
+                        return '#NAME?';
+                }
+            }
+
+            parseArguments(argsStr) {
+                const args = [];
+                let current = '';
+                let depth = 0;
+
+                for (let char of argsStr) {
+                    if (char === '(' ) depth++;
+                    if (char === ')') depth--;
+                    
+                    if (char === ',' && depth === 0) {
+                        args.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                
+                if (current.trim()) {
+                    args.push(current.trim());
+                }
+                
+                return args;
+            }
+
+            parseRange(range) {
+                // Parse A1:B10 format
+                const match = range.match(/^([A-Z]+)([0-9]+):([A-Z]+)([0-9]+)$/);
+                if (!match) return [];
+
+                const startCol = this.letterToCol(match[1]);
+                const startRow = parseInt(match[2]) - 1;
+                const endCol = this.letterToCol(match[3]);
+                const endRow = parseInt(match[4]) - 1;
+
+                const cells = [];
+                for (let row = startRow; row <= endRow; row++) {
+                    for (let col = startCol; col <= endCol; col++) {
+                        cells.push(this.colToLetter(col) + (row + 1));
+                    }
+                }
+                return cells;
+            }
+
+            getCellValue(ref) {
+                const match = ref.match(/^([A-Z]+)([0-9]+)$/);
+                if (!match) return 0;
+
+                const col = this.letterToCol(match[1]);
+                const row = parseInt(match[2]) - 1;
+                const cellKey = `${row}-${col}`;
+                const cellData = this.cells.get(cellKey);
+
+                if (!cellData || cellData.displayValue === undefined) return 0;
+                
+                const val = cellData.displayValue;
+                if (typeof val === 'string' && val.startsWith('#')) return 0;
+                
+                const num = parseFloat(val);
+                return isNaN(num) ? 0 : num;
+            }
+
+            // ==================== FORMULA FUNCTIONS ====================
+            
+            funcSum(args, currentRow, currentCol) {
+                let sum = 0;
+                for (let arg of args) {
+                    if (arg.includes(':')) {
+                        const cells = this.parseRange(arg);
+                        for (let cell of cells) {
+                            sum += this.getCellValue(cell);
+                        }
+                    } else {
+                        const val = this.evaluateExpression(arg, currentRow, currentCol);
+                        sum += parseFloat(val) || 0;
+                    }
+                }
+                return sum;
+            }
+
+            funcAverage(args, currentRow, currentCol) {
+                let sum = 0;
+                let count = 0;
+                for (let arg of args) {
+                    if (arg.includes(':')) {
+                        const cells = this.parseRange(arg);
+                        for (let cell of cells) {
+                            const val = this.getCellValue(cell);
+                            if (val !== 0 || this.cells.get(this.cellRefToKey(cell))?.value) {
+                                sum += val;
+                                count++;
+                            }
+                        }
+                    } else {
+                        const val = this.evaluateExpression(arg, currentRow, currentCol);
+                        sum += parseFloat(val) || 0;
+                        count++;
+                    }
+                }
+                return count > 0 ? sum / count : 0;
+            }
+
+            funcMin(args, currentRow, currentCol) {
+                let min = Infinity;
+                for (let arg of args) {
+                    if (arg.includes(':')) {
+                        const cells = this.parseRange(arg);
+                        for (let cell of cells) {
+                            const val = this.getCellValue(cell);
+                            if (val < min) min = val;
+                        }
+                    } else {
+                        const val = parseFloat(this.evaluateExpression(arg, currentRow, currentCol)) || 0;
+                        if (val < min) min = val;
+                    }
+                }
+                return min === Infinity ? 0 : min;
+            }
+
+            funcMax(args, currentRow, currentCol) {
+                let max = -Infinity;
+                for (let arg of args) {
+                    if (arg.includes(':')) {
+                        const cells = this.parseRange(arg);
+                        for (let cell of cells) {
+                            const val = this.getCellValue(cell);
+                            if (val > max) max = val;
+                        }
+                    } else {
+                        const val = parseFloat(this.evaluateExpression(arg, currentRow, currentCol)) || 0;
+                        if (val > max) max = val;
+                    }
+                }
+                return max === -Infinity ? 0 : max;
+            }
+
+            funcCount(args, currentRow, currentCol) {
+                let count = 0;
+                for (let arg of args) {
+                    if (arg.includes(':')) {
+                        const cells = this.parseRange(arg);
+                        for (let cell of cells) {
+                            const cellKey = this.cellRefToKey(cell);
+                            if (this.cells.has(cellKey) && this.cells.get(cellKey).value) {
+                                count++;
+                            }
+                        }
+                    } else {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            funcIf(args, currentRow, currentCol) {
+                if (args.length < 2) return '#VALUE!';
+                
+                const condition = this.evaluateExpression(args[0], currentRow, currentCol);
+                let result;
+                
+                if (this.evaluateCondition(condition)) {
+                    result = args[1];
+                } else {
+                    result = args.length > 2 ? args[2] : '';
+                }
+                
+                return this.evaluateExpression(result, currentRow, currentCol);
+            }
+
+            evaluateCondition(expr) {
+                if (typeof expr === 'boolean') return expr;
+                if (typeof expr === 'number') return expr !== 0;
+                
+                const str = String(expr).trim();
+                if (str === 'TRUE' || str === '1') return true;
+                if (str === 'FALSE' || str === '0' || str === '') return false;
+                
+                return true;
+            }
+
+            evaluateExpression(expr, currentRow, currentCol) {
+                expr = String(expr).trim();
+                
+                // Handle string literals
+                if (expr.startsWith('"') && expr.endsWith('"')) {
+                    return expr.slice(1, -1);
+                }
+                
+                // Handle numbers
+                if (!isNaN(expr)) {
+                    return parseFloat(expr);
+                }
+                
+                // Handle cell references
+                if (/^[A-Z]+[0-9]+$/.test(expr)) {
+                    return this.getCellValue(expr);
+                }
+                
+                // Handle operators
+                if (expr.includes('+') || expr.includes('-') || expr.includes('*') || expr.includes('/') || expr.includes('>') || expr.includes('<') || expr.includes('=')) {
+                    return this.evaluateOperators(expr, currentRow, currentCol);
+                }
+                
+                return expr;
+            }
+
+            evaluateOperators(expr, currentRow, currentCol) {
+                try {
+                    // Replace cell references with values
+                    let evaluated = expr.replace(/[A-Z]+[0-9]+/g, (match) => {
+                        return this.getCellValue(match);
+                    });
+                    
+                    // Safe eval alternative
+                    const result = Function('"use strict"; return (' + evaluated + ')')();
+                    return result;
+                } catch (error) {
+                    return '#VALUE!';
+                }
+            }
+
+            cellRefToKey(ref) {
+                const match = ref.match(/^([A-Z]+)([0-9]+)$/);
+                if (!match) return null;
+                const col = this.letterToCol(match[1]);
+                const row = parseInt(match[2]) - 1;
+                return `${row}-${col}`;
+            }
+
+            recalculateDependents(cellKey) {
+                // In a full implementation, this would traverse the dependency graph
+                // For now, we recalculate all formula cells
+                this.cells.forEach((data, key) => {
+                    if (data.formula) {
+                        const [row, col] = key.split('-').map(Number);
+                        const result = this.evaluateFormula(data.formula.substring(1), row, col);
+                        data.displayValue = result;
+                    }
+                });
+            }
+
+            // ==================== FORMATTING ====================
+            
+            applyFormat(format, value) {
+                const cellKey = `${this.selectedCell.row}-${this.selectedCell.col}`;
+                let cellData = this.cells.get(cellKey) || {};
+                cellData.style = cellData.style || {};
+
+                switch (format) {
+                    case 'bold':
+                        cellData.style.bold = !cellData.style.bold;
+                        break;
+                    case 'italic':
+                        cellData.style.italic = !cellData.style.italic;
+                        break;
+                    case 'underline':
+                        cellData.style.underline = !cellData.style.underline;
+                        break;
+                    case 'bgColor':
+                        cellData.style.bgColor = value;
+                        break;
+                    case 'textColor':
+                        cellData.style.textColor = value;
+                        break;
+                    case 'align':
+                        cellData.style.align = value;
+                        break;
+                    case 'fontFamily':
+                        cellData.style.fontFamily = value;
+                        break;
+                    case 'fontSize':
+                        cellData.style.fontSize = parseInt(value);
+                        break;
+                }
+
+                this.cells.set(cellKey, cellData);
+                this.renderCells();
+            }
+
+            // ==================== CLIPBOARD ====================
+            
+            copyCell() {
+                const cellKey = `${this.selectedCell.row}-${this.selectedCell.col}`;
+                this.clipboard = { ...this.cells.get(cellKey) };
+            }
+
+            cutCell() {
+                this.copyCell();
+                const cellKey = `${this.selectedCell.row}-${this.selectedCell.col}`;
+                this.cells.delete(cellKey);
+                this.renderCells();
+            }
+
+            pasteCell() {
+                if (!this.clipboard) return;
+                const cellKey = `${this.selectedCell.row}-${this.selectedCell.col}`;
+                this.cells.set(cellKey, { ...this.clipboard });
+                this.recalculateDependents(cellKey);
+                this.renderCells();
+            }
+
+            // ==================== EVENT LISTENERS ====================
+            
+            attachEventListeners() {
+                // Ribbon tabs
+                document.querySelectorAll('.ribbon-tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        document.querySelectorAll('.ribbon-tab').forEach(t => t.classList.remove('active'));
+                        document.querySelectorAll('.ribbon-content').forEach(c => c.classList.remove('active'));
+                        
+                        tab.classList.add('active');
+                        const content = document.querySelector(`[data-content="${tab.dataset.tab}"]`);
+                        if (content) content.classList.add('active');
+                    });
+                });
+
+                // Format buttons
+                document.querySelectorAll('.format-button').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const format = btn.dataset.format || btn.dataset.align;
+                        if (format) {
+                            this.applyFormat(format, btn.dataset.align);
+                            btn.classList.toggle('active');
+                        }
+                    });
+                });
+
+                // Color pickers
+                document.getElementById('bgColor').addEventListener('change', (e) => {
+                    this.applyFormat('bgColor', e.target.value);
+                });
+
+                document.getElementById('textColor').addEventListener('change', (e) => {
+                    this.applyFormat('textColor', e.target.value);
+                });
+
+                // Font controls
+                document.getElementById('fontFamily').addEventListener('change', (e) => {
+                    this.applyFormat('fontFamily', e.target.value);
+                });
+
+                document.getElementById('fontSize').addEventListener('change', (e) => {
+                    this.applyFormat('fontSize', e.target.value);
+                });
+
+                // Cell clicks
+                document.getElementById('cellsGrid').addEventListener('click', (e) => {
+                    if (e.target.classList.contains('cell')) {
+                        const row = parseInt(e.target.dataset.row);
+                        const col = parseInt(e.target.dataset.col);
+                        this.selectCell(row, col);
+                    }
+                });
+
+                // Cell double-click
+                document.getElementById('cellsGrid').addEventListener('dblclick', (e) => {
+                    if (e.target.classList.contains('cell')) {
+                        const row = parseInt(e.target.dataset.row);
+                        const col = parseInt(e.target.dataset.col);
+                        this.startEditing(row, col);
+                    }
+                });
+
+                // Formula bar
+                const formulaInput = document.getElementById('formulaInput');
+                formulaInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.setCellValue(this.selectedCell.row, this.selectedCell.col, formulaInput.value);
+                        this.finishEditing(false);
+                        this.selectCell(this.selectedCell.row + 1, this.selectedCell.col);
+                    } else if (e.key === 'Escape') {
+                        this.finishEditing(false);
+                    }
+                });
+
+                formulaInput.addEventListener('input', (e) => {
+                    const input = document.querySelector('.cell-input');
+                    if (input) {
+                        input.value = e.target.value;
+                    }
+                });
+
+                // Keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    if (document.activeElement === formulaInput || document.querySelector('.cell-input')) {
+                        return;
+                    }
+
+                    const { row, col } = this.selectedCell;
+
+                    switch (e.key) {
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            if (row > 0) this.selectCell(row - 1, col);
+                            break;
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            if (row < this.rows - 1) this.selectCell(row + 1, col);
+                            break;
+                        case 'ArrowLeft':
+                            e.preventDefault();
+                            if (col > 0) this.selectCell(row, col - 1);
+                            break;
+                        case 'ArrowRight':
+                            e.preventDefault();
+                            if (col < this.cols - 1) this.selectCell(row, col + 1);
+                            break;
+                        case 'Enter':
+                            e.preventDefault();
+                            this.startEditing(row, col);
+                            break;
+                        case 'Tab':
+                            e.preventDefault();
+                            if (e.shiftKey) {
+                                if (col > 0) this.selectCell(row, col - 1);
+                            } else {
+                                if (col < this.cols - 1) this.selectCell(row, col + 1);
+                            }
+                            break;
+                        case 'Delete':
+                        case 'Backspace':
+                            e.preventDefault();
+                            this.setCellValue(row, col, '');
+                            break;
+                        default:
+                            if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+                                this.startEditing(row, col);
+                                setTimeout(() => {
+                                    const input = document.querySelector('.cell-input');
+                                    if (input) {
+                                        input.value = e.key;
+                                        input.setSelectionRange(1, 1);
+                                    }
+                                }, 0);
+                            }
+                    }
+
+                    // Ctrl+C, Ctrl+X, Ctrl+V
+                    if (e.ctrlKey || e.metaKey) {
+                        switch (e.key.toLowerCase()) {
+                            case 'c':
+                                e.preventDefault();
+                                this.copyCell();
+                                break;
+                            case 'x':
+                                e.preventDefault();
+                                this.cutCell();
+                                break;
+                            case 'v':
+                                e.preventDefault();
+                                this.pasteCell();
+                                break;
+                            case 'b':
+                                e.preventDefault();
+                                this.applyFormat('bold');
+                                break;
+                            case 'i':
+                                e.preventDefault();
+                                this.applyFormat('italic');
+                                break;
+                            case 'u':
+                                e.preventDefault();
+                                this.applyFormat('underline');
+                                break;
+                        }
+                    }
+                });
+
+                // Cell input handling
+                document.addEventListener('keydown', (e) => {
+                    const input = document.querySelector('.cell-input');
+                    if (!input) return;
+
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.setCellValue(this.editingCell.row, this.editingCell.col, input.value);
+                        this.finishEditing(false);
+                        this.selectCell(this.editingCell.row + 1, this.editingCell.col);
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        this.finishEditing(false);
+                    } else if (e.key === 'Tab') {
+                        e.preventDefault();
+                        this.setCellValue(this.editingCell.row, this.editingCell.col, input.value);
+                        this.finishEditing(false);
+                        const newCol = e.shiftKey ? this.editingCell.col - 1 : this.editingCell.col + 1;
+                        if (newCol >= 0 && newCol < this.cols) {
+                            this.selectCell(this.editingCell.row, newCol);
+                        }
+                    }
+                });
+
+                // Scroll handling
+                const viewport = document.getElementById('cellsViewport');
+                let scrollTimeout;
+                viewport.addEventListener('scroll', () => {
+                    clearTimeout(scrollTimeout);
+                    scrollTimeout = setTimeout(() => {
+                        this.renderCells();
+                    }, 50);
+                });
+
+                // Column header selection
+                document.getElementById('columnHeaders').addEventListener('click', (e) => {
+                    if (e.target.classList.contains('column-header')) {
+                        const col = parseInt(e.target.dataset.col);
+                        this.selectColumn(col);
+                    }
+                });
+
+                // Row header selection
+                document.getElementById('rowHeaders').addEventListener('click', (e) => {
+                    if (e.target.classList.contains('row-header')) {
+                        const row = parseInt(e.target.dataset.row);
+                        this.selectRow(row);
+                    }
+                });
+            }
+
+            selectColumn(col) {
+                document.querySelectorAll('.column-header').forEach(h => h.classList.remove('selected'));
+                const header = document.querySelector(`[data-col="${col}"]`);
+                if (header) header.classList.add('selected');
+                
+                this.selectCell(0, col);
+            }
+
+            selectRow(row) {
+                document.querySelectorAll('.row-header').forEach(h => h.classList.remove('selected'));
+                const header = document.querySelector(`[data-row="${row}"]`);
+                if (header) header.classList.add('selected');
+                
+                this.selectCell(row, 0);
+            }
+        }
+
+        // ==================== INITIALIZE ====================
+        const spreadsheet = new SpreadsheetEngine();
+        
+        // Sample data for testing
+        spreadsheet.setCellValue(0, 0, '100');
+        spreadsheet.setCellValue(1, 0, '200');
+        spreadsheet.setCellValue(2, 0, '300');
+        spreadsheet.setCellValue(3, 0, '=SUM(A1:A3)');
+        spreadsheet.setCellValue(4, 0, '=AVERAGE(A1:A3)');
+        
+        spreadsheet.setCellValue(0, 1, 'Product');
+        spreadsheet.setCellValue(1, 1, 'Price');
+        spreadsheet.setCellValue(2, 1, 'Quantity');
+        spreadsheet.setCellValue(3, 1, 'Total');
+        
+        spreadsheet.setCellValue(0, 2, '=IF(A1>150,"Yüksek","Düşük")');
+    </script>
+</body>
+</html>

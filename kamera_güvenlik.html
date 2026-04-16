@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Güvenlik Kamerası</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👁️</text></svg>">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
+    <style>
+        body {
+            background-color: #111;
+            color: #0f0;
+            font-family: 'Consolas', 'Courier New', monospace;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sol Taraf: Kamera Alanı */
+        #main-view {
+            flex: 3;
+            position: relative;
+            background: #000;
+            border-right: 2px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.9;
+            transition: filter 0.5s; /* Gece görüşü geçişi için */
+        }
+
+        /* YENİ: Gece Görüşü Filtresi */
+        .night-vision {
+            filter: sepia(100%) hue-rotate(90deg) saturate(300%) contrast(1.2) brightness(1.5) !important;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
+        }
+
+        /* YENİ: CRT Tarama Çizgileri Efekti */
+        .scanlines {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            z-index: 15;
+            opacity: 0.6;
+        }
+
+        /* Sağ Taraf: Kontrol Paneli */
+        #sidebar {
+            flex: 1;
+            background: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            box-sizing: border-box;
+            border-left: 2px solid #0f0;
+            max-width: 350px;
+        }
+
+        h2 { margin: 0 0 10px 0; border-bottom: 1px solid #333; padding-bottom: 5px; font-size: 1.2rem; }
+
+        /* YENİ: Kontrol Butonları Alanı */
+        .control-panel {
+            border: 1px solid #333;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #050505;
+        }
+        
+        .btn-group {
+            display: flex; gap: 5px; margin-bottom: 5px;
+        }
+
+        button {
+            flex: 1;
+            background: #002200;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        button:hover { background: #0f0; color: #000; }
+        button.active { background: #0f0; color: #000; }
+        button.recording { background: red; color: white; border-color: red; animation: blink-rec 1s infinite; }
+
+        @keyframes blink-rec { 50% { opacity: 0.5; } }
+
+        /* Log Paneli */
+        #logs-container {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #333;
+            padding: 5px;
+            margin-bottom: 10px;
+            font-size: 0.8rem;
+            color: #aaa;
+            background: #000;
+        }
+        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #222; }
+        .log-warn { color: #ff3333; }
+        .log-info { color: #00ffff; }
+
+        /* Galeri */
+        #gallery {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #333;
+            background: #000;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            padding: 5px;
+        }
+        .snapshot {
+            width: 100%; border: 1px solid #0f0; opacity: 0.7; transition: 0.3s; cursor: pointer;
+        }
+        .snapshot:hover { opacity: 1; border-color: #fff; }
+
+        /* HUD Overlay */
+        .hud-overlay {
+            position: absolute; top: 20px; left: 20px; pointer-events: none; z-index: 20;
+        }
+        .status-badge {
+            background: rgba(0, 50, 0, 0.8); padding: 5px 10px; border: 1px solid #0f0; margin-bottom: 5px; font-size: 0.9rem;
+        }
+
+        .alert-box {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: red; font-size: 3rem; font-weight: bold; border: 5px solid red; padding: 20px;
+            display: none; background: rgba(0,0,0,0.8); z-index: 100; text-align: center;
+        }
+
+        #loading {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #0f0;
+            display: flex; justify-content: center; align-items: center; flex-direction: column; z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading">
+        <h1>SİSTEM BAŞLATILIYOR...</h1>
+        <p>Kamera Erişimi ve AI Modelleri Yükleniyor</p>
+    </div>
+
+    <div id="main-view">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="canvas"></canvas>
+        
+        <div class="scanlines"></div>
+
+        <div class="hud-overlay">
+            <div class="status-badge">SİSTEM: <span style="color:#0f0">ÇEVRİMİÇİ</span></div>
+            <div class="status-badge">MOD: <span id="mode-display">İNSAN TESPİTİ</span></div>
+            <div class="status-badge">SES SEVİYESİ: <span id="audio-lvl">0</span>%</div>
+            <div class="status-badge" id="rec-badge" style="display:none; color:red;">● KAYIT YAPILIYOR</div>
+        </div>
+
+        <div id="alert-box" class="alert-box">TEHDİT ALGILANDI</div>
+    </div>
+
+    <div id="sidebar">
+        <h2>KONTROL MERKEZİ</h2>
+        <div class="control-panel">
+            <div class="btn-group">
+                <button id="btn-mode-person" class="active" onclick="setDetectionMode('person')">👤 İNSAN</button>
+                <button id="btn-mode-all" onclick="setDetectionMode('all')">👁️ HEPSİ</button>
+            </div>
+            <div class="btn-group">
+                <button id="btn-night" onclick="toggleNightVision()">🌑 GECE GÖRÜŞÜ</button>
+            </div>
+            <div class="btn-group">
+                <button id="btn-record" onclick="toggleRecording()">🎥 VİDEO KAYIT</button>
+            </div>
+        </div>
+
+        <h2>OLAY GÜNLÜĞÜ</h2>
+        <div id="logs-container"></div>
+        
+        <h2>KANIT GALERİSİ</h2>
+        <div id="gallery"></div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const logsContainer = document.getElementById('logs-container');
+        const gallery = document.getElementById('gallery');
+        const audioLevelEl = document.getElementById('audio-lvl');
+        const alertBox = document.getElementById('alert-box');
+        const loading = document.getElementById('loading');
+        
+        // Yeni Elemanlar
+        const modeDisplay = document.getElementById('mode-display');
+        const recBadge = document.getElementById('rec-badge');
+        const btnRecord = document.getElementById('btn-record');
+
+        let model = null;
+        let lastPhotoTime = 0; 
+        let audioCtx;
+        let isAlarmPlaying = false;
+        
+        // YENİ: Durum Değişkenleri
+        let detectionMode = 'person'; // 'person' veya 'all'
+        let mediaRecorder;
+        let recordedChunks = [];
+        let isRecording = false;
+
+        // --- SES ALARM SİSTEMİ ---
+        function playAlarmSound() {
+            if(isAlarmPlaying) return;
+            isAlarmPlaying = true;
+            
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.5);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+            
+            setTimeout(() => { isAlarmPlaying = false; }, 500);
+        }
+
+        // --- LOG SİSTEMİ ---
+        function addLog(message, type = 'normal') {
+            const d = new Date();
+            const time = d.toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            if(type === 'warn') div.className += ' log-warn';
+            if(type === 'info') div.className += ' log-info';
+            div.innerText = `[${time}] ${message}`;
+            logsContainer.prepend(div);
+        }
+
+        // --- FOTOĞRAF ÇEKME ---
+        function takeSnapshot() {
+            const snapCanvas = document.createElement('canvas');
+            snapCanvas.width = video.videoWidth;
+            snapCanvas.height = video.videoHeight;
+            const snapCtx = snapCanvas.getContext('2d');
+            
+            // Eğer gece görüşü açıksa filtreyi fotoğrafa da uygula
+            if(video.classList.contains('night-vision')) {
+                snapCtx.filter = 'sepia(100%) hue-rotate(90deg) saturate(300%) contrast(1.2) brightness(1.5)';
+            }
+            snapCtx.drawImage(video, 0, 0);
+            
+            const dataURL = snapCanvas.toDataURL('image/jpeg');
+            const img = document.createElement('img');
+            img.src = dataURL;
+            img.className = 'snapshot';
+            img.onclick = () => {
+                const link = document.createElement('a');
+                link.download = `kanit_${Date.now()}.jpg`;
+                link.href = dataURL;
+                link.click();
+            };
+            gallery.prepend(img);
+            addLog("Kanıt Fotoğrafı Kaydedildi", "info");
+        }
+
+        // --- YENİ: GECE GÖRÜŞÜ FONKSİYONU ---
+        function toggleNightVision() {
+            video.classList.toggle('night-vision');
+            const btn = document.getElementById('btn-night');
+            if(video.classList.contains('night-vision')) {
+                btn.classList.add('active');
+                addLog("Gece Görüşü: AKTİF", "info");
+            } else {
+                btn.classList.remove('active');
+                addLog("Gece Görüşü: KAPALI", "normal");
+            }
+        }
+
+        // --- YENİ: ALGILAMA MODU DEĞİŞTİRME ---
+        function setDetectionMode(mode) {
+            detectionMode = mode;
+            document.getElementById('btn-mode-person').classList.remove('active');
+            document.getElementById('btn-mode-all').classList.remove('active');
+            
+            if(mode === 'person') {
+                document.getElementById('btn-mode-person').classList.add('active');
+                modeDisplay.innerText = "İNSAN TESPİTİ";
+            } else {
+                document.getElementById('btn-mode-all').classList.add('active');
+                modeDisplay.innerText = "TÜM NESNELER";
+            }
+            addLog(`Algılama Modu: ${mode.toUpperCase()}`, "info");
+        }
+
+        // --- YENİ: VİDEO KAYIT (DVR) SİSTEMİ ---
+        function toggleRecording() {
+            if(!isRecording) {
+                // Kaydı Başlat (Canvas'ı kaydediyoruz ki çizimler de çıksın)
+                const stream = canvas.captureStream(30); 
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+                
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) recordedChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `video_kanit_${Date.now()}.webm`;
+                    a.click();
+                    recordedChunks = [];
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                btnRecord.innerText = "KAYDI DURDUR ⏹";
+                btnRecord.classList.add('recording');
+                recBadge.style.display = 'block';
+                addLog("Video Kaydı Başlatıldı", "warn");
+            } else {
+                // Kaydı Durdur
+                mediaRecorder.stop();
+                isRecording = false;
+                btnRecord.innerText = "🎥 VİDEO KAYDET";
+                btnRecord.classList.remove('recording');
+                recBadge.style.display = 'none';
+                addLog("Video Kaydı Tamamlandı ve İndirildi", "info");
+            }
+        }
+
+        // --- KAMERA VE SES ---
+        async function setupCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 1280, height: 720 },
+                    audio: true
+                });
+                video.srcObject = stream;
+                
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioCtx.createMediaStreamSource(stream);
+                const analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 64;
+                source.connect(analyser);
+                analyzeAudio(analyser);
+
+                return new Promise((resolve) => video.onloadedmetadata = () => resolve());
+            } catch (e) {
+                alert("Kamera hatası! Lütfen izin verin.");
+            }
+        }
+
+        function analyzeAudio(analyser) {
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            function loop() {
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for(let i=0; i<dataArray.length; i++) sum += dataArray[i];
+                let average = sum / dataArray.length;
+                let volume = Math.round((average / 255) * 100);
+                
+                audioLevelEl.innerText = volume;
+                
+                if(volume > 50) { 
+                    alertBox.style.display = 'block';
+                    alertBox.innerText = "YÜKSEK SES!";
+                    addLog(`Yüksek Ses Algılandı: ${volume}%`, "warn");
+                    playAlarmSound(); 
+                } else if (alertBox.innerText === "YÜKSEK SES!") {
+                    alertBox.style.display = 'none';
+                }
+                requestAnimationFrame(loop);
+            }
+            loop();
+        }
+
+        // --- AI TESPİT DÖNGÜSÜ (GÜNCELLENDİ) ---
+        async function detect() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const predictions = await model.detect(video);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            let threatFound = false;
+
+            predictions.forEach(pred => {
+                // YENİ: Filtreleme Mantığı
+                let shouldDraw = false;
+                if (detectionMode === 'all') {
+                    shouldDraw = true;
+                } else if (detectionMode === 'person' && pred.class === 'person') {
+                    shouldDraw = true;
+                }
+
+                if (shouldDraw) {
+                    threatFound = true;
+                    const [x, y, w, h] = pred.bbox;
+                    
+                    // Çizim
+                    ctx.strokeStyle = '#ff0000';
+                    ctx.lineWidth = 3;
+                    
+                    // Köşe çizimi
+                    const lineLen = 20;
+                    ctx.beginPath(); ctx.moveTo(x, y+lineLen); ctx.lineTo(x, y); ctx.lineTo(x+lineLen, y); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(x+w-lineLen, y); ctx.lineTo(x+w, y); ctx.lineTo(x+w, y+lineLen); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(x, y+h-lineLen); ctx.lineTo(x, y+h); ctx.lineTo(x+lineLen, y+h); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(x+w-lineLen, y+h); ctx.lineTo(x+w, y+h); ctx.lineTo(x+w, y+h-lineLen); ctx.stroke();
+
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
+                    ctx.fillRect(x, y, w, h);
+
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '14px Consolas';
+                    ctx.fillStyle = 'red';
+                    // Nesne ismini ekrana yaz
+                    ctx.fillText(`${pred.class.toUpperCase()} [%${Math.round(pred.score*100)}]`, x, y - 10);
+                }
+            });
+
+            if (threatFound) {
+                alertBox.style.display = 'block';
+                if(alertBox.innerText !== "YÜKSEK SES!") alertBox.innerText = "TESPİT EDİLDİ";
+                
+                playAlarmSound();
+
+                const now = Date.now();
+                if (now - lastPhotoTime > 3000) {
+                    takeSnapshot();
+                    lastPhotoTime = now;
+                    addLog("Nesne Tespit Edildi!", "warn");
+                }
+            } else {
+                if(alertBox.innerText === "TESPİT EDİLDİ") alertBox.style.display = 'none';
+            }
+
+            requestAnimationFrame(detect);
+        }
+
+        async function init() {
+            await setupCamera();
+            addLog("Kamera bağlantısı kuruldu.", "info");
+            
+            model = await cocoSsd.load();
+            addLog("AI Model (Coco-SSD) yüklendi.", "info");
+            
+            loading.style.display = 'none';
+            detect();
+        }
+
+        init();
+
+    </script>
+</body>
+</html>

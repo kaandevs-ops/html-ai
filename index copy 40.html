@@ -1,0 +1,2305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MacOS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* ========================================================= */
+    /* --- BİRLEŞTİRİLMİŞ STİLLER --- */
+    /* ========================================================= */
+
+    /* Global Reset & Base Styles (From Page 1) */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      width: 100%;
+      height: 100vh;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+
+    .main-container {
+        min-height: 100vh;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        background: url("macos-big-sur-apple-layers-fluidic-colorful-wwdc-stock--1455.jpg") center center;
+        background-size: cover;
+        background-attachment: fixed;
+    }
+
+    /* Finder (Ana Ekran) Uygulama Konteyneri */
+    #finder-app {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column; 
+        align-items: center;
+        flex-grow: 1; /* Ortadaki içeriği dikeyde ortalamak için */
+        padding-top: 70px; /* Menü çubuğu için üstten boşluk */
+    }
+
+    .content-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        flex-grow: 1; 
+    }
+
+    /* Glass Effect Base */
+    .glass-effect {
+        box-shadow: 0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1);
+        transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 2.2);
+        transition: all 0.7s;
+        position: relative;
+        overflow: hidden;
+        color: black;
+        cursor: pointer;
+        margin-top: 650px;
+        font-weight: 600;
+        z-index: 50; 
+    }
+
+    /* Glass Layers */
+    .glass-layer-1 {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 0;
+        overflow: hidden;
+        border-radius: 1.5rem;
+        backdrop-filter: blur(3px);
+        filter: url(#glass-distortion);
+        isolation: isolate;
+    }
+
+    .glass-layer-2 {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: inherit;
+    }
+
+    .glass-layer-3 {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 20;
+        border-radius: 1.5rem;
+        overflow: hidden;
+        box-shadow: inset 2px 2px 1px 0 rgba(255, 255, 255, 0.5), 
+                    inset -1px -1px 1px 1px rgba(255, 255, 255, 0.5);
+    }
+
+    .glass-content {
+        position: relative;
+        z-index: 30;
+    }
+
+    /* Dock Styles */
+    .dock-container {
+        border-radius: 1.5rem;
+        padding: 0.75rem;
+        transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+    }
+
+    .dock-container:hover {
+        padding: 1rem;
+        border-radius: 2rem;
+    }
+
+    .dock-icons {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border-radius: 1.5rem;
+        padding: 0.50rem 0.90rem 0;
+        overflow: hidden;
+    }
+
+    .dock-icon {
+        width: 4rem;
+        height: 4rem;
+        transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+        transform-origin: center center;
+        cursor: pointer;
+    }
+
+    .dock-icon:hover {
+        transform: scale(1.1);
+    }
+    
+    /* YENİ: Aktif Uygulama Noktası Stilleri */
+    .dock-icon {
+        position: relative; /* Noktayı konumlandırmak için eklendi */
+    }
+
+    .dock-icon .active-dot {
+        position: absolute;
+        bottom: 2px; /* İkonun altından ne kadar uzakta olacağı */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 6px;
+        height: 6px;
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+        opacity: 0; /* Varsayılan olarak gizli */
+        transition: opacity 0.3s;
+        z-index: 10;
+    }
+
+    .dock-icon.app-is-open .active-dot {
+        opacity: 1; /* app-is-open sınıfı eklendiğinde görünür yap */
+    }
+
+    /* YENİ: Dock'u Tam Ekranda Gizleme Stili */
+    .dock-container.hidden-on-fullscreen {
+        transform: translateY(100px); /* Ekran dışına kaydır */
+        opacity: 0;
+        pointer-events: none; /* Tıklamayı engelle */
+    }
+
+    /* Button Styles */
+    .button-container {
+        border-radius: 1.5rem;
+        padding: 1.5rem 2.5rem;
+        overflow: hidden;
+        transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+    }
+
+    .button-container:hover {
+        padding: 1.75rem 2.75rem;
+        border-radius: 2rem;
+    }
+
+    .button-content {
+        transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+    }
+
+    .button-container:hover .button-content {
+        transform: scale(0.95);
+    }
+
+    .button-text {
+        font-size: 1.25rem;
+        color: white;
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    }
+
+
+    /* --- Menu Bar Styles --- */
+    .menu-bar-container { 
+      width: 100%;
+      max-width: none; 
+      position: fixed; /* Sabit konum */
+      top: 0;
+      left: 0;
+      padding: 8px;
+      z-index: 1000; /* Her zaman en üstte */
+      transform: translateY(0); /* Varsayılan konum */
+      transition: transform 0.3s ease-in-out; /* Animasyon ekle */
+    }
+    
+    /* GİZLİ MENÜ ÇUBUĞU (Artık sadece Tam Ekran için kullanılacak) */
+    .menu-bar-container.hidden-on-app {
+        transform: translateY(-48px); /* Menü çubuğunun yüksekliğine göre ayarla (48px = 32px yükseklik + 16px padding) */
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .menu-bar {
+      height: 32px;
+      max-width: 1450px; 
+      margin: 0 auto; 
+      background: rgba(138, 52, 52, 0);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+    }
+
+    .left-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .apple-logo {
+      cursor: pointer;
+      opacity: 1;
+      transition: opacity 0.15s;
+      display: flex;
+      align-items: center;
+    }
+
+    .apple-logo:hover {
+      opacity: 0.8;
+    }
+
+    .app-name {
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .menu-items {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .menu-item {
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      opacity: 1;
+      transition: opacity 0.15s;
+      user-select: none;
+    }
+
+    .menu-item:hover {
+      opacity: 0.8;
+    }
+
+    /* GÜNCELLENMİŞ SAĞ BÖLÜM (Simgeler ve Tarih/Saat için) */
+    .right-section {
+      display: flex;
+      align-items: center;
+      gap: 12px; /* Simgeler arasındaki boşluk */
+    }
+
+    .icon {
+      cursor: pointer;
+      opacity: 1;
+      transition: opacity 0.15s;
+      display: flex;
+      align-items: center;
+    }
+
+    .icon:hover {
+      opacity: 0.8;
+    }
+
+    /* GÜNCELLENMİŞ SAAT VE TARİH */
+    .clock {
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+      user-select: none;
+      cursor: pointer;
+      opacity: 1;
+      transition: opacity 0.15s;
+      display: flex; 
+      align-items: center;
+      gap: 4px; /* Saat ve tarih arasındaki boşluk */
+      margin-left: 4px;
+    }
+
+    .clock .date-part {
+        font-size: 13px;
+        font-weight: 500;
+        color: white;
+        opacity: 0.8;
+    }
+
+    .clock:hover {
+      opacity: 0.8;
+    }
+
+    /* Dropdown Styles */
+    .dropdown {
+      position: absolute;
+      background: rgba(40, 40, 40, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      min-width: 220px;
+      z-index: 200;
+      display: none;
+      animation: menuFadeIn 0.15s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    }
+
+    .dropdown.show {
+      display: block;
+    }
+
+    .dropdown-content {
+      padding: 4px 0;
+    }
+
+    .dropdown-item {
+      padding: 4px 16px;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.1s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dropdown-item:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .dropdown-separator {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.15);
+      margin: 4px 8px;
+    }
+
+    .dropdown-label {
+      display: flex;
+      align-items: center;
+    }
+
+    .submenu-arrow {
+      margin-left: 8px;
+      font-size: 10px;
+      opacity: 0.7;
+    }
+
+    .shortcut {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-left: 16px;
+    }
+
+    @keyframes menuFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-5px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+
+    /* --- Uygulama Penceresi Stilleri (Music & Mail) --- */
+
+    /* Genel Pencere Konteyneri */
+    .app-window-container {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80vw; /* Pencere genişliği */
+        height: 80vh; /* Pencere yüksekliği */
+        min-width: 700px;
+        min-height: 500px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        display: none; /* Varsayılan olarak kapalı */
+        z-index: 90; /* Z-Index JavaScript ile yönetilecek */
+        resize: both; /* Yeniden boyutlandırmaya izin ver */
+        cursor: grab; /* Sürükleme için imleç */
+    }
+    
+    /* YENİ: Tam Ekran Stili */
+    .app-window-container.fullscreen {
+        width: 100vw;
+        height: 100vh;
+        top: 0;
+        left: 0;
+        transform: none !important; /* Sürükleme transform'unu geçersiz kıl */
+        border-radius: 0;
+        transition: all 0.3s ease-in-out; /* Yumuşak geçiş */
+        resize: none; /* Tam ekranda yeniden boyutlandırmayı engelle */
+    }
+    
+    /* Pencere Başlık Çubuğu (Trafik ışıkları ve sürükleme alanı) */
+    .window-titlebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 36px; /* Başlık çubuğu yüksekliği */
+        background: rgba(255, 255, 255, 0.05); /* Arka planı hafiflet */
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        padding-left: 15px;
+        /* Uygulama içeriği tarafından sürüklenmeye izin vermek için (sadece butonlar hariç) */
+        -webkit-app-region: drag; 
+        cursor: grab; 
+    }
+    
+    /* YENİ: Tam Ekrandayken Başlık Çubuğu İnceltme */
+    .app-window-container.fullscreen .window-titlebar {
+        height: 24px;
+        padding-left: 10px;
+        background: rgba(255, 255, 255, 0.01);
+        backdrop-filter: blur(5px);
+    }
+    
+    /* Music App ana konteyner (Home ekranını örtecek) */
+    #music-app {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+        color: #fff;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column; /* İçeriği dikey düzenle */
+        padding-top: 36px; /* Başlık çubuğu için boşluk */
+    }
+
+    .app-container {
+        display: flex;
+        flex: 1; /* Geri kalan alanı kapla */
+        overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        width: 240px;
+        background: rgba(22, 22, 22, 0.95);
+        backdrop-filter: blur(20px);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 20px; /* Pencere olarak açıldığı için üst boşluğu azalt */
+    }
+    
+    /* Music Main Content'in üst boşluğunu kaldır */
+    .main-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 40px;
+        padding-bottom: 120px;
+        padding-top: 20px;
+    }
+
+
+    /* --- Mail App Styles --- */
+    #mail-app {
+        width: 100%;
+        height: 100%;
+        background: #1a1a1a;
+        color: #fff;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        padding-top: 36px; /* Başlık çubuğu için boşluk */
+    }
+
+    .mail-app-container {
+        display: flex;
+        flex: 1;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .mail-sidebar {
+        width: 250px;
+        background: rgba(22, 22, 22, 0.95);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        flex-direction: column;
+        padding-top: 20px; /* Pencere olarak açıldığı için üst boşluğu azalt */
+    }
+
+    .mail-list-panel {
+        width: 350px;
+        background: rgba(30, 30, 30, 0.95);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        overflow-y: auto;
+        padding-top: 0px; /* Başlık çubuğunun altında kalmalı */
+    }
+    
+    .mail-content-panel {
+        flex: 1;
+        overflow-y: auto;
+        padding: 50px;
+        padding-top: 20px; /* Başlık çubuğunun altında kalmalı */
+    }
+
+    /* Mail List Header düzeltmesi */
+    .mail-list-header {
+        position: sticky;
+        top: 0;
+        background: rgba(30, 30, 30, 0.95);
+        z-index: 10;
+        padding: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    /* --- Mail App Styles SONU --- */
+
+    /* --- TRAFİK IŞIĞI BUTONLARI --- */
+    .traffic-lights {
+        position: relative; 
+        top: 0; 
+        left: 0;
+        display: flex;
+        gap: 8px;
+        z-index: 110; 
+        -webkit-app-region: no-drag; /* Butonların üzerine sürüklemeyi engelle */
+    }
+
+    .traffic-light-button {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.1s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .traffic-light-button.red {
+        background-color: #ff5f57;
+    }
+
+    .traffic-light-button.yellow {
+        background-color: #ffbd2e;
+    }
+
+    .traffic-light-button.green {
+        background-color: #27c93f;
+    }
+
+    /* Hover/Focus icon effect */
+    .traffic-light-button::after {
+        content: '';
+        position: absolute;
+        font-size: 8px;
+        font-weight: bold;
+        color: rgba(0, 0, 0, 0.6);
+        opacity: 0;
+        transition: opacity 0.1s;
+    }
+
+    .traffic-light-button:hover::after {
+        opacity: 1;
+    }
+
+    /* Specific icons */
+    .traffic-light-button.red:hover::after {
+        content: '×'; /* Close icon */
+        transform: translateY(-1px);
+    }
+
+    .traffic-light-button.yellow:hover::after {
+        content: '—'; /* Minimize icon */
+        font-size: 10px;
+        transform: translateY(-1px);
+    }
+
+    .traffic-light-button.green:hover::after {
+        content: '⤡'; /* Zoom/Fullscreen icon */
+        font-size: 7px;
+    }
+    /* --- TRAFİK IŞIĞI BUTONLARI SONU --- */
+
+    /* Diğer Music App/Mail App stilleri (Değişmedi) */
+    
+    .logo {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .logo::before {
+        content: '🎵';
+        font-size: 28px;
+    }
+    
+    .nav-item {
+        padding: 12px 16px;
+        margin-bottom: 5px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+    }
+    
+    /* İkon Boyutu Düzeltme */
+    .icon {
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Music App Content Stilleri */
+    .nav-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-item.active {
+        background: rgba(255, 255, 255, 0.15);
+        font-weight: 500;
+    }
+
+    .nav-section {
+        margin-top: 30px;
+    }
+
+    .nav-section-title {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.5);
+        margin-bottom: 10px;
+        padding-left: 16px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .page {
+        display: none;
+    }
+
+    .page.active {
+        display: block;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .search-bar {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        padding: 12px 20px;
+        width: 400px;
+        color: #fff;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.3s;
+    }
+    
+    .player {
+        position: absolute; /* Fixed yerine absolute kullanıldı, parent artık window container */
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(18, 18, 18, 0.98);
+        backdrop-filter: blur(40px);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 15px 30px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        z-index: 100;
+    }
+
+    .player-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        width: 300px;
+    }
+
+    .player-cover {
+        width: 56px;
+        height: 56px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .player-info {
+        flex: 1;
+    }
+
+    .player-title {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+
+    .player-artist {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .player-center {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .player-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .control-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .play-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+        color: #fff;
+    }
+    
+    .progress-container {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        max-width: 500px;
+        gap: 10px;
+    }
+    
+    .time {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.6);
+        width: 30px;
+        text-align: center;
+    }
+    
+    .progress-bar {
+        flex: 1;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: #fff;
+        border-radius: 2px;
+        width: 30%;
+        transition: width 0.1s;
+    }
+    
+    .player-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        width: 200px;
+        justify-content: flex-end;
+    }
+
+    /* ========================================================= */
+    /* --- DENETİM MERKEZİ (CONTROL CENTER) STİLLERİ --- */
+    /* ========================================================= */
+
+    /* Denetim Merkezi (Control Center) Açılır Menü Stilleri */
+    #control-center-dropdown {
+      position: absolute;
+      top: 45px; /* Menü çubuğunun altı */
+      right: 8px; /* Sağ kenara hizalı */
+      width: 300px; /* Daha geniş */
+      padding: 10px;
+      background: rgba(40, 40, 40, 0.75);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      z-index: 999; 
+      display: none;
+      animation: menuFadeIn 0.2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+      color: white;
+    }
+
+    #control-center-dropdown.show {
+        display: block;
+    }
+
+    /* CC Grup Yapısı (Modüller arası boşluk) */
+    .cc-group {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        margin-bottom: 10px;
+        padding: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: space-between;
+    }
+    
+    /* İki Modül Yan Yana (Wi-Fi/Bluetooth) */
+    .cc-group > .cc-module {
+        flex: 1 1 calc(50% - 5px); /* İki modül yan yana, ortada 10px boşluk */
+        min-width: 120px;
+        height: 60px;
+        padding: 0;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+    }
+    
+    /* Toggle Buton İçeriği */
+    .cc-toggle {
+        padding: 10px;
+    }
+
+    .cc-icon {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        min-height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        transition: background-color 0.15s;
+    }
+
+    /* Toggle Açık Durum Simülasyonu */
+    .cc-toggle-on {
+        background: #007aff !important; /* Açık mavi */
+    }
+    
+    .cc-group > .cc-module:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .cc-label {
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* Kaydırıcı (Slider) Stilleri */
+    .cc-slider-label {
+        flex-basis: 100%;
+        padding: 0 5px;
+        background: transparent !important;
+        cursor: default !important;
+        height: auto !important;
+        font-size: 12px;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: -5px;
+    }
+    
+    .cc-slider-row {
+        flex-basis: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        height: 36px !important;
+        padding: 0 10px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .cc-slider-sim {
+        flex: 1;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 3px;
+        position: relative;
+        cursor: grab;
+    }
+    
+    .cc-slider-sim::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: var(--progress);
+        background: white;
+        border-radius: 3px;
+        transition: width 0.1s;
+    }
+
+    /* Grid 4 (Ekran Yansıtma, Night Shift) */
+    .cc-grid-4 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        padding: 0;
+        background: none;
+        gap: 10px;
+    }
+
+    .cc-grid-4 .cc-module {
+        background: rgba(255, 255, 255, 0.1);
+        height: 36px !important;
+        flex: auto !important;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 500;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        transition: background-color 0.15s;
+    }
+    
+    .cc-grid-4 .cc-module:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .cc-pill-on {
+        background: #34c759 !important;
+        color: white;
+    }
+    
+  </style>
+</head>
+<body>
+    <svg style="display: none;">
+        <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
+            <feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/>
+            <feComponentTransfer in="turbulence" result="mapped">
+                <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/>
+                <feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/>
+                <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/>
+            </feComponentTransfer>
+            <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/>
+            <feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight">
+                <fePointLight x="-200" y="-200" z="300"/>
+            </feSpecularLighting>
+            <feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+    </svg>
+
+    <div class="main-container">
+
+        <div class="menu-bar-container">
+            <div class="menu-bar">
+                <div class="left-section">
+                    <div class="apple-logo" id="appleLogo">
+                        <svg width="15" height="19" viewBox="0 0 110 140" fill="white">
+                            <path d="M0 0 C5.58236403 2.09904125 9.60467483 0.88914551 14.97265625 -1.09375 C24.52115711 -4.439908 34.11309717 -4.54862597 43.35546875 -0.23046875 C48.12396107 2.4076135 50.86575425 5.08527779 53.41015625 9.90625 C52.35828125 10.69 51.30640625 11.47375 50.22265625 12.28125 C44.71078889 17.03285979 41.56508326 23.28635633 40.47265625 30.46875 C40.03168138 38.29605399 41.87292643 44.10920342 46.82421875 50.18359375 C49.69950343 53.3067478 52.89615914 55.56358526 56.41015625 57.90625 C53.62981681 69.36905295 47.16852412 82.51930379 37.16015625 89.40625 C32.57853571 91.90531575 28.55304343 92.53884155 23.41015625 91.90625 C21.37403354 91.28785199 19.35323208 90.61750058 17.34765625 89.90625 C8.57237805 86.84256185 3.23794872 88.20952158 -5.43359375 91.00390625 C-10.61364364 92.48483636 -14.47478385 92.64004629 -19.65234375 90.84375 C-33.68747534 81.58653555 -41.78781841 64.33028781 -45.19067383 48.33569336 C-47.46721739 34.48010623 -46.65131557 19.75938694 -38.46484375 8.03125 C-28.23499655 -4.14713952 -14.17528672 -5.71090688 0 0 Z" transform="translate(45.58984375,33.09375)"/>
+                            <path d="M0 0 C0.57231958 7.72631433 -0.96546021 14.10973315 -5.80078125 20.30859375 C-10.932Continuation of the previous response:
+-10.93255592 25.73930675 -15.29387058 28.82351765 -22.9375 29.1875 C-23.948125 29.125625 -24.95875 29.06375 -26 29 C-26.59493662 20.81962143 -24.35167303 14.76774508 -19.375 8.25 C-14.46051828 2.89895264 -7.38077314 -0.97115436 0 0 Z" transform="translate(76,0)"/>
+                        </svg>
+                    </div>
+
+                    <span class="app-name" id="appName">Finder</span>
+
+                    <div class="menu-items">
+                        <span class="menu-item" data-menu="File">File</span>
+                        <span class="menu-item" data-menu="Edit">Edit</span>
+                        <span class="menu-item" data-menu="View">View</span>
+                        <span class="menu-item" data-menu="Go">Go</span>
+                        <span class="menu-item" data-menu="Window">Window</span>
+                        <span class="menu-item" data-menu="Help">Help</span>
+                        
+
+                    </div>
+                </div>
+
+                <div class="right-section">
+                    <div class="icon" id="spotlight-icon" title="Spotlight">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </div>
+                    
+                    <div class="icon" title="Wi-Fi">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55S6.87 14.86 12 14.86s7-2.31 7-2.31"></path><path d="M2 9S4.7 11.87 12 11.87s10-2.87 10-2.87"></path><path d="M8.5 15.5S9.5 17 12 17s3.5-1.5 3.5-1.5"></path></svg>
+                    </div>
+                    
+                    <div class="icon" title="Pil: %90">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect><line x1="23" y1="12" x2="23" y2="12"></line></svg>
+                    </div>
+
+                    <div class="icon" id="control-center-icon" title="Denetim Merkezi">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    </div>
+
+                    <span class="clock" id="clock">
+                        <span class="date-part" id="date-display">Kas 11 Sal</span>
+                        <span class="time-part">12:33</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div id="finder-app">
+            
+
+            <div class="dock-container glass-effect">
+                <div class="dock-icons">
+                    <a href="#" class="dock-icon" title="Music" id="music-dock-icon">
+                        <svg width="60" height="60" viewBox="0 0 100 100">
+                            <defs>
+                                <linearGradient id="musicGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#FF00A5;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#FFD400;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                            <rect width="100" height="100" rx="20" fill="url(#musicGradient)"/>
+                            <path d="M70 75 V35 H55 V60 L55 70 M30 75 V35 H45 V75 M55 35 H70 V45 H55 Z" fill="white"/>
+                            <circle cx="30" cy="75" r="5" fill="white"/>
+                            <circle cx="70" cy="75" r="5" fill="white"/>
+                        </svg>
+                        <div class="active-dot"></div>
+                    </a>
+                    <a href="#" class="dock-icon" title="Finder">
+                        <svg width="60" height="60" viewBox="0 0 100 100" fill="none">
+                            <rect width="100" height="100" rx="20" fill="#50E3C2"/>
+                            <path d="M50 10 L80 50 L50 90 L20 50 Z" fill="#F8395A"/>
+                            <path d="M50 10 L50 90 M10 50 H90" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                        </svg>
+                    </a>
+                    <a href="#" class="dock-icon" title="Mail" id="mail-dock-icon">
+                        <svg width="60" height="60" viewBox="0 0 100 100" fill="none">
+                            <rect width="100" height="100" rx="20" fill="#2E7EAA"/>
+                            <path d="M15 30 L50 60 L85 30 V70 H15 Z" fill="white"/>
+                            <path d="M15 30 L50 60 L85 30 M15 30 V70 M85 30 V70" stroke="#2E7EAA" stroke-width="4" stroke-linecap="round"/>
+                        </svg>
+                        <div class="active-dot"></div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="music-window" class="app-window-container">
+            <div class="window-titlebar" id="music-titlebar">
+                <div class="traffic-lights">
+                    <div class="traffic-light-button red" data-action="close" data-app-id="music-window"></div>
+                    <div class="traffic-light-button yellow" data-action="minimize" data-app-id="music-window"></div>
+                    <div class="traffic-light-button green" data-action="zoom" data-app-id="music-window"></div>
+                </div>
+            </div>
+            
+            <div id="music-app">
+                <div class="app-container">
+                    <div class="sidebar">
+                        <div class="logo">Apple Music</div>
+                        <div class="nav-section">
+                            <div class="nav-section-title">Kitaplık</div>
+                            <div class="nav-item active" data-page="home">
+                                <span class="icon">🏠</span>
+                                <span>Ana Sayfa</span>
+                            </div>
+                            <div class="nav-item" data-page="songs">
+                                <span class="icon">🎵</span>
+                                <span>Şarkılar</span>
+                            </div>
+                            <div class="nav-item" data-page="radio">
+                                <span class="icon">📻</span>
+                                <span>Radyo</span>
+                            </div>
+                        </div>
+
+                        <div class="nav-section">
+                            <div class="nav-section-title">Çalma Listeleri</div>
+                            <div class="nav-item" data-page="playlist-1">
+                                <span class="icon">🎶</span>
+                                <span>Pop Hitleri</span>
+                            </div>
+                            <div class="nav-item" data-page="playlist-2">
+                                <span class="icon">🎧</span>
+                                <span>Rock Klasikleri</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="main-content">
+                        <div class="header">
+                            <input type="text" class="search-bar" placeholder="Müzik, Sanatçı, Albüm veya Çalma Listesi Ara...">
+                            <div class="user-profile">AD</div>
+                        </div>
+
+                        <div id="home" class="page active">
+                            <h1 class="section-title">Sana Özel</h1>
+                            <div class="featured" style="height: 250px;">
+                                <div class="featured-content">
+                                    <div class="featured-label">YENİ ÇALMA LİSTESİ</div>
+                                    <div class="featured-title" style="font-size: 32px;">Haftanın En İyileri</div>
+                                    <div class="featured-subtitle" style="font-size: 16px;">Bu hafta en çok dinlenen şarkılar, yalnızca senin için.</div>
+                                    <button class="play-button" style="width: 45px; height: 45px; font-size: 18px;">▶</button>
+                                </div>
+                            </div>
+
+                            <h2 class="section-title">Popüler Şarkılar</h2>
+                            <div class="album-grid">
+                                <div class="album-card" data-song="1">
+                                    <div class="album-cover" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                                        <button class="album-play-btn">▶</button>
+                                    </div>
+                                    <div class="album-title">Levitating</div>
+                                    <div class="album-artist">Dua Lipa</div>
+                                </div>
+                                <div class="album-card" data-song="2">
+                                    <div class="album-cover" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                                        <button class="album-play-btn">▶</button>
+                                    </div>
+                                    <div class="album-title">Stay</div>
+                                    <div class="album-artist">The Kid LAROI, Justin Bieber</div>
+                                </div>
+                                <div class="album-card" data-song="3">
+                                    <div class="album-cover" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+                                        <button class="album-play-btn">▶</button>
+                                    </div>
+                                    <div class="album-title">Heat Waves</div>
+                                    <div class="album-artist">Glass Animals</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="songs" class="page">
+                            <h1 class="section-title">Tüm Şarkılar</h1>
+                            <div class="songs-list">
+                                <div class="song-row header">
+                                    <div class="song-number">#</div>
+                                    <div class="song-info">BAŞLIK</div>
+                                    <div class="song-album">ALBÜM</div>
+                                    <div class="song-duration">SÜRE</div>
+                                    <div class="song-actions"></div>
+                                </div>
+                                <div class="song-row playing" data-song="0">
+                                    <div class="song-number">1</div>
+                                    <div class="song-info">
+                                        <div class="song-cover" style="background: linear-gradient(135deg, #667eea, #764ba2);"></div>
+                                        <div class="song-details">
+                                            <div class="song-name">Blinding Lights</div>
+                                            <div class="song-artist">The Weeknd</div>
+                                        </div>
+                                    </div>
+                                    <div class="song-album">After Hours</div>
+                                    <div class="song-duration">3:20</div>
+                                    <div class="song-actions">
+                                        <button class="action-btn">⋯</button>
+                                    </div>
+                                </div>
+                                <div class="song-row" data-song="1">
+                                    <div class="song-number">2</div>
+                                    <div class="song-info">
+                                        <div class="song-cover" style="background: linear-gradient(135deg, #f093fb, #f5576c);"></div>
+                                        <div class="song-details">
+                                            <div class="song-name">Levitating</div>
+                                            <div class="song-artist">Dua Lipa</div>
+                                        </div>
+                                    </div>
+                                    <div class="song-album">Future Nostalgia</div>
+                                    <div class="song-duration">3:23</div>
+                                    <div class="song-actions">
+                                        <button class="action-btn">⋯</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="player">
+                    <div class="player-left">
+                        <div class="player-cover"></div>
+                        <div class="player-info">
+                            <div class="player-title">Blinding Lights</div>
+                            <div class="player-artist">The Weeknd</div>
+                        </div>
+                        <button class="control-btn">❤️</button>
+                    </div>
+                    <div class="player-center">
+                        <div class="player-controls">
+                            <button class="control-btn">🔀</button>
+                            <button class="control-btn prev-btn">⏮️</button>
+                            <button class="control-btn play-btn">⏸️</button>
+                            <button class="control-btn next-btn">⏭️</button>
+                            <button class="control-btn">🔁</button>
+                        </div>
+                        <div class="progress-container">
+                            <span class="time current-time">0:00</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill"></div>
+                            </div>
+                            <span class="time duration">3:20</span>
+                        </div>
+                    </div>
+                    <div class="player-right">
+                        <button class="control-btn">🔊</button>
+                        <div class="volume-container">
+                            <div class="volume-bar">
+                                <div class="volume-fill"></div>
+                            </div>
+                        </div>
+                        <button class="control-btn">☰</button>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        <div id="mail-window" class="app-window-container">
+            <div class="window-titlebar" id="mail-titlebar">
+                <div class="traffic-lights">
+                    <div class="traffic-light-button red" data-action="close" data-app-id="mail-window"></div>
+                    <div class="traffic-light-button yellow" data-action="minimize" data-app-id="mail-window"></div>
+                    <div class="traffic-light-button green" data-action="zoom" data-app-id="mail-window"></div>
+                </div>
+            </div>
+
+            <div id="mail-app">
+                <div class="mail-app-container">
+                    <div class="mail-sidebar">
+                        <h2 style="padding: 0 15px; margin-bottom: 20px; font-size: 18px; font-weight: 600; color: #fff;">Posta Kutuları</h2>
+                        <div style="padding: 0 15px;">
+                            <div class="nav-item active" style="padding: 8px 10px; margin-bottom: 5px; background: rgba(255, 255, 255, 0.1); color: #fff; cursor: pointer; border-radius: 8px;">Gelen Kutusu (3)</div>
+                            <div class="nav-item" style="padding: 8px 10px; margin-bottom: 5px; color: #fff; cursor: pointer; border-radius: 8px;">Taslaklar</div>
+                            <div class="nav-item" style="padding: 8px 10px; margin-bottom: 5px; color: #fff; cursor: pointer; border-radius: 8px;">Gönderilenler</div>
+                            <div class="nav-item" style="padding: 8px 10px; margin-bottom: 5px; color: #fff; cursor: pointer; border-radius: 8px;">Arşiv</div>
+                        </div>
+                    </div>
+
+                    <div class="mail-list-panel">
+                        <div class="mail-list-header">
+                            <h2 style="font-size: 20px; font-weight: 700;">Gelen Kutusu</h2>
+                        </div>
+                        <div style="padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer; background: rgba(255, 255, 255, 0.05);">
+                            <div style="font-weight: 600; font-size: 14px; color: #fff;">Apple</div>
+                            <div style="font-size: 14px; color: #fff;">iCloud Depolama Alanınız Dolmak Üzere</div>
+                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">iCloud saklama alanınız dolmak üzere. Daha fazla alan satın almak için...</div>
+                        </div>
+                        <div style="padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer;">
+                            <div style="font-weight: 500; font-size: 14px; color: #fff;">Kod Atölyesi</div>
+                            <div style="font-size: 14px; color: #fff;">Yeni MacOS Projesi Hakkında</div>
+                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">Selam, yeni UI/UX özelliklerini entegre etmeye başladık...</div>
+                        </div>
+                        <div style="padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer;">
+                            <div style="font-weight: 500; font-size: 14px; color: #fff;">Gemini</div>
+                            <div style="font-size: 14px; color: #fff;">Son Kodlama İlerlemesi</div>
+                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6); overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">Music ve Mail uygulaması pencereleri başarıyla geri yüklendi...</div>
+                        </div>
+                    </div>
+
+                    <div class="mail-content-panel">
+                        <h1 style="font-size: 24px; margin-bottom: 10px;">iCloud Depolama Alanınız Dolmak Üzere</h1>
+                        <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6); margin-bottom: 30px;">Gönderen: Apple <apple@icloud.com> | 10 Kasım 2025</div>
+                        <p style="margin-bottom: 20px;">Merhaba,</p>
+                        <p style="margin-bottom: 20px;">iCloud saklama alanınız dolmak üzere. Yedeklemelerinizin düzgün çalışması ve yeni dosyaları kaydedebilmeniz için lütfen depolama alanınızı yükseltin.</p>
+                        <p>Saygılarımızla, <br>Apple Destek Ekibi</p>
+                    </div>
+                    <div id="mail-compose-modal" style="display:none; position:absolute; bottom:0; right:20px; width:400px; height:500px; background:#1e1e1e; border:1px solid #333; border-radius:10px 10px 0 0; box-shadow:0 -5px 20px rgba(0,0,0,0.5); z-index:100; flex-direction:column;">
+    <div style="background:#2d2d2d; padding:10px; border-radius:10px 10px 0 0; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-weight:bold; color:white;">Yeni İleti</span>
+        <button onclick="document.getElementById('mail-compose-modal').style.display='none'" style="background:none; border:none; color:#ccc; cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:10px; display:flex; flex-direction:column; gap:10px; flex:1;">
+        <input type="text" id="compose-to" placeholder="Kime:" style="background:#2d2d2d; border:none; padding:8px; color:white; border-radius:4px;">
+        <input type="text" id="compose-subject" placeholder="Konu:" style="background:#2d2d2d; border:none; padding:8px; color:white; border-radius:4px;">
+        <textarea id="compose-body" style="flex:1; background:#2d2d2d; border:none; padding:8px; color:white; border-radius:4px; resize:none;" placeholder="İletiniz..."></textarea>
+        <button style="background:#007aff; color:white; border:none; padding:10px; border-radius:4px; cursor:pointer; font-weight:bold;">Gönder</button>
+    </div>
+</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="control-center-dropdown">
+            <div class="cc-group">
+                <div class="cc-module cc-toggle">
+                    <div class="cc-icon cc-toggle-on" style="background: #007aff;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55S6.87 14.86 12 14.86s7-2.31 7-2.31"></path><path d="M2 9S4.7 11.87 12 11.87s10-2.87 10-2.87"></path><path d="M8.5 15.5S9.5 17 12 17s3.5-1.5 3.5-1.5"></path></svg>
+                    </div>
+                    <div class="cc-label">Wi-Fi (Açık)</div>
+                </div>
+                <div class="cc-module cc-toggle">
+                    <div class="cc-icon cc-toggle-on" style="background: #007aff;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 17.5h11M12 21v-3.5M12 6.5V3M15 9.5l-3-3-3 3M15 14.5l-3 3-3-3"></path></svg>
+                    </div>
+                    <div class="cc-label">Bluetooth (Açık)</div>
+                </div>
+            </div>
+            
+            <div class="cc-group">
+                <div class="cc-module cc-slider-label">
+                    <div class="cc-label">Ekran Parlaklığı</div>
+                </div>
+                <div class="cc-module cc-slider-row">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <div class="cc-slider-sim" style="--progress: 75%;"></div>
+                </div>
+            </div>
+            
+            <div class="cc-group">
+                <div class="cc-module cc-slider-label">
+                    <div class="cc-label">Ses</div>
+                </div>
+                <div class="cc-module cc-slider-row">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2V15H6L11 19V5Z"></path><path d="M19.07 4.93A10 10 0 0115 12a10 10 0 014.07 7.07"></path></svg>
+                    <div class="cc-slider-sim" style="--progress: 50%;"></div>
+                </div>
+            </div>
+
+            <div class="cc-group cc-grid-4">
+                <div class="cc-module cc-pill" style="background: rgba(255, 255, 255, 0.15);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17h-2.5a.5.5 0 01-.5-.5v-4a.5.5 0 01.5-.5h2.5a.5.5 0 01.5.5v4a.5.5 0 01-.5.5z"></path><rect x="3" y="2" width="18" height="20" rx="2" ry="2" stroke-dasharray="1 3"></rect></svg>
+                    Ekran Yansıtma
+                </div>
+                <div class="cc-module cc-pill cc-pill-on" id="night-shift-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1010 10V5h-5a10 10 0 00-5 10v4"></path></svg>
+                    Night Shift
+                </div>
+            </div>
+        </div>
+        <div id="dropdowns-container"></div>
+    </div>
+
+    <div id="dock-context-menu" class="dropdown" style="display: none; position: fixed; z-index: 2000;"></div>
+
+    <audio id="player-audio" style="display: none;"></audio>
+    <script>
+        // =========================================================
+        // --- BİRLEŞTİRİLMİŞ JAVASCRIPT ---
+        // =========================================================
+
+        // Menu Data (Değişmedi)
+        const APPLE_MENU = [
+            { label: 'About This Mac', action: 'about' },
+            { type: 'separator' },
+            { label: 'System Settings...', action: 'settings' },
+            { label: 'App Store...', action: 'app-store' },
+            { type: 'separator' },
+            { label: 'Recent Items', action: 'recent', hasSubmenu: true },
+            { type: 'separator' },
+            { label: 'Force Quit Applications...', action: 'force-quit', shortcut: '⌥⌘⎋' },
+            { type: 'separator' },
+            { label: 'Sleep', action: 'sleep' },
+            { label: 'Restart...', action: 'restart' },
+            { label: 'Shut Down...', action: 'shutdown' },
+            { type: 'separator' },
+            { label: 'Lock Screen', action: 'lock', shortcut: '⌃⌘Q' },
+            { label: 'Log Out...', action: 'logout', shortcut: '⇧⌘Q' }
+        ];
+        const FILE_MENU = [
+            { label: 'New Tab', action: 'new-tab', shortcut: '⌘T' },
+            { label: 'New Window', action: 'new-window', shortcut: '⌘N' },
+            { label: 'New Private Window', action: 'new-private', shortcut: '⇧⌘N' },
+            { type: 'separator' },
+            { label: 'Open File...', action: 'open-file', shortcut: '⌘O' },
+            { label: 'Open Location...', action: 'open-location', shortcut: '⌘L' },
+            { type: 'separator' },
+            { label: 'Close Window', action: 'close-window', shortcut: '⇧⌘W' },
+            { label: 'Close Tab', action: 'close-tab', shortcut: '⌘W' },
+            { label: 'Save Page As...', action: 'save-page', shortcut: '⌘S' },
+            { type: 'separator' },
+            { label: 'Share', action: 'share', hasSubmenu: true },
+            { type: 'separator' },
+            { label: 'Print...', action: 'print', shortcut: '⌘P' }
+        ];
+        const EDIT_MENU = [
+            { label: 'Undo', action: 'undo', shortcut: '⌘Z' },
+            { label: 'Redo', action: 'redo', shortcut: '⇧⌘Z' },
+            { type: 'separator' },
+            { label: 'Cut', action: 'cut', shortcut: '⌘X' },
+            { label: 'Copy', action: 'copy', shortcut: '⌘C' },
+            { label: 'Paste', action: 'paste', shortcut: '⌘V' },
+            { label: 'Select All', action: 'select-all', shortcut: '⌘A' },
+            { type: 'separator' },
+            { label: 'Find', action: 'find', shortcut: '⌘F' },
+            { label: 'Find Next', action: 'find-next', shortcut: '⌘G' },
+            { label: 'Find Previous', action: 'find-prev', shortcut: '⇧⌘G' },
+            { type: 'separator' },
+            { label: 'Start Dictation', action: 'dictation' },
+            { label: 'Emoji & Symbols', action: 'emoji', shortcut: '⌃⌘Space' }
+        ];
+        const VIEW_MENU = [
+            { label: 'Show Tab Bar', action: 'show-tabs' },
+            { label: 'Show Sidebar', action: 'show-sidebar' },
+            { type: 'separator' },
+            { label: 'Hide Toolbar', action: 'hide-toolbar', shortcut: '⌥⌘T' },
+            { label: 'Customize Toolbar...', action: 'customize-toolbar' },
+            { type: 'separator' },
+            { label: 'Show All Tabs', action: 'show-all-tabs', shortcut: '⇧⌘\\' },
+            { type: 'separator' },
+            { label: 'Enter Full Screen', action: 'fullscreen', shortcut: '⌃⌘F' }
+        ];
+        const WINDOW_MENU = [
+            { label: 'Minimize', action: 'minimize', shortcut: '⌘M' },
+            { label: 'Zoom', action: 'zoom' },
+            { type: 'separator' },
+            { label: 'Cycle Through Windows', action: 'cycle-windows', shortcut: '⌘`' },
+            { type: 'separator' },
+            { label: 'Bring All to Front', action: 'bring-to-front' }
+        ];
+        const HELP_MENU = [
+            { label: 'Search', action: 'search-help' },
+            { type: 'separator' },
+            { label: 'App Help', action: 'app-help' },
+            { label: 'Keyboard Shortcuts', action: 'shortcuts' },
+            { type: 'separator' },
+            { label: 'Contact Support', action: 'contact-support' }
+        ];
+        const GO_MENU = [
+            { label: 'Enclosing Folder', action: 'search-help' ,shortcut: '⌘⇧'},
+            { type: 'separator' },
+            { label: 'Recents', action: 'app-help' ,shortcut: '⇧⌘F'},
+            { label: 'Documents', action: 'shortcuts' ,shortcut: '⇧⌘O'},
+            { type: 'separator' },
+            { label: 'Go To Folder', action: 'contact-support' ,shortcut: '⇧⌘G'}
+        ];
+        const MENUS = {
+            'apple': APPLE_MENU,
+            'File': FILE_MENU,
+            'Edit': EDIT_MENU,
+            'View': VIEW_MENU,
+            'Window': WINDOW_MENU,
+            'Help': HELP_MENU,
+            'Go': GO_MENU
+        };
+
+        // State
+        let activeMenu = null;
+        // DEĞİŞTİ: Artık tek bir uygulama yerine açık pencerelerin bir listesini tutuyoruz
+        let openAppWindows = new Set();
+        let globalZIndex = 100; // Pencereleri öne getirmek için
+
+        // YENİ: Pencereyi öne getirme ve odaklama fonksiyonu
+        function bringToFront(windowId) {
+            const win = document.getElementById(windowId);
+            if (!win) return;
+            
+            // Z-index'i artırarak en üste al
+            win.style.zIndex = ++globalZIndex;
+            
+            // Menü çubuğundaki uygulama adını güncelle
+            if (windowId === 'music-window') {
+                document.getElementById('appName').textContent = 'Music';
+            } else if (windowId === 'mail-window') {
+                document.getElementById('appName').textContent = 'Mail';
+            }
+        }
+
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.dropdown').forEach(d => {
+                if(d.id !== 'dock-context-menu') { // Dock menüsü hariç
+                    d.remove();
+                }
+            });
+            activeMenu = null;
+        }
+        
+        // ⭐️ GÜNCELLEME: launchApp artık diğer pencereleri kapatmıyor
+        function launchApp(windowId) {
+            const appWindow = document.getElementById(windowId);
+            if (!appWindow) return;
+
+            appWindow.style.display = 'block'; // Pencereyi göster
+            
+            // Uygulamayı açık listesine ekle
+            openAppWindows.add(windowId);
+            
+            // Pencereyi öne getir ve uygulama adını güncelle
+            bringToFront(windowId);
+
+            // İlgili dock ikonuna 'app-is-open' sınıfını ekle (nokta için)
+            if (windowId === 'music-window') {
+                document.getElementById('music-dock-icon').classList.add('app-is-open');
+            } else if (windowId === 'mail-window') {
+                document.getElementById('mail-dock-icon').classList.add('app-is-open');
+            }
+        }
+
+        // ⭐️ GÜNCELLEME: closeApp artık çoklu pencere durumunu kontrol ediyor
+        function closeApp(windowId) {
+            const appWindow = document.getElementById(windowId);
+            if(appWindow) {
+                appWindow.style.display = 'none';
+                if (appWindow.classList.contains('fullscreen')) {
+                    appWindow.classList.remove('fullscreen');
+                }
+            }
+            
+            // Uygulamayı açık listesinden çıkar
+            openAppWindows.delete(windowId);
+
+            // İlgili dock ikonu sınıfını kaldır (nokta için)
+             if (windowId === 'music-window') {
+                document.getElementById('music-dock-icon').classList.remove('app-is-open');
+            } else if (windowId === 'mail-window') {
+                document.getElementById('mail-dock-icon').classList.remove('app-is-open');
+            }
+
+            // Kapatılan pencere tam ekrandaysa, dock ve menü çubuğunu geri getir
+            const dock = document.querySelector('.dock-container');
+            const menuBar = document.querySelector('.menu-bar-container');
+            if (dock) dock.classList.remove('hidden-on-fullscreen');
+            if (menuBar) menuBar.classList.remove('hidden-on-app');
+
+
+            // Başka AÇIK UYGULAMA KALMADIYSA Finder'a dön
+            if (openAppWindows.size === 0) {
+                document.getElementById('appName').textContent = 'Finder';
+                if(dock) dock.style.display = 'flex'; 
+                document.getElementById('finder-app').style.display = 'flex';
+                closeAllDropdowns();
+            } else {
+                // Başka bir uygulama AÇIKSA, en üsttekine odaklan
+                let topAppId = null;
+                let maxZ = 0;
+                openAppWindows.forEach(id => {
+                    const win = document.getElementById(id);
+                    const z = parseInt(win.style.zIndex || 90);
+                    if (z > maxZ) {
+                        maxZ = z;
+                        topAppId = id;
+                    }
+                });
+                if (topAppId) {
+                    bringToFront(topAppId); // Kalan en üstteki pencereye odaklan
+                }
+            }
+        }
+
+
+        // Update clock (TARİH EKLENDİ)
+        function updateClock() {
+            const now = new Date();
+            
+            // Saat (Örn: 12:33)
+            const timeString = now.toLocaleTimeString('tr-TR', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: false
+            }); 
+            
+            // Tarih (Örn: Kas 11) - macOS tarzı
+            const dateString = now.toLocaleDateString('tr-TR', {
+                month: 'short',
+                day: 'numeric',
+                weekday: 'short'
+            }).replace('.', '').replace(' ', ''); // TR kısaltmalarındaki noktaları ve boşlukları kaldır
+
+            const clockElement = document.getElementById('clock');
+            if (clockElement) {
+                const timePart = clockElement.querySelector('.time-part');
+                const datePart = clockElement.querySelector('.date-part');
+                
+                if (timePart) timePart.textContent = timeString;
+                if (datePart) {
+                    // Sadece günü ve ayı göstermek için formatı biraz daha kısaltalım.
+                    // Örn: Sal 11 Kas -> 11 Kas Sal
+                    const parts = dateString.split(' ');
+                    if (parts.length >= 3) {
+                       datePart.textContent = `${parts[1]} ${parts[2]} ${parts[0]}`;
+                    } else {
+                       datePart.textContent = dateString;
+                    }
+                }
+            }
+        }
+
+        // Create dropdown content (Değişmedi)
+        function createDropdownContent(items) {
+            let html = '<div class="dropdown-content">';
+            items.forEach(item => {
+                if (item.type === 'separator') {
+                    html += '<div class="dropdown-separator"></div>';
+                } else {
+                    html += '<div class="dropdown-item" data-action="' + (item.action || '') + '">';
+                    html += '<span class="dropdown-label">';
+                    html += item.label;
+                    if (item.hasSubmenu) {
+                        html += '<span class="submenu-arrow">▶</span>';
+                    }
+                    html += '</span>';
+                    if (item.shortcut) {
+                        html += '<span class="shortcut">' + item.shortcut + '</span>';
+                    }
+                    html += '</div>';
+                }
+            });
+            html += '</div>';
+            return html;
+        }
+
+        // Show dropdown (Değişmedi)
+        function showDropdown(menuName, triggerElement) {
+            closeAllDropdowns();
+            activeMenu = menuName;
+            
+            const menuItems = MENUS[menuName];
+            if (!menuItems) return;
+
+            const dropdown = document.createElement('div');
+            dropdown.className = 'dropdown show';
+            dropdown.innerHTML = createDropdownContent(menuItems);
+
+            const rect = triggerElement.getBoundingClientRect();
+            
+            // Positioning 
+            if (menuName === 'apple') {
+                dropdown.style.top = (rect.bottom + 4) + 'px';
+                dropdown.style.left = (rect.left - 10) + 'px';
+                dropdown.style.minWidth = '250px';
+            } else {
+                dropdown.style.top = (rect.bottom + 4) + 'px';
+                dropdown.style.left = rect.left + 'px';
+            }
+
+
+            document.getElementById('dropdowns-container').appendChild(dropdown);
+            
+            // Set up action listeners for the new dropdown
+            dropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    console.log(`Action clicked: ${this.getAttribute('data-action')}`);
+                    closeAllDropdowns();
+                });
+            });
+            
+            // Denetim Merkezi'ni kapat
+            const controlCenterDropdown = document.getElementById('control-center-dropdown');
+            if (controlCenterDropdown) controlCenterDropdown.classList.remove('show');
+        }
+
+        /* --- Music App Logic (Geri Yüklendi) --- */
+        const songs = [
+            // Tüm URL'ler geçersiz dosya yolundan, simülasyon amaçlı boş dizeye çevrildi.
+            { title: 'Blinding Lights', artist: 'The Weeknd', album: 'After Hours', duration: '3:20', gradient: 'linear-gradient(135deg, #667eea, #764ba2)', url: 'd1.mp3' },
+            // ... diğer şarkılar
+        ];
+        let currentSongIndex = 0;
+        let isPlaying = false;
+        const audio = document.getElementById('player-audio');
+
+        const playerTitle = document.querySelector('.player-title');
+        const playerArtist = document.querySelector('.player-artist');
+        const playerCover = document.querySelector('.player-cover');
+        const playBtn = document.querySelector('.play-btn');
+        const progressFill = document.querySelector('.progress-fill');
+        const durationDisplay = document.querySelector('.time.duration');
+        const songRows = document.querySelectorAll('.song-row:not(.header)');
+
+        // Update player state (Müzik otomatik başlamayacak şekilde ayarlandı)
+        function updatePlayer(index) {
+            if (index < 0 || index >= songs.length) index = 0;
+            const song = songs[index];
+            if (!song) return; // Güvenlik kontrolü
+
+            // Update Player Arayüzü
+            if(playerTitle) playerTitle.textContent = song.title;
+            if(playerArtist) playerArtist.textContent = song.artist;
+            if(playerCover) playerCover.style.background = song.gradient;
+            if(durationDisplay) durationDisplay.textContent = song.duration;
+            
+            // Ses kaynağını ayarla
+            audio.src = song.url; 
+            
+            // Oynatıcı durumunu sıfırla (Müzik durmuş durumda)
+            if(progressFill) progressFill.style.width = '0%';
+            const currentTimeDisplay = document.querySelector('.time.current-time');
+            if(currentTimeDisplay) currentTimeDisplay.textContent = '0:00';
+            
+            if (playBtn) {
+                // Müzik çalmıyor olarak ayarla
+                isPlaying = false; 
+                playBtn.innerHTML = '▶️'; // Oynat butonu göster
+                audio.pause(); // Olası bir otomatik çalmayı durdur
+            }
+
+            // Şarkı Listesi Vurgularını Güncelle
+            songRows.forEach(row => row.classList.remove('playing'));
+            const currentRow = document.querySelector(`#music-window .song-row[data-song="${index}"]`);
+            if (currentRow) currentRow.classList.add('playing');
+        }
+
+        // --- Event Listeners and Initialization --- //
+        
+        // Toggle Play/Pause (Music Player)
+        if(playBtn) {
+            playBtn.addEventListener('click', () => {
+                // Kullanıcı tıkladığı için isPlaying durumunu tersine çevirebiliriz
+                isPlaying = !isPlaying; 
+                
+                if (isPlaying) {
+                    audio.play().catch(e => {
+                        alert("Müzik çalma başlatılamadı. Geçerli bir ses dosyası yüklediğinizden emin olun!");
+                        console.error("Ses Çalma Hatası:", e);
+                        isPlaying = false; // Başarısız olursa durumu geri al
+                        playBtn.innerHTML = '▶️';
+                    }); 
+                    playBtn.innerHTML = '⏸️';
+                } else {
+                    audio.pause();
+                    playBtn.innerHTML = '▶️';
+                }
+            });
+        }
+        
+        // İlerleme Çubuğunu ve Süreyi Güncelle (Simülasyon)
+        if (audio) {
+            audio.addEventListener('timeupdate', () => {
+                const currentTime = audio.currentTime;
+                const duration = audio.duration; 
+
+                if (progressFill && duration > 0) {
+                    const progressPercent = (currentTime / duration) * 100;
+                    progressFill.style.width = progressPercent + '%';
+                }
+
+                const currentMinutes = Math.floor(currentTime / 60);
+                const currentSeconds = Math.floor(currentTime % 60).toString().padStart(2, '0');
+                const currentTimeDisplay = document.querySelector('.time.current-time');
+                
+                if (currentTimeDisplay) {
+                    currentTimeDisplay.textContent = `${currentMinutes}:${currentSeconds}`;
+                }
+            });
+
+            audio.addEventListener('loadedmetadata', () => {
+                if (durationDisplay && !isNaN(audio.duration)) {
+                    const totalMinutes = Math.floor(audio.duration / 60);
+                    const totalSeconds = Math.floor(audio.duration % 60).toString().padStart(2, '0');
+                    durationDisplay.textContent = `${totalMinutes}:${totalSeconds}`;
+                }
+            });
+        }
+
+
+        // Navigation (Music App Sidebar)
+        const navItems = document.querySelectorAll('#music-window .nav-item[data-page]');
+        const pages = document.querySelectorAll('#music-app .page');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const pageName = item.dataset.page;
+                
+                // Active nav item
+                document.querySelectorAll('#music-window .nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                // Active page
+                pages.forEach(page => {
+                    page.classList.remove('active');
+                    if (page.id === pageName) {
+                        page.classList.add('active');
+                    }
+                });
+            });
+        });
+
+        // Initialize Music App (Müzik uygulaması varsayılan olarak kapalı olduğu için bu kısım gerekli)
+        updatePlayer(0); 
+        
+        // Menu Bar Event Listeners (GÜNCEL)
+        document.getElementById('appleLogo').addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            // Denetim Merkezi'ni kapat
+            const controlCenterDropdown = document.getElementById('control-center-dropdown');
+            if (controlCenterDropdown) controlCenterDropdown.classList.remove('show');
+
+            // ⭐️ DEĞİŞİKLİK: Artık uygulama kapatmıyor, sadece menüyü açıyor
+            if (activeMenu === 'apple') {
+                closeAllDropdowns();
+            } else {
+                showDropdown('apple', this);
+            }
+        });
+
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                // Denetim Merkezi'ni kapat
+                const controlCenterDropdown = document.getElementById('control-center-dropdown');
+                if (controlCenterDropdown) controlCenterDropdown.classList.remove('show');
+                
+                const menuName = this.getAttribute('data-menu');
+                if (activeMenu === menuName) {
+                    closeAllDropdowns();
+                } else {
+                    showDropdown(menuName, this);
+                }
+            });
+        });
+        
+        // --- YENİ KISIM: DENETİM MERKEZİ VE SPOTLIGHT LOGIC ---
+        const controlCenterIcon = document.getElementById('control-center-icon');
+        const controlCenterDropdown = document.getElementById('control-center-dropdown');
+        const spotlightIcon = document.getElementById('spotlight-icon');
+        
+        // Denetim Merkezi Toggle
+        if (controlCenterIcon && controlCenterDropdown) {
+            controlCenterIcon.addEventListener('click', function(e) {
+                e.stopPropagation(); 
+                
+                // Diğer Menü Çubuğu dropdown'larını kapat
+                closeAllDropdowns();
+                
+                // Denetim Merkezi'nin görünürlüğünü aç/kapa
+                controlCenterDropdown.classList.toggle('show');
+            });
+        }
+        
+        // Spotlight (Arama) Simülasyonu
+        if (spotlightIcon) {
+            spotlightIcon.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                // Denetim Merkezi'ni ve diğer menüleri kapat
+                closeAllDropdowns(); 
+                if (controlCenterDropdown) controlCenterDropdown.classList.remove('show');
+
+                alert("Spotlight (Arama) Açılıyor... \n (Simülasyon)");
+            });
+        }
+        
+        // Night Shift Toggle (Simülasyon)
+        const nightShiftToggle = document.getElementById('night-shift-toggle');
+        if (nightShiftToggle) {
+             nightShiftToggle.addEventListener('click', function(e) {
+                 e.stopPropagation();
+                 this.classList.toggle('cc-pill-on');
+                 if (this.classList.contains('cc-pill-on')) {
+                     alert("Night Shift Açık");
+                 } else {
+                     alert("Night Shift Kapalı");
+                 }
+             });
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            // Menü çubuğu dropdownlarını kapat
+            if (!e.target.closest('.dropdown') && !e.target.closest('.menu-item') && !e.target.closest('#appleLogo')) {
+                closeAllDropdowns();
+            }
+            
+            // Denetim Merkezi'ni kapat
+            if (controlCenterDropdown && controlCenterDropdown.classList.contains('show')) {
+                if (!e.target.closest('#control-center-dropdown') && !e.target.closest('#control-center-icon')) {
+                    controlCenterDropdown.classList.remove('show');
+                }
+            }
+
+            // YENİ: Dock Context Menu'yü kapat
+            const dockMenu = document.getElementById('dock-context-menu');
+            if (dockMenu && dockMenu.style.display === 'block' && !e.target.closest('#dock-context-menu')) {
+                dockMenu.style.display = 'none';
+            }
+        });
+        
+        // ⭐️ Trafik Işıkları Event Listener (GÜNCELLENDİ)
+        document.addEventListener('click', function(e) {
+            const button = e.target.closest('.traffic-light-button');
+            if (!button) return;
+
+            const action = button.getAttribute('data-action');
+            const windowId = button.getAttribute('data-app-id');
+
+            if (action === 'close') {
+                closeApp(windowId);
+            } else if (action === 'minimize') {
+                // Sadece gizle (macOS minimize efekti simülasyonu için daha sonra geliştirilebilir)
+                closeApp(windowId); 
+            } else if (action === 'zoom') {
+                // YENİ: Dock ve Menü Çubuğu seçicileri
+                const windowElement = document.getElementById(windowId);
+                const dock = document.querySelector('.dock-container');
+                const menuBar = document.querySelector('.menu-bar-container');
+                
+                if (windowElement) {
+                    if (windowElement.classList.contains('fullscreen')) {
+                        // Tam ekrandan çık
+                        windowElement.classList.remove('fullscreen');
+                        windowElement.style.width = '80vw';
+                        windowElement.style.height = '80vh';
+                        windowElement.style.top = '50%';
+                        windowElement.style.left = '50%';
+                        windowElement.style.transform = 'translate(-50%, -50%)';
+                        windowElement.style.resize = 'both';
+                        windowElement.style.cursor = 'grab';
+
+                        // YENİ: Dock ve Menü Çubuğunu GÖSTER
+                        if (dock) dock.classList.remove('hidden-on-fullscreen');
+                        if (menuBar) menuBar.classList.remove('hidden-on-app');
+
+                    } else {
+                        // Tam ekrana geç
+                        windowElement.classList.add('fullscreen');
+                        windowElement.style.width = '100vw';
+                        windowElement.style.height = '100vh';
+                        windowElement.style.top = '0';
+                        windowElement.style.left = '0';
+                        windowElement.style.transform = 'none';
+                        windowElement.style.resize = 'none';
+                        windowElement.style.cursor = 'default';
+
+                        // YENİ: Dock ve Menü Çubuğunu GİZLE
+                        if (dock) dock.classList.add('hidden-on-fullscreen');
+                        if (menuBar) menuBar.classList.add('hidden-on-app');
+                    }
+                }
+            }
+        });
+
+        // ⭐️ Pencere Sürükleme Mantığı
+        function makeDraggable(windowId, titlebarId) {
+            const windowElement = document.getElementById(windowId);
+            const titlebar = document.getElementById(titlebarId);
+            
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX = 0;
+            let initialY = 0;
+            let xOffset = 0;
+            let yOffset = 0;
+
+            titlebar.addEventListener("mousedown", dragStart);
+            titlebar.addEventListener("touchstart", dragStart);
+
+            document.addEventListener("mouseup", dragEnd);
+            document.addEventListener("touchend", dragEnd);
+            document.addEventListener("mousemove", drag);
+            document.addEventListener("touchmove", drag);
+
+            // Başlangıç transform değerini oku
+            const style = window.getComputedStyle(windowElement);
+            const matrix = new WebKitCSSMatrix(style.transform);
+            xOffset = matrix.m41;
+            yOffset = matrix.m42;
+
+
+            function dragStart(e) {
+                if (windowElement.classList.contains('fullscreen')) return; // Tam ekrandaysa sürükleme
+
+                if (e.target.closest('.traffic-lights')) {
+                    // Trafik ışıkları tıklanırsa sürüklemeyi başlatma
+                    return; 
+                }
+
+                e.preventDefault(); // Metin seçilmesini önle
+
+                if (e.type === "touchstart") {
+                    initialX = e.touches[0].clientX - xOffset;
+                    initialY = e.touches[0].clientY - yOffset;
+                } else {
+                    initialX = e.clientX - xOffset;
+                    initialY = e.clientY - yOffset;
+                }
+
+                isDragging = true;
+                windowElement.style.cursor = 'grabbing';
+            }
+
+            function dragEnd() {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+                windowElement.style.cursor = 'grab';
+            }
+
+            function drag(e) {
+                if (isDragging && !windowElement.classList.contains('fullscreen')) {
+                    e.preventDefault();
+
+                    if (e.type === "touchmove") {
+                        currentX = e.touches[0].clientX - initialX;
+                        currentY = e.touches[0].clientY - initialY;
+                    } else {
+                        currentX = e.clientX - initialX;
+                        currentY = e.clientY - initialY;
+                    }
+
+                    xOffset = currentX;
+                    yOffset = currentY;
+
+                    // Pencereyi taşı
+                    windowElement.style.top = '50%'; 
+                    windowElement.style.left = '50%'; 
+                    windowElement.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px))`;
+                }
+            }
+        }
+        
+        // Uygulamaları sürüklebilir yap
+        makeDraggable('music-window', 'music-titlebar');
+        makeDraggable('mail-window', 'mail-titlebar');
+
+        // Clock Update
+        updateClock();
+        setInterval(updateClock, 60000);
+
+        // --- DOCK ICON CLICK ---
+        document.getElementById('music-dock-icon').addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Görsel geri bildirim
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+
+            launchApp('music-window');
+        });
+        
+        document.getElementById('mail-dock-icon').addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Görsel geri bildirim
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+
+            launchApp('mail-window');
+        });
+
+        // --- YENİ: Pencereye Tıklayınca Öne Getirme ---
+        document.getElementById('music-window').addEventListener('mousedown', () => bringToFront('music-window'));
+        document.getElementById('mail-window').addEventListener('mousedown', () => bringToFront('mail-window'));
+
+
+        // --- YENİ: Dock Sağ Tık Menüsü (Context Menu) ---
+        
+        // YENİ: Dock menüsündeki tıklamaları yöneten ana dinleyici (Event Delegation)
+        document.getElementById('dock-context-menu').addEventListener('click', function(e) {
+            const item = e.target.closest('.dropdown-item');
+            if (!item) return;
+
+            const action = item.getAttribute('data-action');
+            const appId = item.getAttribute('data-app-id');
+
+            // Eğer "Çık" eylemiyse
+            if (action === 'quit' && appId) {
+                closeApp(appId); // Uygulamayı kapat
+                this.style.display = 'none'; // Menüyü gizle
+            }
+        });
+
+        // Sağ tık menüsünü gösteren fonksiyon (GÜNCELLENDİ)
+        function showDockContextMenu(e, appName) {
+            e.preventDefault();
+            closeAllDropdowns(); // Diğer menü çubuğu menülerini kapat
+            
+            // Denetim Merkezi'ni kapat
+            const controlCenterDropdown = document.getElementById('control-center-dropdown');
+            if (controlCenterDropdown) controlCenterDropdown.classList.remove('show');
+
+            const menu = document.getElementById('dock-context-menu');
+            
+            // YENİ: Hangi uygulamanın hedeflendiğini belirle
+            let windowId = null;
+            if (appName === 'Music') {
+                windowId = 'music-window';
+            } else if (appName === 'Mail') {
+                windowId = 'mail-window';
+            }
+
+            // YENİ: "Çık" butonu için dinamik HTML
+            let quitItemHtml = '';
+            if (windowId) {
+                // Sadece Music ve Mail için 'quit' eylemi ekle
+                quitItemHtml = `<div class="dropdown-item" data-action="quit" data-app-id="${windowId}">Çık (Quit)</div>`;
+            } else {
+                // Finder (veya windowId'si olmayanlar) için pasif buton
+                quitItemHtml = `<div class="dropdown-item" style="opacity: 0.5; cursor: default;">Çık (Quit)</div>`;
+            }
+            
+            // Menü içeriğini oluştur
+            menu.innerHTML = `
+                <div class="dropdown-content" style="padding: 4px;">
+                    <div class="dropdown-item" style="font-weight: 600;">${appName}</div>
+                    <div class="dropdown-separator"></div>
+                    <div class="dropdown-item">Seçenekler</div>
+                    <div class="dropdown-item">Oturumu Kapat</div>
+                    <div class="dropdown-separator"></div>
+                    <div class="dropdown-item">Dock'ta Tut</div>
+                    <div class="dropdown-separator"></div>
+                    ${quitItemHtml}
+                </div>
+            `;
+            
+            menu.style.display = 'block';
+            
+            // Menüyü Dock'un (veya imlecin) üzerinde konumlandır
+            const menuHeight = menu.offsetHeight;
+            const menuWidth = menu.offsetWidth;
+            
+            let top = e.clientY - menuHeight - 10; // İmlecin 10px üstü
+            let left = e.clientX - (menuWidth / 2); // İmlecin ortası
+            
+            // Ekran kenarlarından taşmayı önle
+            if (top < 10) top = 10;
+            if (left < 10) left = 10;
+            if (left + menuWidth > window.innerWidth - 10) {
+                 left = window.innerWidth - menuWidth - 10;
+            }
+
+            menu.style.top = top + 'px';
+            menu.style.left = left + 'px';
+        }
+
+        // Dock ikonlarına sağ tık listener'ları ekle
+        document.getElementById('music-dock-icon').addEventListener('contextmenu', (e) => {
+            showDockContextMenu(e, 'Music');
+            // Tıkladığımızda uygulamayı öne de getir
+            if (openAppWindows.has('music-window')) {
+                 bringToFront('music-window');
+            }
+        });
+        
+        document.getElementById('mail-dock-icon').addEventListener('contextmenu', (e) => {
+            showDockContextMenu(e, 'Mail');
+            if (openAppWindows.has('mail-window')) {
+                 bringToFront('mail-window');
+            }
+        });
+        
+        // Finder için de ekleyelim
+        document.querySelector('.dock-icon[title="Finder"]').addEventListener('contextmenu', (e) => {
+            showDockContextMenu(e, 'Finder');
+        });
+        // --- GELİŞMİŞ JARVIS DİNLEYİCİSİ ---
+window.addEventListener('message', function(event) {
+    const command = event.data;
+
+    if (!command) return;
+
+    // 1. UYGULAMA AÇMA (Önceki koddan kalan)
+    if (command.action === 'OPEN_MAC_APP') {
+        if (command.appName === 'music') launchApp('music-window');
+        if (command.appName === 'mail') launchApp('mail-window');
+    }
+
+    // ... (Önceki kodlar aynı) ...
+
+    // 2. MÜZİK KONTROLÜ (GÜNCELLENMİŞ VERSİYON)
+    if (command.action === 'MUSIC_CONTROL') {
+        launchApp('music-window');
+        
+        const audioEl = document.getElementById('player-audio');
+        const pBtn = document.querySelector('.play-btn');
+        
+        if (command.state === 'play') {
+            // Müzik zaten çalıyorsa işlem yapma
+            if (!audioEl.paused) return;
+
+            // Oynatmaya çalış
+            const playPromise = audioEl.play();
+
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    // Otomatik oynatma başarılı
+                    isPlaying = true;
+                    pBtn.innerHTML = '⏸️'; // Duraklat simgesi yap
+                })
+                .catch(error => {
+                    console.log("Otomatik oynatma engellendi, kullanıcı etkileşimi bekleniyor.");
+                    // Eğer tarayıcı engellerse, kullanıcıya görsel bir uyarı verelim veya butona basılmış gibi yapalım
+                    isPlaying = false;
+                    pBtn.innerHTML = '▶️';
+                });
+            }
+        } 
+        else if (command.state === 'pause') {
+            audioEl.pause();
+            isPlaying = false;
+            pBtn.innerHTML = '▶️'; // Oynat simgesi yap
+        }
+    }
+
+    // ... (Mail kodları aynı kalacak) ...
+
+    // 3. MAİL OKUMA (FİLTRELEME)
+    if (command.action === 'SHOW_MAIL') {
+        launchApp('mail-window');
+        const targetName = command.sender.toLowerCase();
+        
+        // Mail listesindeki gönderen isimlerini tara
+        const mailItems = document.querySelectorAll('.mail-list-panel > div');
+        let found = false;
+
+        mailItems.forEach(item => {
+            // Başlık değilse (header classı yoksa)
+            if (!item.classList.contains('mail-list-header')) {
+                const senderEl = item.querySelector('div:first-child'); // İlk div gönderen ismidir
+                if (senderEl && senderEl.textContent.toLowerCase().includes(targetName)) {
+                    item.click(); // Maile tıkla
+                    item.style.background = "rgba(0, 122, 255, 0.3)"; // Vurgula
+                    setTimeout(() => item.style.background = "", 2000); // Vurguyu kaldır
+                    found = true;
+                }
+            }
+        });
+        
+        if(!found) alert(command.sender + " kişisinden gelen bir mail bulunamadı.");
+    }
+
+    // 4. MAİL YAZMA (COMPOSE)
+    if (command.action === 'COMPOSE_MAIL') {
+        launchApp('mail-window');
+        const modal = document.getElementById('mail-compose-modal');
+        const toInput = document.getElementById('compose-to');
+        
+        modal.style.display = 'flex'; // Modalı göster
+        toInput.value = command.recipient; // Alıcıyı doldur
+        document.getElementById('compose-body').focus(); // Yazıya odaklan
+    }
+});
+    </script>
+</body>
+</html>

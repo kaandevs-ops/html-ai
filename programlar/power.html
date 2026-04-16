@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerPoint</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: #f3f2f1;
+        }
+
+        /* ==================== RIBBON ==================== */
+        .ribbon {
+            background: #fff;
+            border-bottom: 1px solid #d1d1d1;
+        }
+
+        .ribbon-tabs {
+            display: flex;
+            background: #fff;
+            padding: 0 10px;
+            border-bottom: 1px solid #edebe9;
+        }
+
+        .ribbon-tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #323130;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .ribbon-tab:hover {
+            background: #f3f2f1;
+        }
+
+        .ribbon-tab.active {
+            border-bottom-color: #0078d4;
+            color: #0078d4;
+        }
+
+        .ribbon-content {
+            display: none;
+            background: #fff;
+            padding: 8px 10px;
+            min-height: 92px;
+        }
+
+        .ribbon-content.active {
+            display: flex;
+            gap: 2px;
+        }
+
+        .ribbon-group {
+            display: flex;
+            flex-direction: column;
+            padding: 0 8px;
+            border-right: 1px solid #edebe9;
+        }
+
+        .ribbon-group:last-child {
+            border-right: none;
+        }
+
+        .ribbon-group-title {
+            font-size: 11px;
+            color: #605e5c;
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        .ribbon-group-content {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex: 1;
+        }
+
+        .ribbon-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            padding: 6px 8px;
+            cursor: pointer;
+            border-radius: 2px;
+            font-size: 12px;
+            color: #323130;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            transition: all 0.1s;
+        }
+
+        .ribbon-btn:hover {
+            background: #f3f2f1;
+            border-color: #edebe9;
+        }
+
+        .ribbon-btn:active {
+            background: #edebe9;
+        }
+
+        .ribbon-btn.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .ribbon-icon {
+            width: 24px;
+            height: 24px;
+            background: #0078d4;
+            border-radius: 2px;
+        }
+
+        .ribbon-btn-text {
+            font-size: 11px;
+        }
+
+        /* ==================== MAIN LAYOUT ==================== */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 125px);
+        }
+
+        /* ==================== LEFT PANEL (SLIDES) ==================== */
+        .slides-panel {
+            width: 240px;
+            background: #fff;
+            border-right: 1px solid #edebe9;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .slide-thumbnail {
+            border: 2px solid transparent;
+            margin-bottom: 8px;
+            cursor: pointer;
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .slide-thumbnail:hover {
+            border-color: #c7e0f4;
+        }
+
+        .slide-thumbnail.active {
+            border-color: #0078d4;
+            box-shadow: 0 0 0 1px #0078d4;
+        }
+
+        .slide-number {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            padding: 2px 6px;
+            font-size: 11px;
+            border-radius: 2px;
+        }
+
+        .slide-thumbnail-content {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #fff;
+            position: relative;
+        }
+
+        /* ==================== CANVAS AREA ==================== */
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #e5e5e5;
+            overflow: hidden;
+        }
+
+        .canvas-toolbar {
+            background: #fff;
+            border-bottom: 1px solid #edebe9;
+            padding: 4px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .zoom-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .zoom-btn {
+            background: #fff;
+            border: 1px solid #8a8886;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            border-radius: 2px;
+        }
+
+        .zoom-level {
+            font-size: 12px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .canvas-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        .slide-canvas {
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            position: relative;
+            transform-origin: center;
+        }
+
+        /* ==================== OBJECTS ==================== */
+        .slide-object {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+        }
+
+        .slide-object.selected {
+            outline: 2px solid #0078d4;
+            outline-offset: -2px;
+        }
+
+        .slide-object.selected .resize-handle {
+            display: block;
+        }
+
+        .resize-handle {
+            display: none;
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border: 1px solid #0078d4;
+            border-radius: 1px;
+        }
+
+        .resize-nw { top: -4px; left: -4px; cursor: nw-resize; }
+        .resize-ne { top: -4px; right: -4px; cursor: ne-resize; }
+        .resize-sw { bottom: -4px; left: -4px; cursor: sw-resize; }
+        .resize-se { bottom: -4px; right: -4px; cursor: se-resize; }
+        .resize-n { top: -4px; left: 50%; transform: translateX(-50%); cursor: n-resize; }
+        .resize-s { bottom: -4px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
+        .resize-w { top: 50%; left: -4px; transform: translateY(-50%); cursor: w-resize; }
+        .resize-e { top: 50%; right: -4px; transform: translateY(-50%); cursor: e-resize; }
+
+        .rotate-handle {
+            display: none;
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border: 1px solid #0078d4;
+            border-radius: 50%;
+            cursor: grab;
+        }
+
+        .slide-object.selected .rotate-handle {
+            display: block;
+        }
+
+        /* ==================== TEXT BOX ==================== */
+        .text-box {
+            border: 1px dashed transparent;
+            padding: 8px;
+            min-width: 100px;
+            min-height: 40px;
+        }
+
+        .text-box.selected {
+            border-color: #0078d4;
+        }
+
+        .text-content {
+            outline: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ==================== SHAPE ==================== */
+        .shape {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ==================== IMAGE ==================== */
+        .image-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* ==================== CONTEXT MENU ==================== */
+        .context-menu {
+            position: fixed;
+            background: #fff;
+            border: 1px solid #8a8886;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            min-width: 180px;
+            z-index: 10000;
+            display: none;
+        }
+
+        .context-menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            border-bottom: 1px solid #edebe9;
+        }
+
+        .context-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .context-menu-item:hover {
+            background: #f3f2f1;
+        }
+
+        /* ==================== SLIDESHOW MODE ==================== */
+        .slideshow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slideshow.active {
+            display: flex;
+        }
+
+        .slideshow-slide {
+            width: 100%;
+            height: 100%;
+            display: none;
+            position: relative;
+        }
+
+        .slideshow-slide.active {
+            display: block;
+        }
+
+        /* ==================== ANIMATION PANEL ==================== */
+        .right-panel {
+            width: 280px;
+            background: #fff;
+            border-left: 1px solid #edebe9;
+            display: none;
+            flex-direction: column;
+        }
+
+        .right-panel.active {
+            display: flex;
+        }
+
+        .panel-header {
+            padding: 12px;
+            border-bottom: 1px solid #edebe9;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .animation-item {
+            padding: 8px;
+            background: #f3f2f1;
+            margin-bottom: 8px;
+            border-radius: 2px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .animation-item:hover {
+            background: #edebe9;
+        }
+
+        /* ==================== SMART GUIDES ==================== */
+        .smart-guide {
+            position: absolute;
+            background: #ff4081;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .smart-guide.horizontal {
+            height: 1px;
+            width: 100%;
+        }
+
+        .smart-guide.vertical {
+            width: 1px;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- RIBBON -->
+    <div class="ribbon">
+        <div class="ribbon-tabs">
+            <div class="ribbon-tab active" data-tab="home">Giriş</div>
+            <div class="ribbon-tab" data-tab="insert">Ekle</div>
+            <div class="ribbon-tab" data-tab="design">Tasarım</div>
+            <div class="ribbon-tab" data-tab="transitions">Geçişler</div>
+            <div class="ribbon-tab" data-tab="animations">Animasyonlar</div>
+            <div class="ribbon-tab" data-tab="slideshow">Slayt Gösterisi</div>
+            <div class="ribbon-tab" data-tab="review">Gözden Geçir</div>
+            <div class="ribbon-tab" data-tab="view">Görünüm</div>
+        </div>
+
+        <!-- HOME TAB -->
+        <div class="ribbon-content active" data-content="home">
+            <div class="ribbon-group">
+                <div class="ribbon-group-content">
+                    <button class="ribbon-btn" id="newSlideBtn">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Yeni Slayt</div>
+                    </button>
+                </div>
+                <div class="ribbon-group-title">Slaytlar</div>
+            </div>
+            <div class="ribbon-group">
+                <div class="ribbon-group-content">
+                    <button class="ribbon-btn" id="cutBtn">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Kes</div>
+                    </button>
+                    <button class="ribbon-btn" id="copyBtn">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Kopyala</div>
+                    </button>
+                    <button class="ribbon-btn" id="pasteBtn">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Yapıştır</div>
+                    </button>
+                </div>
+                <div class="ribbon-group-title">Pano</div>
+            </div>
+            <div class="ribbon-group">
+                <div class="ribbon-group-content">
+                    <button class="ribbon-btn" id="fontSizeInc">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">A+</div>
+                    </button>
+                    <button class="ribbon-btn" id="fontSizeDec">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">A-</div>
+                    </button>
+                </div>
+                <div class="ribbon-group-title">Yazı Tipi</div>
+            </div>
+        </div>
+
+        <!-- INSERT TAB -->
+        <div class="ribbon-content" data-content="insert">
+            <div class="ribbon-group">
+                <div class="ribbon-group-content">
+                    <button class="ribbon-btn" id="insertTextBtn">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Metin Kutusu</div>
+                    </button>
+                </div>
+                <div class="ribbon-group-title">Metin</div>
+            </div>
+            <div class="ribbon-group">
+                <div class="ribbon-group-content">
+                    <button class="ribbon-btn" id="insertRectBtn">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Dikdörtgen</div>
+                    </button>
+                    <button class="ribbon-btn" id="insertCircleBtn">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Daire</div>
+                    </button>
+                </div>
+                <div class="ribbon-group-title">Şekiller</div>
+            </div>
+            <div class="ribbon-group">
+                <div class="ribbon-group-content">
+                    <button class="ribbon-btn" id="insertImageBtn">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Resim</div>
+                    </button>
+                </div>
+                <div class="ribbon-group-title">Görüntüler</div>
+            </div>
+        </div>
+
+        <!-- DESIGN TAB -->
+        <div class="ribbon-content" data-content="design">
+            <div class="ribbon-group">
+                <div class="ribbon-group-content">
+                    <button class="ribbon-btn" id="theme1Btn">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Tema 1</div>
+                    </button>
+                    <button class="ribbon-btn" id="theme2Btn">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Tema 2</div>
+                    </button>
+                </div>
+                <div class="ribbon-group-title">Temalar</div>
+            </div>
+        </div>
+
+        <!-- TRANSITIONS TAB -->
+        <div class="ribbon-content" data-content="transitions">
+            <div class="ribbon-group">
+                <div class="ribbon-group-content">
+                    <button class="ribbon-btn" id="transitionNone">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Yok</div>
+                    </button>
+                    <button class="ribbon-btn" id="transitionFade">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Fade</div>
+                    </button>
+                    <button class="ribbon-btn" id="transitionPush">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Push</div>
+                    </button>
+                    <button class="ribbon-btn" id="transitionWipe">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Wipe</div>
+                    </button>
+                </div>
+                <div class="ribbon-group-title">Geçiş Efekti</div>
+            </div>
+        </div>
+
+        <!-- ANIMATIONS TAB -->
+        <div class="ribbon-content" data-content="animations">
+            <div class="ribbon-group">
+                <div class="ribbon-group-content">
+                    <button class="ribbon-btn" id="animFadeIn">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Fade In</div>
+                    </button>
+                    <button class="ribbon-btn" id="animFlyIn">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Fly In</div>
+                    </button>
+                    <button class="ribbon-btn" id="animBounce">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Bounce</div>
+                    </button>
+                </div>
+                <div class="ribbon-group-title">Animasyon</div>
+            </div>
+        </div>
+
+        <!-- SLIDESHOW TAB -->
+        <div class="ribbon-content" data-content="slideshow">
+            <div class="ribbon-group">
+                <div class="ribbon-group-content">
+                    <button class="ribbon-btn" id="startSlideshowBtn">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Başlat</div>
+                    </button>
+                </div>
+                <div class="ribbon-group-title">Slayt Gösterisi</div>
+            </div>
+        </div>
+
+        <!-- REVIEW TAB -->
+        <div class="ribbon-content" data-content="review">
+            <div class="ribbon-group">
+                <div class="ribbon-group-content">
+                    <button class="ribbon-btn">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Yazım</div>
+                    </button>
+                </div>
+                <div class="ribbon-group-title">Denetleme</div>
+            </div>
+        </div>
+
+        <!-- VIEW TAB -->
+        <div class="ribbon-content" data-content="view">
+            <div class="ribbon-group">
+                <div class="ribbon-group-content">
+                    <button class="ribbon-btn" id="gridToggle">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Izgara</div>
+                    </button>
+                    <button class="ribbon-btn" id="guidesToggle">
+                        <div class="ribbon-icon"></div>
+                        <div class="ribbon-btn-text">Kılavuzlar</div>
+                    </button>
+                </div>
+                <div class="ribbon-group-title">Göster</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="main-container">
+        <!-- LEFT PANEL: SLIDES -->
+        <div class="slides-panel" id="slidesPanel"></div>
+
+        <!-- CANVAS AREA -->
+        <div class="canvas-area">
+            <div class="canvas-toolbar">
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoomOut">−</button>
+                    <div class="zoom-level" id="zoomLevel">100%</div>
+                    <button class="zoom-btn" id="zoomIn">+</button>
+                </div>
+            </div>
+            <div class="canvas-wrapper" id="canvasWrapper">
+                <div class="slide-canvas" id="slideCanvas"></div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: ANIMATIONS -->
+        <div class="right-panel" id="rightPanel">
+            <div class="panel-header">Animasyon Bölmesi</div>
+            <div class="panel-content" id="animationList"></div>
+        </div>
+    </div>
+
+    <!-- CONTEXT MENU -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" id="ctxCut">Kes</div>
+        <div class="context-menu-item" id="ctxCopy">Kopyala</div>
+        <div class="context-menu-item" id="ctxPaste">Yapıştır</div>
+        <div class="context-menu-item" id="ctxDelete">Sil</div>
+        <div class="context-menu-item" id="ctxDuplicate">Çoğalt</div>
+    </div>
+
+    <!-- SLIDESHOW -->
+    <div class="slideshow" id="slideshow"></div>
+
+    <script>
+        // ==================== CORE DATA MODEL ====================
+        const state = {
+            slides: [],
+            currentSlideIndex: 0,
+            selectedObjects: [],
+            clipboard: null,
+            zoom: 1.0,
+            history: [],
+            historyIndex: -1,
+            gridEnabled: false,
+            guidesEnabled: true,
+            slideWidth: 960,
+            slideHeight: 540,
+            aspectRatio: '16:9'
+        };
+
+        let objectIdCounter = 0;
+        let isDragging = false;
+        let isResizing = false;
+        let isRotating = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let draggedObject = null;
+        let resizeHandle = null;
+
+        // ==================== INITIALIZATION ====================
+        function init() {
+            createNewSlide();
+            renderSlides();
+            renderCanvas();
+            setupEventListeners();
+            saveHistory();
+        }
+
+        // ==================== SLIDE MANAGEMENT ====================
+        function createNewSlide() {
+            const slide = {
+                id: Date.now(),
+                objects: [],
+                background: '#ffffff',
+                transition: 'none',
+                transitionDuration: 500
+            };
+            state.slides.push(slide);
+            return slide;
+        }
+
+        function setCurrentSlide(index) {
+            if (index >= 0 && index < state.slides.length) {
+                state.currentSlideIndex = index;
+                state.selectedObjects = [];
+                renderSlides();
+                renderCanvas();
+            }
+        }
+
+        function getCurrentSlide() {
+            return state.slides[state.currentSlideIndex];
+        }
+
+        function deleteSlide(index) {
+            if (state.slides.length > 1) {
+                state.slides.splice(index, 1);
+                if (state.currentSlideIndex >= state.slides.length) {
+                    state.currentSlideIndex = state.slides.length - 1;
+                }
+                renderSlides();
+                renderCanvas();
+                saveHistory();
+            }
+        }
+
+        function duplicateSlide(index) {
+            const slide = JSON.parse(JSON.stringify(state.slides[index]));
+            slide.id = Date.now();
+            state.slides.splice(index + 1, 0, slide);
+            renderSlides();
+            saveHistory();
+        }
+
+        // ==================== OBJECT MANAGEMENT ====================
+        function createObject(type, props = {}) {
+            const obj = {
+                id: objectIdCounter++,
+                type: type,
+                x: props.x || 100,
+                y: props.y || 100,
+                width: props.width || 200,
+                height: props.height || 100,
+                rotation: 0,
+                zIndex: getCurrentSlide().objects.length,
+                animations: [],
+                ...props
+            };
+
+            if (type === 'text') {
+                obj.content = props.content || 'Buraya metin yazın';
+                obj.fontSize = props.fontSize || 18;
+                obj.fontFamily = props.fontFamily || 'Arial';
+                obj.color = props.color || '#000000';
+                obj.align = props.align || 'left';
+                obj.bold = false;
+                obj.italic = false;
+            } else if (type === 'shape') {
+                obj.shapeType = props.shapeType || 'rectangle';
+                obj.fillColor = props.fillColor || '#4472c4';
+                obj.borderColor = props.borderColor || '#2f5496';
+                obj.borderWidth = props.borderWidth || 2;
+                obj.borderRadius = props.borderRadius || 0;
+                obj.opacity = props.opacity || 1;
+            } else if (type === 'image') {
+                obj.src = props.src || '';
+            }
+
+            getCurrentSlide().objects.push(obj);
+            renderCanvas();
+            saveHistory();
+            return obj;
+        }
+
+        function deleteObject(objId) {
+            const slide = getCurrentSlide();
+            slide.objects = slide.objects.filter(o => o.id !== objId);
+            state.selectedObjects = state.selectedObjects.filter(id => id !== objId);
+            renderCanvas();
+            saveHistory();
+        }
+
+        function selectObject(objId, multiSelect = false) {
+            if (multiSelect) {
+                if (state.selectedObjects.includes(objId)) {
+                    state.selectedObjects = state.selectedObjects.filter(id => id !== objId);
+                } else {
+                    state.selectedObjects.push(objId);
+                }
+            } else {
+                state.selectedObjects = [objId];
+            }
+            renderCanvas();
+        }
+
+        function getObjectById(objId) {
+            return getCurrentSlide().objects.find(o => o.id === objId);
+        }
+
+        function updateObject(objId, props) {
+            const obj = getObjectById(objId);
+            if (obj) {
+                Object.assign(obj, props);
+                renderCanvas();
+            }
+        }
+
+        // ==================== RENDERING ====================
+        function renderSlides() {
+            const panel = document.getElementById('slidesPanel');
+            panel.innerHTML = '';
+
+            state.slides.forEach((slide, index) => {
+                const div = document.createElement('div');
+                div.className = 'slide-thumbnail' + (index === state.currentSlideIndex ? ' active' : '');
+                div.innerHTML = `
+                    <div class="slide-number">${index + 1}</div>
+                    <div class="slide-thumbnail-content" style="background: ${slide.background}">
+                        ${renderSlidePreview(slide)}
+                    </div>
+                `;
+                div.addEventListener('click', () => setCurrentSlide(index));
+                div.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    showSlideContextMenu(e, index);
+                });
+                panel.appendChild(div);
+            });
+        }
+
+        function renderSlidePreview(slide) {
+            let html = '';
+            slide.objects.forEach(obj => {
+                const style = `position: absolute; left: ${obj.x * 0.23}px; top: ${obj.y * 0.23}px; 
+                              width: ${obj.width * 0.23}px; height: ${obj.height * 0.23}px;
+                              transform: rotate(${obj.rotation}deg);`;
+                
+                if (obj.type === 'text') {
+                    html += `<div style="${style} font-size: ${obj.fontSize * 0.23}px; color: ${obj.color};">${obj.content}</div>`;
+                } else if (obj.type === 'shape') {
+                    const shapeStyle = obj.shapeType === 'circle' ? 'border-radius: 50%;' : `border-radius: ${obj.borderRadius}px;`;
+                    html += `<div style="${style} background: ${obj.fillColor}; border: ${obj.borderWidth}px solid ${obj.borderColor}; ${shapeStyle}"></div>`;
+                } else if (obj.type === 'image' && obj.src) {
+                    html += `<img src="${obj.src}" style="${style} object-fit: contain;" />`;
+                }
+            });
+            return html;
+        }
+
+        function renderCanvas() {
+            const canvas = document.getElementById('slideCanvas');
+            const slide = getCurrentSlide();
+            
+            canvas.style.width = state.slideWidth + 'px';
+            canvas.style.height = state.slideHeight + 'px';
+            canvas.style.background = slide.background;
+            canvas.style.transform = `scale(${state.zoom})`;
+            
+            canvas.innerHTML = '';
+
+            const sortedObjects = [...slide.objects].sort((a, b) => a.zIndex - b.zIndex);
+            
+            sortedObjects.forEach(obj => {
+                const el = document.createElement('div');
+                el.className = 'slide-object';
+                el.dataset.id = obj.id;
+                el.style.left = obj.x + 'px';
+                el.style.top = obj.y + 'px';
+                el.style.width = obj.width + 'px';
+                el.style.height = obj.height + 'px';
+                el.style.transform = `rotate(${obj.rotation}deg)`;
+                el.style.zIndex = obj.zIndex;
+
+                if (state.selectedObjects.includes(obj.id)) {
+                    el.classList.add('selected');
+                }
+
+                if (obj.type === 'text') {
+                    el.className += ' text-box';
+                    const content = document.createElement('div');
+                    content.className = 'text-content';
+                    content.contentEditable = true;
+                    content.innerHTML = obj.content;
+                    content.style.fontSize = obj.fontSize + 'px';
+                    content.style.fontFamily = obj.fontFamily;
+                    content.style.color = obj.color;
+                    content.style.textAlign = obj.align;
+                    content.style.fontWeight = obj.bold ? 'bold' : 'normal';
+                    content.style.fontStyle = obj.italic ? 'italic' : 'normal';
+                    
+                    content.addEventListener('input', (e) => {
+                        obj.content = e.target.innerHTML;
+                        saveHistory();
+                    });
+                    
+                    el.appendChild(content);
+                } else if (obj.type === 'shape') {
+                    el.className += ' shape';
+                    el.style.background = obj.fillColor;
+                    el.style.border = `${obj.borderWidth}px solid ${obj.borderColor}`;
+                    el.style.opacity = obj.opacity;
+                    if (obj.shapeType === 'circle') {
+                        el.style.borderRadius = '50%';
+                    } else {
+                        el.style.borderRadius = obj.borderRadius + 'px';
+                    }
+                } else if (obj.type === 'image') {
+                    el.className += ' image-box';
+                    if (obj.src) {
+                        const img = document.createElement('img');
+                        img.src = obj.src;
+                        el.appendChild(img);
+                    }
+                }
+
+                if (state.selectedObjects.includes(obj.id)) {
+                    el.innerHTML += `
+                        <div class="resize-handle resize-nw"></div>
+                        <div class="resize-handle resize-ne"></div>
+                        <div class="resize-handle resize-sw"></div>
+                        <div class="resize-handle resize-se"></div>
+                        <div class="resize-handle resize-n"></div>
+                        <div class="resize-handle resize-s"></div>
+                        <div class="resize-handle resize-w"></div>
+                        <div class="resize-handle resize-e"></div>
+                        <div class="rotate-handle"></div>
+                    `;
+                }
+
+                el.addEventListener('mousedown', (e) => handleObjectMouseDown(e, obj.id));
+                canvas.appendChild(el);
+            });
+        }
+
+        // ==================== EVENT HANDLERS ====================
+        function setupEventListeners() {
+            // Ribbon tabs
+            document.querySelectorAll('.ribbon-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.ribbon-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.ribbon-content').forEach(c => c.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.querySelector(`[data-content="${tab.dataset.tab}"]`).classList.add('active');
+                });
+            });
+
+            // Ribbon buttons
+            document.getElementById('newSlideBtn').addEventListener('click', () => {
+                createNewSlide();
+                setCurrentSlide(state.slides.length - 1);
+                saveHistory();
+            });
+
+            document.getElementById('insertTextBtn').addEventListener('click', () => {
+                createObject('text', { x: 200, y: 150 });
+            });
+
+            document.getElementById('insertRectBtn').addEventListener('click', () => {
+                createObject('shape', { x: 200, y: 150, shapeType: 'rectangle' });
+            });
+
+            document.getElementById('insertCircleBtn').addEventListener('click', () => {
+                createObject('shape', { x: 200, y: 150, shapeType: 'circle', width: 150, height: 150 });
+            });
+
+            document.getElementById('insertImageBtn').addEventListener('click', () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        createObject('image', { x: 200, y: 150, src: event.target.result });
+                    };
+                    reader.readAsDataURL(file);
+                };
+                input.click();
+            });
+
+            // Transitions
+            document.getElementById('transitionNone').addEventListener('click', () => setTransition('none'));
+            document.getElementById('transitionFade').addEventListener('click', () => setTransition('fade'));
+            document.getElementById('transitionPush').addEventListener('click', () => setTransition('push'));
+            document.getElementById('transitionWipe').addEventListener('click', () => setTransition('wipe'));
+
+            // Animations
+            document.getElementById('animFadeIn').addEventListener('click', () => addAnimation('fadeIn'));
+            document.getElementById('animFlyIn').addEventListener('click', () => addAnimation('flyIn'));
+            document.getElementById('animBounce').addEventListener('click', () => addAnimation('bounce'));
+
+            // Slideshow
+            document.getElementById('startSlideshowBtn').addEventListener('click', startSlideshow);
+
+            // Zoom
+            document.getElementById('zoomIn').addEventListener('click', () => setZoom(state.zoom + 0.1));
+            document.getElementById('zoomOut').addEventListener('click', () => setZoom(state.zoom - 0.1));
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    if (e.key === 'z') {
+                        e.preventDefault();
+                        undo();
+                    } else if (e.key === 'y') {
+                        e.preventDefault();
+                        redo();
+                    } else if (e.key === 'c') {
+                        e.preventDefault();
+                        copyObjects();
+                    } else if (e.key === 'v') {
+                        e.preventDefault();
+                        pasteObjects();
+                    } else if (e.key === 'x') {
+                        e.preventDefault();
+                        cutObjects();
+                    }
+                } else if (e.key === 'Delete') {
+                    deleteSelectedObjects();
+                }
+            });
+
+            // Context menu
+            document.addEventListener('click', () => {
+                document.getElementById('contextMenu').style.display = 'none';
+            });
+
+            document.getElementById('ctxDelete').addEventListener('click', deleteSelectedObjects);
+            document.getElementById('ctxCopy').addEventListener('click', copyObjects);
+            document.getElementById('ctxPaste').addEventListener('click', pasteObjects);
+            document.getElementById('ctxCut').addEventListener('click', cutObjects);
+            document.getElementById('ctxDuplicate').addEventListener('click', duplicateObjects);
+
+            // Canvas interactions
+            const canvas = document.getElementById('slideCanvas');
+            canvas.addEventListener('click', (e) => {
+                if (e.target === canvas) {
+                    state.selectedObjects = [];
+                    renderCanvas();
+                }
+            });
+
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+
+        function handleObjectMouseDown(e, objId) {
+            if (e.target.classList.contains('resize-handle')) {
+                isResizing = true;
+                resizeHandle = e.target.classList[1];
+                draggedObject = getObjectById(objId);
+                e.stopPropagation();
+                return;
+            }
+
+            if (e.target.classList.contains('rotate-handle')) {
+                isRotating = true;
+                draggedObject = getObjectById(objId);
+                e.stopPropagation();
+                return;
+            }
+
+            isDragging = true;
+            dragStartX = e.clientX / state.zoom;
+            dragStartY = e.clientY / state.zoom;
+            
+            if (!state.selectedObjects.includes(objId)) {
+                selectObject(objId, e.ctrlKey || e.metaKey);
+            }
+            
+            draggedObject = getObjectById(objId);
+            e.stopPropagation();
+        }
+
+        function handleMouseMove(e) {
+            if (isDragging && draggedObject) {
+                const dx = (e.clientX / state.zoom) - dragStartX;
+                const dy = (e.clientY / state.zoom) - dragStartY;
+                
+                state.selectedObjects.forEach(id => {
+                    const obj = getObjectById(id);
+                    if (obj) {
+                        obj.x += dx;
+                        obj.y += dy;
+                        
+                        if (state.gridEnabled) {
+                            obj.x = Math.round(obj.x / 10) * 10;
+                            obj.y = Math.round(obj.y / 10) * 10;
+                        }
+                    }
+                });
+                
+                dragStartX = e.clientX / state.zoom;
+                dragStartY = e.clientY / state.zoom;
+                renderCanvas();
+            } else if (isResizing && draggedObject) {
+                const rect = document.getElementById('slideCanvas').getBoundingClientRect();
+                const x = (e.clientX - rect.left) / state.zoom;
+                const y = (e.clientY - rect.top) / state.zoom;
+                
+                if (resizeHandle.includes('e')) {
+                    draggedObject.width = Math.max(20, x - draggedObject.x);
+                }
+                if (resizeHandle.includes('w')) {
+                    const newWidth = draggedObject.width + (draggedObject.x - x);
+                    if (newWidth > 20) {
+                        draggedObject.x = x;
+                        draggedObject.width = newWidth;
+                    }
+                }
+                if (resizeHandle.includes('s')) {
+                    draggedObject.height = Math.max(20, y - draggedObject.y);
+                }
+                if (resizeHandle.includes('n')) {
+                    const newHeight = draggedObject.height + (draggedObject.y - y);
+                    if (newHeight > 20) {
+                        draggedObject.y = y;
+                        draggedObject.height = newHeight;
+                    }
+                }
+                
+                renderCanvas();
+            } else if (isRotating && draggedObject) {
+                const rect = document.getElementById('slideCanvas').getBoundingClientRect();
+                const centerX = draggedObject.x + draggedObject.width / 2;
+                const centerY = draggedObject.y + draggedObject.height / 2;
+                const x = (e.clientX - rect.left) / state.zoom;
+                const y = (e.clientY - rect.top) / state.zoom;
+                
+                const angle = Math.atan2(y - centerY, x - centerX) * (180 / Math.PI);
+                draggedObject.rotation = angle + 90;
+                renderCanvas();
+            }
+        }
+
+        function handleMouseUp() {
+            if (isDragging || isResizing || isRotating) {
+                saveHistory();
+            }
+            isDragging = false;
+            isResizing = false;
+            isRotating = false;
+            draggedObject = null;
+            resizeHandle = null;
+        }
+
+        // ==================== CLIPBOARD ====================
+        function copyObjects() {
+            state.clipboard = state.selectedObjects.map(id => {
+                const obj = getObjectById(id);
+                return JSON.parse(JSON.stringify(obj));
+            });
+        }
+
+        function cutObjects() {
+            copyObjects();
+            deleteSelectedObjects();
+        }
+
+        function pasteObjects() {
+            if (state.clipboard && state.clipboard.length > 0) {
+                state.selectedObjects = [];
+                state.clipboard.forEach(obj => {
+                    const newObj = JSON.parse(JSON.stringify(obj));
+                    newObj.id = objectIdCounter++;
+                    newObj.x += 20;
+                    newObj.y += 20;
+                    getCurrentSlide().objects.push(newObj);
+                    state.selectedObjects.push(newObj.id);
+                });
+                renderCanvas();
+                saveHistory();
+            }
+        }
+
+        function duplicateObjects() {
+            copyObjects();
+            pasteObjects();
+        }
+
+        function deleteSelectedObjects() {
+            state.selectedObjects.forEach(id => {
+                deleteObject(id);
+            });
+        }
+
+        // ==================== TRANSITIONS ====================
+        function setTransition(type) {
+            getCurrentSlide().transition = type;
+            saveHistory();
+        }
+
+        // ==================== ANIMATIONS ====================
+        function addAnimation(type) {
+            state.selectedObjects.forEach(id => {
+                const obj = getObjectById(id);
+                if (obj) {
+                    obj.animations.push({
+                        type: type,
+                        duration: 500,
+                        delay: 0,
+                        order: obj.animations.length
+                    });
+                }
+            });
+            updateAnimationPanel();
+            saveHistory();
+        }
+
+        function updateAnimationPanel() {
+            const panel = document.getElementById('animationList');
+            panel.innerHTML = '';
+            
+            if (state.selectedObjects.length === 1) {
+                const obj = getObjectById(state.selectedObjects[0]);
+                if (obj && obj.animations.length > 0) {
+                    document.getElementById('rightPanel').classList.add('active');
+                    obj.animations.forEach((anim, index) => {
+                        const item = document.createElement('div');
+                        item.className = 'animation-item';
+                        item.textContent = `${index + 1}. ${anim.type} (${anim.duration}ms)`;
+                        panel.appendChild(item);
+                    });
+                } else {
+                    document.getElementById('rightPanel').classList.remove('active');
+                }
+            } else {
+                document.getElementById('rightPanel').classList.remove('active');
+            }
+        }
+
+        // ==================== SLIDESHOW ====================
+        function startSlideshow() {
+            const slideshow = document.getElementById('slideshow');
+            slideshow.innerHTML = '';
+            
+            state.slides.forEach((slide, index) => {
+                const slideEl = document.createElement('div');
+                slideEl.className = 'slideshow-slide';
+                slideEl.style.width = '100%';
+                slideEl.style.height = '100%';
+                slideEl.style.background = slide.background;
+                slideEl.style.display = 'flex';
+                slideEl.style.alignItems = 'center';
+                slideEl.style.justifyContent = 'center';
+                
+                const container = document.createElement('div');
+                container.style.position = 'relative';
+                container.style.width = '80vw';
+                container.style.height = '45vw';
+                container.style.maxWidth = '1600px';
+                container.style.maxHeight = '900px';
+                
+                slide.objects.forEach(obj => {
+                    const el = document.createElement('div');
+                    el.style.position = 'absolute';
+                    el.style.left = (obj.x / state.slideWidth * 100) + '%';
+                    el.style.top = (obj.y / state.slideHeight * 100) + '%';
+                    el.style.width = (obj.width / state.slideWidth * 100) + '%';
+                    el.style.height = (obj.height / state.slideHeight * 100) + '%';
+                    el.style.transform = `rotate(${obj.rotation}deg)`;
+                    
+                    if (obj.type === 'text') {
+                        el.innerHTML = obj.content;
+                        el.style.fontSize = (obj.fontSize / state.slideWidth * 100) + 'vw';
+                        el.style.color = obj.color;
+                        el.style.fontFamily = obj.fontFamily;
+                        el.style.textAlign = obj.align;
+                    } else if (obj.type === 'shape') {
+                        el.style.background = obj.fillColor;
+                        el.style.border = `${obj.borderWidth}px solid ${obj.borderColor}`;
+                        if (obj.shapeType === 'circle') {
+                            el.style.borderRadius = '50%';
+                        }
+                    } else if (obj.type === 'image' && obj.src) {
+                        const img = document.createElement('img');
+                        img.src = obj.src;
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.objectFit = 'contain';
+                        el.appendChild(img);
+                    }
+                    
+                    container.appendChild(el);
+                });
+                
+                slideEl.appendChild(container);
+                slideshow.appendChild(slideEl);
+            });
+            
+            slideshow.classList.add('active');
+            showSlideshowSlide(0);
+            
+            let currentSlide = 0;
+            const handleKeydown = (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') {
+                    currentSlide = Math.min(currentSlide + 1, state.slides.length - 1);
+                    showSlideshowSlide(currentSlide);
+                } else if (e.key === 'ArrowLeft') {
+                    currentSlide = Math.max(currentSlide - 1, 0);
+                    showSlideshowSlide(currentSlide);
+                } else if (e.key === 'Escape') {
+                    slideshow.classList.remove('active');
+                    document.removeEventListener('keydown', handleKeydown);
+                }
+            };
+            
+            document.addEventListener('keydown', handleKeydown);
+            slideshow.addEventListener('click', () => {
+                currentSlide = Math.min(currentSlide + 1, state.slides.length - 1);
+                showSlideshowSlide(currentSlide);
+            });
+        }
+
+        function showSlideshowSlide(index) {
+            document.querySelectorAll('.slideshow-slide').forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+        }
+
+        // ==================== ZOOM ====================
+        function setZoom(zoom) {
+            state.zoom = Math.max(0.1, Math.min(3, zoom));
+            document.getElementById('zoomLevel').textContent = Math.round(state.zoom * 100) + '%';
+            renderCanvas();
+        }
+
+        // ==================== HISTORY ====================
+        function saveHistory() {
+            const snapshot = JSON.parse(JSON.stringify({
+                slides: state.slides,
+                currentSlideIndex: state.currentSlideIndex
+            }));
+            
+            state.history = state.history.slice(0, state.historyIndex + 1);
+            state.history.push(snapshot);
+            state.historyIndex++;
+            
+            if (state.history.length > 50) {
+                state.history.shift();
+                state.historyIndex--;
+            }
+        }
+
+        function undo() {
+            if (state.historyIndex > 0) {
+                state.historyIndex--;
+                const snapshot = state.history[state.historyIndex];
+                state.slides = JSON.parse(JSON.stringify(snapshot.slides));
+                state.currentSlideIndex = snapshot.currentSlideIndex;
+                state.selectedObjects = [];
+                renderSlides();
+                renderCanvas();
+            }
+        }
+
+        function redo() {
+            if (state.historyIndex < state.history.length - 1) {
+                state.historyIndex++;
+                const snapshot = state.history[state.historyIndex];
+                state.slides = JSON.parse(JSON.stringify(snapshot.slides));
+                state.currentSlideIndex = snapshot.currentSlideIndex;
+                state.selectedObjects = [];
+                renderSlides();
+                renderCanvas();
+            }
+        }
+
+        // ==================== CONTEXT MENU ====================
+        function showSlideContextMenu(e, index) {
+            const menu = document.getElementById('contextMenu');
+            menu.style.left = e.clientX + 'px';
+            menu.style.top = e.clientY + 'px';
+            menu.style.display = 'block';
+            
+            const deleteItem = document.createElement('div');
+            deleteItem.className = 'context-menu-item';
+            deleteItem.textContent = 'Slaytı Sil';
+            deleteItem.addEventListener('click', () => deleteSlide(index));
+            
+            const duplicateItem = document.createElement('div');
+            duplicateItem.className = 'context-menu-item';
+            duplicateItem.textContent = 'Slaytı Çoğalt';
+            duplicateItem.addEventListener('click', () => duplicateSlide(index));
+            
+            menu.innerHTML = '';
+            menu.appendChild(duplicateItem);
+            menu.appendChild(deleteItem);
+        }
+
+        // ==================== START ====================
+        init();
+    </script>
+</body>
+</html>

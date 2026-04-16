@@ -1,0 +1,2873 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProTask - Enterprise İş Yönetim Platformu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --purple: #8b5cf6;
+            --pink: #ec4899;
+            --bg-main: #f6f8fa;
+            --bg-card: #ffffff;
+            --bg-hover: #f1f3f5;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.15);
+            --shadow-xl: 0 20px 50px rgba(0,0,0,0.2);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            overflow: hidden;
+            line-height: 1.6;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* ========== SIDEBAR ========== */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 70px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: var(--transition);
+        }
+
+        .sidebar.collapsed .logo-text {
+            display: none;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-toggle {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .sidebar.collapsed .sidebar-toggle {
+            display: none;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 16px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 24px;
+        }
+
+        .nav-section-title {
+            padding: 0 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            letter-spacing: 0.6px;
+            transition: var(--transition);
+        }
+
+        .sidebar.collapsed .nav-section-title {
+            opacity: 0;
+            height: 0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-item {
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-primary);
+            font-size: 14px;
+            border-left: 3px solid transparent;
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: #eef2ff;
+            color: var(--primary);
+            border-left-color: var(--primary);
+            font-weight: 500;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .sidebar.collapsed .nav-item span:not(.nav-icon) {
+            display: none;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--primary);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .add-board-btn {
+            margin: 0 16px 16px;
+            padding: 11px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .add-board-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .add-board-btn:active {
+            transform: translateY(0);
+        }
+
+        .sidebar.collapsed .add-board-btn span:not(.icon) {
+            display: none;
+        }
+
+        /* ========== MAIN CONTENT ========== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ========== TOP BAR ========== */
+        .topbar {
+            height: 70px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            gap: 20px;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .workspace-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .workspace-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .workspace-breadcrumb {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding: 9px 14px 9px 38px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            width: 280px;
+            transition: var(--transition);
+            background: var(--bg-main);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            background: white;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .icon-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--radius-md);
+            background: transparent;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .icon-btn:hover {
+            border-color: var(--primary);
+            background: var(--bg-hover);
+            color: var(--primary);
+        }
+
+        .icon-btn .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: var(--danger);
+            color: white;
+            font-size: 10px;
+            padding: 2px 5px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .user-btn {
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+
+        .user-btn:hover {
+            border-color: var(--primary);
+            background: var(--bg-hover);
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .user-role {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* ========== CONTENT AREA ========== */
+        .content-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .view-container {
+            flex: 1;
+            overflow: auto;
+            padding: 24px 30px;
+            background: var(--bg-main);
+            display: none;
+        }
+
+        .view-container.active {
+            display: block;
+        }
+
+        .board-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .board-title-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .board-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .board-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .board-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--bg-hover);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* ========== TABLE ========== */
+        .table-wrapper {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .table-toolbar {
+            padding: 12px 16px;
+            background: var(--bg-main);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .toolbar-left, .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-btn {
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 13px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toolbar-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .toolbar-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: calc(100vh - 280px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            background: var(--bg-main);
+            z-index: 10;
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        th:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        th.sortable::after {
+            content: '⇅';
+            margin-left: 6px;
+            opacity: 0.3;
+        }
+
+        th.sorted-asc::after {
+            content: '↑';
+            opacity: 1;
+            color: var(--primary);
+        }
+
+        th.sorted-desc::after {
+            content: '↓';
+            opacity: 1;
+            color: var(--primary);
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            background: white;
+        }
+
+        tbody tr {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        tbody tr:hover {
+            background: var(--bg-hover) !important;
+        }
+
+        tbody tr.selected {
+            background: #eef2ff !important;
+        }
+
+        .cell-editable {
+            min-height: 28px;
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+            cursor: text;
+        }
+
+        .cell-editable:hover {
+            background: var(--bg-hover);
+        }
+
+        .cell-editable:focus {
+            outline: 2px solid var(--primary);
+            background: white;
+        }
+
+        .cell-editable:empty::before {
+            content: 'Tıklayın...';
+            color: var(--text-muted);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 12px;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .status-badge:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .status-todo { background: #f1f5f9; color: #475569; }
+        .status-progress { background: #dbeafe; color: #1e40af; }
+        .status-review { background: #fef3c7; color: #92400e; }
+        .status-done { background: #d1fae5; color: #065f46; }
+
+        .person-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 4px;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .tag:hover {
+            transform: scale(1.05);
+        }
+
+        .priority-high { background: #fee2e2; color: #991b1b; }
+        .priority-medium { background: #fef3c7; color: #92400e; }
+        .priority-low { background: #d1fae5; color: #065f46; }
+        .priority-critical { background: #fecaca; color: #7f1d1d; }
+
+        .date-input {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+
+        .date-input:hover {
+            background: var(--bg-hover);
+        }
+
+        .checkbox-cell {
+            width: 50px;
+            text-align: center;
+        }
+
+        .checkbox-cell input {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .action-cell {
+            width: 80px;
+            text-align: center;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+            font-size: 16px;
+        }
+
+        .action-btn:hover {
+            background: var(--bg-hover);
+        }
+
+        .delete-btn:hover {
+            background: #fee;
+            color: var(--danger);
+        }
+
+        /* ========== CALENDAR VIEW ========== */
+        .calendar-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .calendar-nav button {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .calendar-nav button:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--bg-hover);
+        }
+
+        .calendar-month {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .calendar-view-toggle {
+            display: flex;
+            gap: 8px;
+        }
+
+        .view-toggle-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .view-toggle-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .view-toggle-btn:hover:not(.active) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .calendar-grid {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .calendar-weekday {
+            text-align: center;
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding: 12px;
+        }
+
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .calendar-day {
+            min-height: 120px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            background: white;
+        }
+
+        .calendar-day:hover {
+            background: var(--bg-hover);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .calendar-day.today {
+            border: 2px solid var(--primary);
+            background: #eef2ff;
+        }
+
+        .calendar-day.other-month {
+            opacity: 0.4;
+            background: var(--bg-main);
+        }
+
+        .calendar-day-number {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .calendar-task {
+            background: var(--primary);
+            color: white;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .calendar-task:hover {
+            transform: scale(1.02);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .calendar-task-more {
+            background: var(--text-muted);
+            color: white;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 4px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        /* ========== ANALYTICS VIEW ========== */
+        .analytics-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-change {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            color: var(--danger);
+        }
+
+        .chart-card {
+            background: white;
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 100%;
+            gap: 12px;
+            padding-bottom: 30px;
+        }
+
+        .bar {
+            flex: 1;
+            background: var(--primary);
+            border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+            position: relative;
+            transition: var(--transition);
+            cursor: pointer;
+            min-height: 20px;
+        }
+
+        .bar:hover {
+            background: var(--primary-dark);
+            transform: translateY(-4px);
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .progress-ring {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            margin: 20px auto;
+        }
+
+        .progress-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            fill: none;
+            stroke: var(--border);
+            stroke-width: 12;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 12;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        .progress-ring-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        /* ========== TEAM VIEW ========== */
+        .team-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .team-card {
+            background: white;
+            padding: 28px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .team-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .team-member-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .team-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .team-member-info {
+            flex: 1;
+        }
+
+        .team-member-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .team-member-role {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .team-member-email {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .team-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .team-stat {
+            text-align: center;
+            padding: 16px;
+            background: var(--bg-main);
+            border-radius: var(--radius-md);
+            transition: var(--transition);
+        }
+
+        .team-stat:hover {
+            background: #eef2ff;
+        }
+
+        .team-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .team-stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .team-progress {
+            margin-top: 16px;
+        }
+
+        .team-progress-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .team-progress-bar {
+            height: 8px;
+            background: var(--bg-main);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .team-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        /* ========== DETAIL PANEL ========== */
+        .detail-panel {
+            width: 420px;
+            background: var(--bg-card);
+            border-left: 1px solid var(--border);
+            overflow-y: auto;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .detail-panel.open {
+            transform: translateX(0);
+        }
+
+        .detail-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-main);
+        }
+
+        .detail-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .close-detail {
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .close-detail:hover {
+            background: var(--bg-hover);
+        }
+
+        .detail-content {
+            padding: 24px;
+        }
+
+        .detail-section {
+            margin-bottom: 28px;
+        }
+
+        .detail-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-field {
+            margin-bottom: 18px;
+        }
+
+        .detail-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: var(--bg-main);
+            border-radius: var(--radius-md);
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-user {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .activity-action {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .activity-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* ========== MODALS ========== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            width: 90%;
+            max-width: 540px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 22px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-family: inherit;
+            transition: var(--transition);
+            background: white;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 110px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 28px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ========== SCROLLBAR ========== */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-main);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border-hover);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            border-left: 4px solid var(--success);
+            z-index: 2000;
+            animation: slideInRight 0.3s ease;
+            min-width: 300px;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .notification.error {
+            border-left-color: var(--danger);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                transform: translateX(-100%);
+                z-index: 200;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .detail-panel {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">PT</div>
+                    <span class="logo-text">ProTask</span>
+                </div>
+                <button class="sidebar-toggle" onclick="app.toggleSidebar()">
+                    <span>◀</span>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Çalışma Alanı</div>
+                    <div class="nav-item active" data-view="board" onclick="app.switchView('board')">
+                        <div class="nav-icon">📋</div>
+                        <span>Panolar</span>
+                    </div>
+                    <div class="nav-item" data-view="calendar" onclick="app.switchView('calendar')">
+                        <div class="nav-icon">📅</div>
+                        <span>Takvim</span>
+                    </div>
+                    <div class="nav-item" data-view="analytics" onclick="app.switchView('analytics')">
+                        <div class="nav-icon">📊</div>
+                        <span>Analizler</span>
+                    </div>
+                    <div class="nav-item" data-view="team" onclick="app.switchView('team')">
+                        <div class="nav-icon">👥</div>
+                        <span>Ekip</span>
+                        <span class="nav-badge">4</span>
+                    </div>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Panolarım</div>
+                    <div id="boardList"></div>
+                </div>
+            </nav>
+            <button class="add-board-btn" onclick="app.showAddBoardModal()">
+                <span class="icon">+</span>
+                <span>Yeni Pano</span>
+            </button>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div class="workspace-info">
+                    <h1 class="workspace-title" id="currentTitle">Ana Proje Panosu</h1>
+                    <div class="workspace-breadcrumb">
+                        <span>Ana Sayfa</span>
+                        <span>→</span>
+                        <span id="breadcrumbView">Panolar</span>
+                    </div>
+                </div>
+                <div class="topbar-actions">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="searchInput" placeholder="Görev veya pano ara..." onkeyup="app.search()">
+                    </div>
+                    <button class="icon-btn" onclick="app.showNotifications()">
+                        <span>🔔</span>
+                        <span class="badge">3</span>
+                    </button>
+                    <button class="icon-btn" onclick="app.showSettings()">
+                        <span>⚙️</span>
+                    </button>
+                    <button class="user-btn">
+                        <div class="avatar" style="background: linear-gradient(135deg, #667eea, #764ba2);">AK</div>
+                        <div class="user-info">
+                            <div class="user-name">Ahmet Kaya</div>
+                            <div class="user-role">Proje Yöneticisi</div>
+                        </div>
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <!-- BOARD VIEW -->
+                <div class="view-container active" id="boardView">
+                    <div class="board-header">
+                        <div class="board-title-section">
+                            <h2 class="board-title" id="boardTitle">Ana Proje Panosu</h2>
+                            <div class="board-meta">
+                                <div class="meta-item">
+                                    <span>📊</span>
+                                    <span id="itemCount">0 görev</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span>✅</span>
+                                    <span id="completedCount">0 tamamlandı</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="board-actions">
+                            <button class="btn btn-secondary" onclick="app.exportData()">
+                                <span>📤</span>
+                                <span>Dışa Aktar</span>
+                            </button>
+                            <button class="btn btn-secondary" onclick="app.showAddColumnModal()">
+                                <span>+</span>
+                                <span>Sütun Ekle</span>
+                            </button>
+                            <button class="btn btn-primary" onclick="app.showAddRowModal()">
+                                <span>+</span>
+                                <span>Görev Ekle</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <div class="table-toolbar">
+                            <div class="toolbar-left">
+                                <button class="toolbar-btn active" onclick="app.filterByStatus('all')">Tümü</button>
+                                <button class="toolbar-btn" onclick="app.filterByStatus('progress')">Devam Eden</button>
+                                <button class="toolbar-btn" onclick="app.filterByStatus('done')">Tamamlanan</button>
+                            </div>
+                            <div class="toolbar-right">
+                                <button class="toolbar-btn" onclick="app.groupBy()"><span>📑</span> Grupla</button>
+                                <button class="toolbar-btn" onclick="app.hideCompleted()"><span>👁️</span> Tamamlananları Gizle</button>
+                            </div>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="mainTable">
+                                <thead id="tableHeader"></thead>
+                                <tbody id="tableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CALENDAR VIEW -->
+                <div class="view-container" id="calendarView">
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <h2 class="calendar-month" id="calendarMonth">Ocak 2026</h2>
+                            <div class="calendar-nav">
+                                <button onclick="app.previousMonth()">◀ Önceki</button>
+                                <button onclick="app.today()">Bugün</button>
+                                <button onclick="app.nextMonth()">Sonraki ▶</button>
+                            </div>
+                            <div class="calendar-view-toggle">
+                                <button class="view-toggle-btn active" onclick="app.setCalendarView('month')">Ay</button>
+                                <button class="view-toggle-btn" onclick="app.setCalendarView('week')">Hafta</button>
+                                <button class="view-toggle-btn" onclick="app.setCalendarView('day')">Gün</button>
+                            </div>
+                        </div>
+                        <div class="calendar-grid">
+                            <div class="calendar-weekdays">
+                                <div class="calendar-weekday">Pzt</div>
+                                <div class="calendar-weekday">Sal</div>
+                                <div class="calendar-weekday">Çar</div>
+                                <div class="calendar-weekday">Per</div>
+                                <div class="calendar-weekday">Cum</div>
+                                <div class="calendar-weekday">Cmt</div>
+                                <div class="calendar-weekday">Paz</div>
+                            </div>
+                            <div class="calendar-days" id="calendarDays"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANALYTICS VIEW -->
+                <div class="view-container" id="analyticsView">
+                    <div class="analytics-container">
+                        <h2 class="board-title" style="margin-bottom: 24px;">Proje Analizleri</h2>
+                       
+                        <div class="analytics-grid">
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <div class="stat-title">Toplam Görev</div>
+                                    <div class="stat-icon" style="background: #eef2ff; color: var(--primary);">📋</div>
+                                </div>
+                                <div class="stat-value" id="totalTasks">0</div>
+                                <div class="stat-change positive">
+                                    <span>↑ 12%</span>
+                                    <span>Bu ayda</span>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <div class="stat-title">Tamamlanan</div>
+                                    <div class="stat-icon" style="background: #d1fae5; color: var(--success);">✓</div>
+                                </div>
+                                <div class="stat-value" id="completedTasks">0</div>
+                                <div class="stat-change positive">
+                                    <span>↑ 8%</span>
+                                    <span>Geçen haftadan</span>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <div class="stat-title">Devam Eden</div>
+                                    <div class="stat-icon" style="background: #dbeafe; color: var(--info);">⏱️</div>
+                                </div>
+                                <div class="stat-value" id="inProgressTasks">0</div>
+                                <div class="stat-change">
+                                    <span>→ 0%</span>
+                                    <span>Değişim yok</span>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <div class="stat-title">Tamamlanma Oranı</div>
+                                    <div class="stat-icon" style="background: #fef3c7; color: var(--warning);">📈</div>
+                                </div>
+                                <div class="stat-value" id="completionRate">0%</div>
+                                <div class="stat-change positive">
+                                    <span>↑ 5%</span>
+                                    <span>Bu ayda</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Haftalık Görev Dağılımı</h3>
+                                <div class="toolbar-right">
+                                    <button class="toolbar-btn" onclick="app.refreshCharts()">🔄 Yenile</button>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <div class="bar-chart" id="weeklyChart"></div>
+                            </div>
+                        </div>
+
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Durum Dağılımı</h3>
+                            </div>
+                            <div class="chart-container">
+                                <div class="bar-chart" id="statusChart"></div>
+                            </div>
+                        </div>
+
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Tamamlanma İlerlemesi</h3>
+                            </div>
+                            <div class="progress-ring">
+                                <svg width="200" height="200">
+                                    <circle class="progress-ring-circle" cx="100" cy="100" r="90"></circle>
+                                    <circle class="progress-ring-fill" id="progressRingFill" cx="100" cy="100" r="90"></circle>
+                                </svg>
+                                <div class="progress-ring-text" id="progressRingText">0%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TEAM VIEW -->
+                <div class="view-container" id="teamView">
+                    <div class="team-container">
+                        <div class="board-header">
+                            <h2 class="board-title">Ekip Üyeleri</h2>
+                            <div class="board-actions">
+                                <button class="btn btn-primary" onclick="app.showAddMemberModal()">
+                                    <span>+</span>
+                                    <span>Üye Ekle</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="team-grid" id="teamGrid"></div>
+                    </div>
+                </div>
+
+                <aside class="detail-panel" id="detailPanel">
+                    <div class="detail-header">
+                        <h3 class="detail-title">Görev Detayları</h3>
+                        <div class="close-detail" onclick="app.closeDetailPanel()">✕</div>
+                    </div>
+                    <div class="detail-content" id="detailContent"></div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <div class="modal-overlay" id="addBoardModal">
+        <div class="modal">
+            <h3 class="modal-header">Yeni Pano Oluştur</h3>
+            <div class="form-group">
+                <label class="form-label">Pano Adı</label>
+                <input type="text" class="form-input" id="newBoardName" placeholder="Örn: Pazarlama Projesi">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Açıklama</label>
+                <textarea class="form-textarea" id="newBoardDesc" placeholder="Pano hakkında kısa açıklama..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="app.closeAddBoardModal()">İptal</button>
+                <button class="btn btn-primary" onclick="app.createBoard()">Oluştur</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addRowModal">
+        <div class="modal">
+            <h3 class="modal-header">Yeni Görev Ekle</h3>
+            <div id="addRowForm"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="app.closeAddRowModal()">İptal</button>
+                <button class="btn btn-primary" onclick="app.addRow()">Ekle</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addColumnModal">
+        <div class="modal">
+            <h3 class="modal-header">Yeni Sütun Ekle</h3>
+            <div class="form-group">
+                <label class="form-label">Sütun Adı</label>
+                <input type="text" class="form-input" id="newColumnName" placeholder="Örn: Öncelik">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sütun Tipi</label>
+                <select class="form-select" id="newColumnType">
+                    <option value="text">Metin</option>
+                    <option value="status">Durum</option>
+                    <option value="person">Kişi</option>
+                    <option value="date">Tarih</option>
+                    <option value="number">Sayı</option>
+                    <option value="tag">Etiket</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="app.closeAddColumnModal()">İptal</button>
+                <button class="btn btn-primary" onclick="app.addColumn()">Ekle</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            data: {
+                boards: [],
+                currentBoard: null,
+                selectedRows: new Set(),
+                currentView: 'board',
+                currentMonth: new Date(),
+                calendarView: 'month',
+                teamMembers: [
+                    {
+                        id: 'user1',
+                        name: 'Ayşe Yılmaz',
+                        role: 'Frontend Developer',
+                        color: '#667eea',
+                        tasks: 12,
+                        completed: 8,
+                        email: 'ayse@protask.com'
+                    },
+                    {
+                        id: 'user2',
+                        name: 'Mehmet Demir',
+                        role: 'Backend Developer',
+                        color: '#10b981',
+                        tasks: 15,
+                        completed: 10,
+                        email: 'mehmet@protask.com'
+                    },
+                    {
+                        id: 'user3',
+                        name: 'Zeynep Kara',
+                        role: 'UI/UX Designer',
+                        color: '#f59e0b',
+                        tasks: 8,
+                        completed: 6,
+                        email: 'zeynep@protask.com'
+                    },
+                    {
+                        id: 'user4',
+                        name: 'Can Öztürk',
+                        role: 'QA Engineer',
+                        color: '#ef4444',
+                        tasks: 10,
+                        completed: 7,
+                        email: 'can@protask.com'
+                    }
+                ]
+            },
+
+            init() {
+                this.loadData();
+                this.render();
+                this.setupEventListeners();
+                this.updateStats();
+            },
+
+            loadData() {
+                const saved = localStorage.getItem('proTaskData');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    this.data.boards = parsed.boards || [];
+                    this.data.currentBoard = parsed.currentBoard || null;
+                } else {
+                    this.data.boards = [{
+                        id: 'board1',
+                        name: 'Ana Proje Panosu',
+                        description: 'Genel proje takip panosu',
+                        columns: [
+                            { id: 'col1', name: 'Görev', type: 'text', width: 300 },
+                            { id: 'col2', name: 'Durum', type: 'status', width: 150 },
+                            { id: 'col3', name: 'Atanan', type: 'person', width: 180 },
+                            { id: 'col4', name: 'Bitiş Tarihi', type: 'date', width: 150 },
+                            { id: 'col5', name: 'Öncelik', type: 'tag', width: 200 }
+                        ],
+                        rows: [
+                            {
+                                id: 'row1',
+                                data: {
+                                    col1: 'Kullanıcı arayüzü tasarımı',
+                                    col2: 'progress',
+                                    col3: { name: 'Ayşe Yılmaz', color: '#667eea' },
+                                    col4: '2026-02-15',
+                                    col5: ['Yüksek', 'Tasarım']
+                                },
+                                createdAt: new Date().toISOString()
+                            },
+                            {
+                                id: 'row2',
+                                data: {
+                                    col1: 'Backend API geliştirme',
+                                    col2: 'review',
+                                    col3: { name: 'Mehmet Demir', color: '#10b981' },
+                                    col4: '2026-02-10',
+                                    col5: ['Kritik', 'Backend']
+                                },
+                                createdAt: new Date().toISOString()
+                            },
+                            {
+                                id: 'row3',
+                                data: {
+                                    col1: 'Veritabanı optimizasyonu',
+                                    col2: 'todo',
+                                    col3: { name: 'Zeynep Kara', color: '#f59e0b' },
+                                    col4: '2026-02-20',
+                                    col5: ['Orta', 'Database']
+                                },
+                                createdAt: new Date().toISOString()
+                            },
+                            {
+                                id: 'row4',
+                                data: {
+                                    col1: 'Mobil uygulama testleri',
+                                    col2: 'done',
+                                    col3: { name: 'Can Öztürk', color: '#ef4444' },
+                                    col4: '2026-01-30',
+                                    col5: ['Düşük', 'Test']
+                                },
+                                createdAt: new Date().toISOString()
+                            },
+                            {
+                                id: 'row5',
+                                data: {
+                                    col1: 'Güvenlik güncellemeleri',
+                                    col2: 'progress',
+                                    col3: { name: 'Ayşe Yılmaz', color: '#667eea' },
+                                    col4: '2026-02-08',
+                                    col5: ['Kritik', 'Security']
+                                },
+                                createdAt: new Date().toISOString()
+                            },
+                            {
+                                id: 'row6',
+                                data: {
+                                    col1: 'Dokümantasyon güncelleme',
+                                    col2: 'todo',
+                                    col3: { name: 'Mehmet Demir', color: '#10b981' },
+                                    col4: '2026-02-25',
+                                    col5: ['Düşük', 'Docs']
+                                },
+                                createdAt: new Date().toISOString()
+                            }
+                        ]
+                    }];
+                    this.data.currentBoard = 'board1';
+                    this.saveData();
+                }
+            },
+
+            saveData() {
+                localStorage.setItem('proTaskData', JSON.stringify({
+                    boards: this.data.boards,
+                    currentBoard: this.data.currentBoard
+                }));
+            },
+
+            getCurrentBoard() {
+                return this.data.boards.find(b => b.id === this.data.currentBoard);
+            },
+
+            switchView(view) {
+                this.data.currentView = view;
+               
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                document.querySelector(`.nav-item[data-view="${view}"]`)?.classList.add('active');
+               
+                document.querySelectorAll('.view-container').forEach(container => {
+                    container.classList.remove('active');
+                });
+               
+                const viewMap = {
+                    'board': 'boardView',
+                    'calendar': 'calendarView',
+                    'analytics': 'analyticsView',
+                    'team': 'teamView'
+                };
+               
+                document.getElementById(viewMap[view]).classList.add('active');
+               
+                const titleMap = {
+                    'board': 'Ana Proje Panosu',
+                    'calendar': 'Takvim Görünümü',
+                    'analytics': 'Proje Analizleri',
+                    'team': 'Ekip Üyeleri'
+                };
+               
+                document.getElementById('currentTitle').textContent = titleMap[view];
+                document.getElementById('breadcrumbView').textContent = titleMap[view];
+               
+                if (view === 'calendar') {
+                    this.renderCalendar();
+                } else if (view === 'analytics') {
+                    this.renderAnalytics();
+                } else if (view === 'team') {
+                    this.renderTeam();
+                }
+            },
+
+            render() {
+                this.renderBoardList();
+                this.renderTable();
+                this.updateStats();
+            },
+
+            renderBoardList() {
+                const list = document.getElementById('boardList');
+                list.innerHTML = this.data.boards.map(board => `
+                    <div class="nav-item ${board.id === this.data.currentBoard ? 'active' : ''}"
+                         onclick="app.switchBoard('${board.id}')">
+                        <div class="nav-icon">📊</div>
+                        <span>${board.name}</span>
+                    </div>
+                `).join('');
+            },
+
+            switchBoard(boardId) {
+                this.data.currentBoard = boardId;
+                this.saveData();
+                this.render();
+            },
+
+            renderTable() {
+                const board = this.getCurrentBoard();
+                if (!board) return;
+
+                document.getElementById('boardTitle').textContent = board.name;
+
+                const thead = document.getElementById('tableHeader');
+                thead.innerHTML = `
+                    <tr>
+                        <th class="checkbox-cell">
+                            <input type="checkbox" onchange="app.toggleSelectAll(this)">
+                        </th>
+                        ${board.columns.map(col => `
+                            <th class="sortable" style="width:${col.width || 150}px" onclick="app.sortBy('${col.id}')">${col.name}</th>
+                        `).join('')}
+                        <th class="action-cell">İşlem</th>
+                    </tr>
+                `;
+
+                const tbody = document.getElementById('tableBody');
+                if (board.rows.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="${board.columns.length + 2}" style="text-align:center; padding:60px 20px; color:var(--text-secondary);">
+                                <div style="font-size:48px; margin-bottom:16px; opacity:0.4;">📋</div>
+                                <div style="font-size:18px; font-weight:600; margin-bottom:8px;">Henüz görev yok</div>
+                                <div style="font-size:14px;">Yeni bir görev ekleyerek başlayın</div>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tbody.innerHTML = board.rows.map(row => `
+                        <tr data-row-id="${row.id}" draggable="true" ondragstart="app.dragStart(event)" ondragover="app.dragOver(event)" ondrop="app.drop(event)">
+                            <td class="checkbox-cell">
+                                <input type="checkbox" ${this.data.selectedRows.has(row.id) ? 'checked' : ''} onchange="app.toggleRowSelect('${row.id}', this.checked)">
+                            </td>
+                            ${board.columns.map(col => `
+                                <td onclick="app.showDetailPanel('${row.id}')">
+                                    ${this.renderCell(row.data[col.id], col.type, row.id, col.id)}
+                                </td>
+                            `).join('')}
+                            <td class="action-cell">
+                                <button class="action-btn delete-btn" onclick="event.stopPropagation(); app.deleteRow('${row.id}')">🗑️</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+
+                this.updateStats();
+            },
+
+            renderCell(value, type, rowId, colId) {
+                switch(type) {
+                    case 'text':
+                        return `<div class="cell-editable" contenteditable="true" onblur="app.updateCell('${rowId}', '${colId}', this.textContent)">${value || ''}</div>`;
+                   
+                    case 'status':
+                        const statusMap = {
+                            'todo': 'Yapılacak',
+                            'progress': 'Devam Ediyor',
+                            'review': 'İnceleme',
+                            'done': 'Tamamlandı'
+                        };
+                        return `<span class="status-badge status-${value}" onclick="event.stopPropagation(); app.cycleStatus('${rowId}', '${colId}')">${statusMap[value] || 'Yapılacak'}</span>`;
+                   
+                    case 'person':
+                        if (!value) return '<span style="color:var(--text-muted)">Atanmadı</span>';
+                        return `
+                            <div class="person-cell">
+                                <div class="avatar" style="background:${value.color}; width:28px; height:28px; font-size:11px;">
+                                    ${value.name.split(' ').map(n => n[0]).join('')}
+                                </div>
+                                <span>${value.name}</span>
+                            </div>
+                        `;
+                   
+                    case 'date':
+                        return `<input type="date" class="date-input" value="${value || ''}" onchange="app.updateCell('${rowId}', '${colId}', this.value)" onclick="event.stopPropagation()">`;
+                   
+                    case 'tag':
+                        if (!value || !Array.isArray(value)) return '';
+                        const priorityClass = value[0] === 'Kritik' ? 'priority-critical' :
+                                            value[0] === 'Yüksek' ? 'priority-high' :
+                                            value[0] === 'Orta' ? 'priority-medium' : 'priority-low';
+                        return `
+                            <div class="tag-container">
+                                ${value.map(tag => `<span class="tag ${priorityClass}">${tag}</span>`).join('')}
+                            </div>
+                        `;
+                   
+                    case 'number':
+                        return `<div class="cell-editable" contenteditable="true" onblur="app.updateCell('${rowId}', '${colId}', this.textContent)">${value || '0'}</div>`;
+                   
+                    default:
+                        return value || '';
+                }
+            },
+
+            updateCell(rowId, colId, value) {
+                const board = this.getCurrentBoard();
+                const row = board.rows.find(r => r.id === rowId);
+                if (row) {
+                    row.data[colId] = value;
+                    this.saveData();
+                    this.updateStats();
+                }
+            },
+
+            cycleStatus(rowId, colId) {
+                const board = this.getCurrentBoard();
+                const row = board.rows.find(r => r.id === rowId);
+                if (row) {
+                    const statuses = ['todo', 'progress', 'review', 'done'];
+                    const currentIndex = statuses.indexOf(row.data[colId]);
+                    row.data[colId] = statuses[(currentIndex + 1) % statuses.length];
+                    this.saveData();
+                    this.renderTable();
+                    this.showNotification('Durum güncellendi');
+                }
+            },
+
+            toggleRowSelect(rowId, checked) {
+                if (checked) {
+                    this.data.selectedRows.add(rowId);
+                } else {
+                    this.data.selectedRows.delete(rowId);
+                }
+            },
+
+            toggleSelectAll(checkbox) {
+                const board = this.getCurrentBoard();
+                if (checkbox.checked) {
+                    board.rows.forEach(row => this.data.selectedRows.add(row.id));
+                } else {
+                    this.data.selectedRows.clear();
+                }
+                this.renderTable();
+            },
+
+            deleteRow(rowId) {
+                if (confirm('Bu görevi silmek istediğinizden emin misiniz?')) {
+                    const board = this.getCurrentBoard();
+                    board.rows = board.rows.filter(r => r.id !== rowId);
+                    this.saveData();
+                    this.renderTable();
+                    this.showNotification('Görev silindi');
+                }
+            },
+
+            sortBy(colId) {
+                const board = this.getCurrentBoard();
+                if (!board) return;
+
+                board.rows.sort((a, b) => {
+                    const valA = a.data[colId];
+                    const valB = b.data[colId];
+                   
+                    if (valA === valB) return 0;
+                    if (!valA) return 1;
+                    if (!valB) return -1;
+                   
+                    if (typeof valA === 'string') {
+                        return valA.localeCompare(valB);
+                    }
+                   
+                    return valA > valB ? 1 : -1;
+                });
+
+                this.renderTable();
+                this.showNotification('Sıralandı');
+            },
+
+            dragStart(e) {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', e.target.dataset.rowId);
+                e.target.style.opacity = '0.4';
+            },
+
+            dragOver(e) {
+                if (e.preventDefault) e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                return false;
+            },
+
+            drop(e) {
+                if (e.stopPropagation) e.stopPropagation();
+                const draggedId = e.dataTransfer.getData('text/html');
+                const targetId = e.currentTarget.dataset.rowId;
+               
+                if (draggedId !== targetId) {
+                    const board = this.getCurrentBoard();
+                    const draggedIndex = board.rows.findIndex(r => r.id === draggedId);
+                    const targetIndex = board.rows.findIndex(r => r.id === targetId);
+                   
+                    const [draggedRow] = board.rows.splice(draggedIndex, 1);
+                    board.rows.splice(targetIndex, 0, draggedRow);
+                   
+                    this.saveData();
+                    this.renderTable();
+                }
+               
+                document.querySelectorAll('tr[draggable]').forEach(row => row.style.opacity = '1');
+                return false;
+            },
+
+            showDetailPanel(rowId) {
+                const board = this.getCurrentBoard();
+                const row = board.rows.find(r => r.id === rowId);
+                if (!row) return;
+
+                const panel = document.getElementById('detailPanel');
+                const content = document.getElementById('detailContent');
+               
+                content.innerHTML = `
+                    <div class="detail-section">
+                        <div class="detail-section-title">Görev Bilgileri</div>
+                        ${board.columns.map(col => `
+                            <div class="detail-field">
+                                <div class="detail-label">${col.name}</div>
+                                <div class="detail-value">${this.getDetailValue(row.data[col.id], col.type)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                   
+                    <div class="detail-section">
+                        <div class="detail-section-title">Aktivite Geçmişi</div>
+                        <div class="activity-item">
+                            <div class="avatar" style="background:#667eea; width:32px; height:32px; font-size:12px;">AK</div>
+                            <div class="activity-content">
+                                <div class="activity-user">Ahmet Kaya</div>
+                                <div class="activity-action">Görevi oluşturdu</div>
+                                <div class="activity-time">${new Date(row.createdAt).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+               
+                panel.classList.add('open');
+            },
+
+            closeDetailPanel() {
+                document.getElementById('detailPanel').classList.remove('open');
+            },
+
+            getDetailValue(value, type) {
+                if (!value) return '<span style="color:var(--text-muted)">Belirtilmemiş</span>';
+               
+                switch(type) {
+                    case 'person':
+                        return `
+                            <div class="person-cell">
+                                <div class="avatar" style="background:${value.color}">${value.name.split(' ').map(n => n[0]).join('')}</div>
+                                <span>${value.name}</span>
+                            </div>
+                        `;
+                    case 'tag':
+                        return `<div class="tag-container">${value.map(t => `<span class="tag">${t}</span>`).join('')}</div>`;
+                    case 'date':
+                        return new Date(value).toLocaleDateString('tr-TR');
+                    case 'status':
+                        const statusMap = {'todo': 'Yapılacak', 'progress': 'Devam Ediyor', 'review': 'İnceleme', 'done': 'Tamamlandı'};
+                        return statusMap[value] || value;
+                    default:
+                        return value;
+                }
+            },
+
+            updateStats() {
+                const board = this.getCurrentBoard();
+                if (!board) return;
+
+                const total = board.rows.length;
+                const completed = board.rows.filter(r => r.data.col2 === 'done').length;
+               
+                document.getElementById('itemCount').textContent = `${total} görev`;
+                document.getElementById('completedCount').textContent = `${completed} tamamlandı`;
+            },
+
+            renderCalendar() {
+                const year = this.data.currentMonth.getFullYear();
+                const month = this.data.currentMonth.getMonth();
+               
+                const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+                document.getElementById('calendarMonth').textContent = `${monthNames[month]} ${year}`;
+               
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const daysInPrevMonth = new Date(year, month, 0).getDate();
+               
+                const startDay = firstDay === 0 ? 6 : firstDay - 1;
+               
+                const calendarDays = document.getElementById('calendarDays');
+                calendarDays.innerHTML = '';
+               
+                const board = this.getCurrentBoard();
+                const today = new Date();
+               
+                for (let i = startDay - 1; i >= 0; i--) {
+                    const day = daysInPrevMonth - i;
+                    calendarDays.innerHTML += `
+                        <div class="calendar-day other-month">
+                            <div class="calendar-day-number">${day}</div>
+                        </div>
+                    `;
+                }
+               
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const currentDate = new Date(year, month, day);
+                    const dateStr = currentDate.toISOString().split('T')[0];
+                    const isToday = currentDate.toDateString() === today.toDateString();
+                   
+                    const tasksForDay = board ? board.rows.filter(row => row.data.col4 === dateStr) : [];
+                   
+                    calendarDays.innerHTML += `
+                        <div class="calendar-day ${isToday ? 'today' : ''}" onclick="app.showDayTasks('${dateStr}')">
+                            <div class="calendar-day-number">${day}</div>
+                            ${tasksForDay.slice(0, 3).map(task => `
+                                <div class="calendar-task" style="background:${this.getStatusColor(task.data.col2)}">
+                                    ${task.data.col1.substring(0, 20)}${task.data.col1.length > 20 ? '...' : ''}
+                                </div>
+                            `).join('')}
+                            ${tasksForDay.length > 3 ? `<div class="calendar-task-more">+${tasksForDay.length - 3} görev</div>` : ''}
+                        </div>
+                    `;
+                }
+               
+                const remainingDays = 42 - (startDay + daysInMonth);
+                for (let i = 1; i <= remainingDays; i++) {
+                    calendarDays.innerHTML += `
+                        <div class="calendar-day other-month">
+                            <div class="calendar-day-number">${i}</div>
+                        </div>
+                    `;
+                }
+            },
+
+            showDayTasks(dateStr) {
+                const board = this.getCurrentBoard();
+                const tasks = board.rows.filter(row => row.data.col4 === dateStr);
+               
+                if (tasks.length > 0) {
+                    alert(`Bu günün görevleri:\n\n${tasks.map(t => '• ' + t.data.col1).join('\n')}`);
+                } else {
+                    this.showNotification('Bu gün için görev yok', false);
+                }
+            },
+
+            getStatusColor(status) {
+                const colors = {
+                    'todo': '#94a3b8',
+                    'progress': '#3b82f6',
+                    'review': '#f59e0b',
+                    'done': '#10b981'
+                };
+                return colors[status] || '#94a3b8';
+            },
+
+            previousMonth() {
+                this.data.currentMonth.setMonth(this.data.currentMonth.getMonth() - 1);
+                this.renderCalendar();
+            },
+
+            nextMonth() {
+                this.data.currentMonth.setMonth(this.data.currentMonth.getMonth() + 1);
+                this.renderCalendar();
+            },
+
+            today() {
+                this.data.currentMonth = new Date();
+                this.renderCalendar();
+            },
+
+            setCalendarView(view) {
+                this.data.calendarView = view;
+                document.querySelectorAll('.view-toggle-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                this.showNotification(`Görünüm: ${view === 'month' ? 'Ay' : view === 'week' ? 'Hafta' : 'Gün'}`);
+            },
+
+            renderAnalytics() {
+                const board = this.getCurrentBoard();
+                if (!board) return;
+
+                const total = board.rows.length;
+                const completed = board.rows.filter(r => r.data.col2 === 'done').length;
+                const inProgress = board.rows.filter(r => r.data.col2 === 'progress').length;
+                const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+                document.getElementById('totalTasks').textContent = total;
+                document.getElementById('completedTasks').textContent = completed;
+                document.getElementById('inProgressTasks').textContent = inProgress;
+                document.getElementById('completionRate').textContent = `${completionRate}%`;
+
+                const weeklyData = [
+                    { label: 'Pzt', value: Math.floor(Math.random() * 15) + 5 },
+                    { label: 'Sal', value: Math.floor(Math.random() * 15) + 5 },
+                    { label: 'Çar', value: Math.floor(Math.random() * 15) + 5 },
+                    { label: 'Per', value: Math.floor(Math.random() * 15) + 5 },
+                    { label: 'Cum', value: Math.floor(Math.random() * 15) + 5 },
+                    { label: 'Cmt', value: Math.floor(Math.random() * 10) + 2 },
+                    { label: 'Paz', value: Math.floor(Math.random() * 10) + 2 }
+                ];
+
+                const maxWeekly = Math.max(...weeklyData.map(d => d.value));
+                document.getElementById('weeklyChart').innerHTML = weeklyData.map(d => `
+                    <div class="bar" style="height:${(d.value / maxWeekly) * 100}%">
+                        <div class="bar-value">${d.value}</div>
+                        <div class="bar-label">${d.label}</div>
+                    </div>
+                `).join('');
+
+                const statusData = [
+                    { label: 'Yapılacak', value: board.rows.filter(r => r.data.col2 === 'todo').length },
+                    { label: 'Devam Eden', value: board.rows.filter(r => r.data.col2 === 'progress').length },
+                    { label: 'İnceleme', value: board.rows.filter(r => r.data.col2 === 'review').length },
+                    { label: 'Tamamlanan', value: board.rows.filter(r => r.data.col2 === 'done').length }
+                ];
+
+                const maxStatus = Math.max(...statusData.map(d => d.value));
+                const statusColors = ['#94a3b8', '#3b82f6', '#f59e0b', '#10b981'];
+                document.getElementById('statusChart').innerHTML = statusData.map((d, i) => `
+                    <div class="bar" style="height:${maxStatus > 0 ? (d.value / maxStatus) * 100 : 10}%; background:${statusColors[i]}">
+                        <div class="bar-value">${d.value}</div>
+                        <div class="bar-label">${d.label}</div>
+                    </div>
+                `).join('');
+
+                const radius = 90;
+                const circumference = 2 * Math.PI * radius;
+                const offset = circumference - (completionRate / 100) * circumference;
+                const fill = document.getElementById('progressRingFill');
+                fill.style.strokeDasharray = `${circumference} ${circumference}`;
+                fill.style.strokeDashoffset = offset;
+                document.getElementById('progressRingText').textContent = `${completionRate}%`;
+            },
+
+            refreshCharts() {
+                this.renderAnalytics();
+                this.showNotification('Grafikler yenilendi');
+            },
+
+            renderTeam() {
+                document.getElementById('teamGrid').innerHTML = this.data.teamMembers.map(member => {
+                    const completionRate = member.tasks > 0 ? Math.round((member.completed / member.tasks) * 100) : 0;
+                    return `
+                    <div class="team-card" onclick="app.showMemberDetail('${member.id}')">
+                        <div class="team-member-header">
+                            <div class="team-avatar" style="background:${member.color}">
+                                ${member.name.split(' ').map(n => n[0]).join('')}
+                            </div>
+                            <div class="team-member-info">
+                                <div class="team-member-name">${member.name}</div>
+                                <div class="team-member-role">${member.role}</div>
+                                <div class="team-member-email">${member.email}</div>
+                            </div>
+                        </div>
+                        <div class="team-stats">
+                            <div class="team-stat">
+                                <div class="team-stat-value">${member.tasks}</div>
+                                <div class="team-stat-label">Toplam Görev</div>
+                            </div>
+                            <div class="team-stat">
+                                <div class="team-stat-value">${member.completed}</div>
+                                <div class="team-stat-label">Tamamlanan</div>
+                            </div>
+                        </div>
+                        <div class="team-progress">
+                            <div class="team-progress-label">
+                                <span>İlerleme</span>
+                                <span>${completionRate}%</span>
+                            </div>
+                            <div class="team-progress-bar">
+                                <div class="team-progress-fill" style="width:${completionRate}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `}).join('');
+            },
+
+            showMemberDetail(memberId) {
+                const member = this.data.teamMembers.find(m => m.id === memberId);
+                if (!member) return;
+
+                const board = this.getCurrentBoard();
+                const memberTasks = board ? board.rows.filter(row =>
+                    row.data.col3 && row.data.col3.name === member.name
+                ) : [];
+
+                alert(`${member.name}\n\nGörevleri:\n${memberTasks.length > 0 ? memberTasks.map(t => '• ' + t.data.col1).join('\n') : 'Henüz görev atanmamış'}`);
+            },
+
+            showAddMemberModal() {
+                this.showNotification('Ekip üyesi ekleme özelliği yakında...', false);
+            },
+
+            showAddBoardModal() {
+                document.getElementById('addBoardModal').classList.add('active');
+            },
+
+            closeAddBoardModal() {
+                document.getElementById('addBoardModal').classList.remove('active');
+            },
+
+            createBoard() {
+    const name = document.getElementById('newBoardName').value.trim();
+    const desc = document.getElementById('newBoardDesc').value.trim();
+   
+    if (!name) {
+        alert('Pano adı gereklidir');
+        return;
+    }
+
+    const newBoard = {
+        id: 'board' + Date.now(),
+        name: name,
+        description: desc,
+        columns: [
+            { id: 'col1', name: 'Görev', type: 'text', width: 300 },
+            { id: 'col2', name: 'Durum', type: 'status', width: 150 },
+            { id: 'col3', name: 'Atanan', type: 'person', width: 180 },
+            { id: 'col4', name: 'Bitiş Tarihi', type: 'date', width: 150 }
+        ],
+        rows: []
+    };
+
+    this.data.boards.push(newBoard);
+    this.data.currentBoard = newBoard.id;
+    this.saveData();
+    this.closeAddBoardModal();
+    this.render();
+    this.showNotification('Yeni pano oluşturuldu');
+   
+    document.getElementById('newBoardName').value = '';
+    document.getElementById('newBoardDesc').value = '';
+},
+showAddRowModal() {
+    const board = this.getCurrentBoard();
+    if (!board) return;
+
+    const form = document.getElementById('addRowForm');
+    form.innerHTML = board.columns.map(col => {
+        let inputHtml = '';
+       
+        switch(col.type) {
+            case 'text':
+                inputHtml = `<input type="text" class="form-input" id="new_${col.id}" placeholder="${col.name} girin">`;
+                break;
+            case 'status':
+                inputHtml = `
+                    <select class="form-select" id="new_${col.id}">
+                        <option value="todo">Yapılacak</option>
+                        <option value="progress">Devam Ediyor</option>
+                        <option value="review">İnceleme</option>
+                        <option value="done">Tamamlandı</option>
+                    </select>
+                `;
+                break;
+            case 'person':
+                inputHtml = `
+                    <select class="form-select" id="new_${col.id}">
+                        <option value="">Seçiniz</option>
+                        ${this.data.teamMembers.map(m =>
+                            `<option value='${JSON.stringify({name: m.name, color: m.color})}'>${m.name}</option>`
+                        ).join('')}
+                    </select>
+                `;
+                break;
+            case 'date':
+                inputHtml = `<input type="date" class="form-input" id="new_${col.id}">`;
+                break;
+            case 'tag':
+                inputHtml = `
+                    <input type="text" class="form-input" id="new_${col.id}"
+                           placeholder="Etiketleri virgülle ayırın">
+                `;
+                break;
+            default:
+                inputHtml = `<input type="text" class="form-input" id="new_${col.id}">`;
+        }
+
+        return `
+            <div class="form-group">
+                <label class="form-label">${col.name}</label>
+                ${inputHtml}
+            </div>
+        `;
+    }).join('');
+
+    document.getElementById('addRowModal').classList.add('active');
+},
+
+closeAddRowModal() {
+    document.getElementById('addRowModal').classList.remove('active');
+},
+
+addRow() {
+    const board = this.getCurrentBoard();
+    if (!board) return;
+
+    const newRow = {
+        id: 'row' + Date.now(),
+        data: {},
+        createdAt: new Date().toISOString()
+    };
+
+    board.columns.forEach(col => {
+        const input = document.getElementById(`new_${col.id}`);
+        if (input) {
+            if (col.type === 'person') {
+                newRow.data[col.id] = input.value ? JSON.parse(input.value) : null;
+            } else if (col.type === 'tag') {
+                newRow.data[col.id] = input.value.split(',').map(t => t.trim()).filter(Boolean);
+            } else {
+                newRow.data[col.id] = input.value;
+            }
+        }
+    });
+
+    board.rows.push(newRow);
+    this.saveData();
+    this.closeAddRowModal();
+    this.renderTable();
+    this.showNotification('Yeni görev eklendi');
+},
+showAddColumnModal() {
+    document.getElementById('addColumnModal').classList.add('active');
+},
+
+closeAddColumnModal() {
+    document.getElementById('addColumnModal').classList.remove('active');
+},
+
+addColumn() {
+    const board = this.getCurrentBoard();
+    if (!board) return;
+
+    const name = document.getElementById('newColumnName').value.trim();
+    const type = document.getElementById('newColumnType').value;
+
+    if (!name) {
+        alert('Sütun adı gereklidir');
+        return;
+    }
+
+    const newColumn = {
+        id: 'col' + Date.now(),
+        name: name,
+        type: type,
+        width: 150
+    };
+
+    board.columns.push(newColumn);
+   
+    // Mevcut satırlara bu sütun için boş değer ekle
+    board.rows.forEach(row => {
+        row.data[newColumn.id] = type === 'tag' ? [] : '';
+    });
+
+    this.saveData();
+    this.closeAddColumnModal();
+    this.renderTable();
+    this.showNotification('Yeni sütun eklendi');
+   
+    document.getElementById('newColumnName').value = '';
+},
+filterByStatus(status) {
+    document.querySelectorAll('.toolbar-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+   
+    // Filtreleme işlemi için satırları gizle/göster
+    const board = this.getCurrentBoard();
+    if (!board) return;
+   
+    const tbody = document.getElementById('tableBody');
+    const rows = tbody.querySelectorAll('tr');
+   
+    rows.forEach(row => {
+        const rowId = row.dataset.rowId;
+        const rowData = board.rows.find(r => r.id === rowId);
+       
+        if (status === 'all' || rowData.data.col2 === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+   
+    this.showNotification(`Filtre: ${status === 'all' ? 'Tümü' : status}`);
+},
+
+groupBy() {
+    this.showNotification('Gruplama özelliği yakında...', false);
+},
+
+hideCompleted() {
+    const board = this.getCurrentBoard();
+    if (!board) return;
+   
+    const tbody = document.getElementById('tableBody');
+    const rows = tbody.querySelectorAll('tr');
+   
+    rows.forEach(row => {
+        const rowId = row.dataset.rowId;
+        const rowData = board.rows.find(r => r.id === rowId);
+       
+        if (rowData && rowData.data.col2 === 'done') {
+            row.style.display = row.style.display === 'none' ? '' : 'none';
+        }
+    });
+   
+    this.showNotification('Tamamlanan görevler gizlendi/gösterildi');
+},
+
+exportData() {
+    const board = this.getCurrentBoard();
+    if (!board) return;
+
+    const dataStr = JSON.stringify(board, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${board.name}_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+   
+    this.showNotification('Veri dışa aktarıldı');
+},
+
+search() {
+    const query = document.getElementById('searchInput').value.toLowerCase().trim();
+    const board = this.getCurrentBoard();
+    if (!board) return;
+
+    const tbody = document.getElementById('tableBody');
+    const rows = tbody.querySelectorAll('tr');
+
+    rows.forEach(row => {
+        const rowId = row.dataset.rowId;
+        const rowData = board.rows.find(r => r.id === rowId);
+       
+        if (!rowData) return;
+
+        const searchableText = Object.values(rowData.data)
+            .map(v => {
+                if (typeof v === 'string') return v;
+                if (v && v.name) return v.name;
+                if (Array.isArray(v)) return v.join(' ');
+                return '';
+            })
+            .join(' ')
+            .toLowerCase();
+
+        if (query === '' || searchableText.includes(query)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+},
+
+showNotifications() {
+    alert('Bildirimler:\n\n• 3 yeni görev atandı\n• 2 görev tamamlandı\n• 1 yorum yapıldı');
+},
+
+showSettings() {
+    alert('Ayarlar:\n\n• Profil\n• Tema\n• Bildirimler\n• Entegrasyonlar');
+},
+
+toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+},
+
+setupEventListeners() {
+    // Escape tuşu ile modal kapatma
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.classList.remove('active');
+            });
+            this.closeDetailPanel();
+        }
+    });
+
+    // Modal overlay'e tıklayınca kapat
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.classList.remove('active');
+            }
+        });
+    });
+},
+
+showNotification(message, isSuccess = true) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${isSuccess ? '' : 'error'}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.animation = 'slideInRight 0.3s ease reverse';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+};
+
+        // Uygulama başlat
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+        
+    </script>
+</body>
+</html>
