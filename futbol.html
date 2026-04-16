@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futbol Oyunu</title>
+    <link rel="icon" href="data:,">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Anton&family=Russo+One&display=swap');
+
+        :root {
+            --yellow: #f1c40f;
+            --blue: #3498db;
+            --red: #e74c3c;
+            --dark: #1e272e;
+            --purple: #9b59b6; /* Turbo modu için renk */
+        }
+        body {
+            margin: 0; padding: 0;
+            background: #000 radial-gradient(circle, #2c3e50 0%, #000 100%);
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh;
+            font-family: 'Russo One', sans-serif;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-wrapper {
+            position: relative;
+            width: 1100px; height: 600px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8), 0 0 20px rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            border: 4px solid #444;
+        }
+
+        /* --- EKRANLAR --- */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 10; transition: all 0.4s ease;
+        }
+        .hidden { opacity: 0; pointer-events: none; transform: scale(1.1); }
+        
+        .btn {
+            background: linear-gradient(to bottom, #f39c12, #d35400);
+            border: none; border-bottom: 6px solid #a04000;
+            color: white; padding: 15px 40px; font-size: 24px;
+            font-family: 'Anton', sans-serif; text-transform: uppercase;
+            border-radius: 8px; cursor: pointer; margin: 10px;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.4);
+            transition: transform 0.1s, filter 0.2s;
+        }
+        .btn:hover { filter: brightness(1.1); }
+        .btn:active { transform: translateY(4px); border-bottom-width: 2px; }
+        .btn-blue { background: linear-gradient(to bottom, #3498db, #2980b9); border-bottom-color: #1c5980; }
+        .btn-green { background: linear-gradient(to bottom, #2ecc71, #27ae60); border-bottom-color: #1e8449; }
+        /* Yeni Turbo Buton Stili */
+        .btn-turbo { background: linear-gradient(to bottom, #9b59b6, #8e44ad); border-bottom-color: #6c3483; }
+
+        /* MENÜ */
+        #menu-screen {
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="600" viewBox="0 0 1100 600"><defs><radialGradient id="g"><stop offset="0%" stop-color="%232c3e50"/><stop offset="100%" stop-color="%23000"/></radialGradient></defs><rect width="100%" height="100%" fill="url(%23g)"/></svg>');
+        }
+        .logo-box {
+            font-family: 'Anton'; font-size: 90px; color: #fff;
+            text-shadow: 0 10px 0 #000, 0 0 30px rgba(255,255,255,0.2);
+            margin-bottom: 40px; text-align: center; line-height: 0.9;
+        }
+        .logo-sub { font-size: 30px; color: var(--yellow); letter-spacing: 5px; }
+
+        /* SEÇİM */
+        #selection-screen {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            flex-direction: column; justify-content: space-between; padding: 30px 0; box-sizing: border-box;
+        }
+        .select-container { display: flex; justify-content: center; align-items: center; gap: 40px; width: 100%; }
+        .player-card {
+            background: rgba(0,0,0,0.4); padding: 15px; border-radius: 20px;
+            display: flex; flex-direction: column; align-items: center;
+            border: 4px solid rgba(255,255,255,0.2); width: 280px;
+        }
+        .card-title { font-size: 24px; color: white; margin-bottom: 10px; font-family: 'Anton'; }
+        
+        .preview-canvas { 
+            background: rgba(255,255,255,0.1); 
+            border-radius: 50%; 
+            margin: 10px 0; 
+            border: 3px solid rgba(255,255,255,0.3); 
+            display: block;
+        }
+        
+        .nav-btn { background: none; border: none; font-size: 40px; color: white; cursor: pointer; }
+        .vs-badge { font-size: 50px; font-family: 'Anton'; color: white; text-shadow: 4px 4px 0 #000; }
+        
+        .controls-info {
+            background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; margin-top: 10px; width: 100%;
+            color: #ccc; font-size: 11px; text-align: left; line-height: 1.6;
+        }
+        .key-badge {
+            display: inline-block; background: #fff; color: #000; padding: 0 4px; 
+            border-radius: 3px; font-weight: bold; min-width: 15px; text-align: center;
+        }
+
+        /* HUD */
+        #game-ui { pointer-events: none; justify-content: space-between; padding: 15px 30px; box-sizing: border-box; }
+        .hud-top { width: 100%; display: flex; justify-content: space-between; align-items: flex-start; }
+        .score-pill {
+            background: linear-gradient(to bottom, #34495e, #2c3e50);
+            padding: 5px 20px; border-radius: 10px; border: 2px solid #5d6d7e;
+            color: white; text-align: center; min-width: 120px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .big-score { font-family: 'Anton'; font-size: 48px; line-height: 1; }
+        .team-label { font-size: 14px; color: #bdc3c7; }
+        .time-box {
+            background: #fff; color: #000; padding: 5px 15px;
+            font-family: 'Anton'; font-size: 40px; border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 0 #bdc3c7; border: 2px solid #000; border-top: none;
+        }
+        #goal-message {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0) rotate(-10deg);
+            font-family: 'Anton'; font-size: 180px; color: var(--yellow);
+            -webkit-text-stroke: 4px black; text-shadow: 10px 10px 0 var(--red);
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            z-index: 20;
+        }
+        #goal-message.show { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+<div id="game-wrapper">
+    <canvas id="gameCanvas" width="1100" height="600"></canvas>
+
+    <div id="menu-screen" class="screen">
+        <div class="logo-box">HEAD FOOTBALL<br><span class="logo-sub">LEGENDS</span></div>
+        <div style="display: flex; gap: 20px;">
+            <button class="btn btn-blue" onclick="goToSelection(true)">TEK KİŞİLİK</button>
+            <button class="btn" onclick="goToSelection(false)">2 OYUNCU (VS)</button>
+        </div>
+        <div style="color: #bbb; margin-top: 20px; font-size: 12px;">© 2025 Nihat Kaan Tekin Studio</div>
+    </div>
+
+    <div id="selection-screen" class="screen hidden">
+        <h1 style="color:white; font-family:'Anton'; font-size: 40px; margin:0;" id="select-title">TAKIMINI SEÇ</h1>
+        <div class="select-container">
+            <div class="player-card">
+                <div class="card-title" style="color: var(--red)">OYUNCU 1</div>
+                <div style="display:flex; align-items:center; width:100%; justify-content:space-between;">
+                    <button class="nav-btn" onclick="cycleChar(1, -1)">❮</button>
+                    <canvas id="p1-preview" class="preview-canvas" width="100" height="100"></canvas>
+                    <button class="nav-btn" onclick="cycleChar(1, 1)">❯</button>
+                </div>
+                <div id="p1-name" style="color:white; font-size:20px; margin-top:5px;">Takım Adı</div>
+                <div class="controls-info">
+                    <div><span class="key-badge">W</span><span class="key-badge">A</span><span class="key-badge">D</span> : Hareket</div>
+                    <div><span class="key-badge">S</span> : Düz Şut</div>
+                    <div style="color:#2ecc71"><span class="key-badge">E</span> : AŞIRTMA (YÜKSEK)</div>
+                    <div style="color:#e74c3c"><span class="key-badge">Q</span> : KAYMA</div>
+                    <div style="color:#f1c40f"><span class="key-badge">V</span> : SÜPER ŞUT</div>
+                </div>
+            </div>
+
+            <div class="vs-badge">VS</div>
+
+            <div class="player-card">
+                <div class="card-title" style="color: var(--blue)" id="p2-card-title">OYUNCU 2</div>
+                <div style="display:flex; align-items:center; width:100%; justify-content:space-between;">
+                    <button class="nav-btn" onclick="cycleChar(2, -1)">❮</button>
+                    <canvas id="p2-preview" class="preview-canvas" width="100" height="100"></canvas>
+                    <button class="nav-btn" onclick="cycleChar(2, 1)">❯</button>
+                </div>
+                <div id="p2-name" style="color:white; font-size:20px; margin-top:5px;">Takım Adı</div>
+                
+                <div id="p2-controls-area" class="controls-info">
+                    <div><span class="key-badge">Oklar</span> : Hareket</div>
+                    <div><span class="key-badge">↓</span> : Düz Şut</div>
+                    <div style="color:#2ecc71"><span class="key-badge">I</span> : AŞIRTMA (YÜKSEK)</div>
+                    <div style="color:#3498db"><span class="key-badge">K</span> : KAYMA</div>
+                    <div style="color:#f1c40f"><span class="key-badge">L</span> : SÜPER ŞUT</div>
+                </div>
+            </div>
+        </div>
+        <div>
+            <button class="btn btn-blue" onclick="goToMenu()">GERİ</button>
+            <button class="btn btn-green" onclick="startGame(false)">NORMAL BAŞLAT</button>
+            <button class="btn btn-turbo" onclick="startGame(true)">TURBO MOD ⚡</button>
+        </div>
+    </div>
+
+    <div id="game-ui" class="screen hidden">
+        <div class="hud-top">
+            <div class="score-pill" style="border-color: var(--red)">
+                <div class="team-label" id="hud-p1-name">P1</div>
+                <div class="big-score" id="score-p1">0</div>
+            </div>
+            <div class="time-box" id="timer">90</div>
+            <div class="score-pill" style="border-color: var(--blue)">
+                <div class="team-label" id="hud-p2-name">P2</div>
+                <div class="big-score" id="score-p2">0</div>
+            </div>
+        </div>
+        <div id="goal-message">GOOOOL!</div>
+    </div>
+
+    <div id="result-screen" class="screen hidden" style="background: rgba(0,0,0,0.9);">
+        <h1 id="winner-title" style="font-family:'Anton'; font-size:70px; color:white; margin-bottom:10px;">KAZANAN</h1>
+        <div id="final-score" style="font-size:50px; color:var(--yellow); margin-bottom:30px;">3 - 1</div>
+        <button class="btn" onclick="restartGame()">TEKRAR OYNA</button>
+        <button class="btn btn-blue" onclick="goToMenu()">ANA MENÜ</button>
+    </div>
+</div>
+
+<script>
+    // --- SES MOTORU ---
+    const AudioEngine = {
+        ctx: null,
+        init: function() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+        play: function(type) {
+            if (!this.ctx) return;
+            if (this.ctx.state === 'suspended') this.ctx.resume();
+            const t = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain); gain.connect(this.ctx.destination);
+
+            if (type === 'kick') { // Normal
+                osc.frequency.setValueAtTime(100, t); osc.frequency.exponentialRampToValueAtTime(0.01, t+0.1);
+                gain.gain.setValueAtTime(0.8, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.1);
+                osc.start(t); osc.stop(t+0.1);
+            } 
+            else if (type === 'chip') { // Aşırtma
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, t); osc.frequency.linearRampToValueAtTime(100, t+0.2);
+                gain.gain.setValueAtTime(0.7, t); gain.gain.linearRampToValueAtTime(0, t+0.2);
+                osc.start(t); osc.stop(t+0.2);
+            }
+            else if (type === 'slide') { // Kayma
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, t); osc.frequency.linearRampToValueAtTime(50, t+0.3);
+                gain.gain.setValueAtTime(0.4, t); gain.gain.linearRampToValueAtTime(0, t+0.3);
+                osc.start(t); osc.stop(t+0.3);
+            }
+            else if (type === 'stun') { // Stun
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100, t); osc.frequency.linearRampToValueAtTime(50, t+0.5);
+                gain.gain.setValueAtTime(0.5, t); gain.gain.linearRampToValueAtTime(0, t+0.5);
+                osc.start(t); osc.stop(t+0.5);
+            }
+            else if (type === 'super') { // Süper
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, t); osc.frequency.linearRampToValueAtTime(1200, t+0.4);
+                gain.gain.setValueAtTime(0.5, t); gain.gain.linearRampToValueAtTime(0, t+0.4);
+                osc.start(t); osc.stop(t+0.4);
+            }
+            else if (type === 'goal') { // Gol
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(400, t); osc.frequency.linearRampToValueAtTime(600, t+0.5);
+                gain.gain.setValueAtTime(0.5, t); gain.gain.linearRampToValueAtTime(0, t+1.0);
+                osc.start(t); osc.stop(t+1.0);
+            }
+        }
+    };
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    const GROUND_Y = 520;
+    const GRAVITY = 0.55;
+    const MATCH_TIME = 90;
+    
+    const TEAMS = [
+        { name: "ATLETICO", colors: ['#e74c3c', '#ffffff'], skin: '#eecca5', hair: '#4e342e' },
+        { name: "REAL", colors: ['#ffffff', '#ecf0f1'], skin: '#e0ac69', hair: '#f1c40f' },
+        { name: "BARCA", colors: ['#a61a37', '#1a37a6'], skin: '#8d5524', hair: '#2c3e50' },
+        { name: "JUVE", colors: ['#000000', '#ffffff'], skin: '#f5cba7', hair: '#000000' }
+    ];
+
+    let gameState = 'MENU';
+    let isSinglePlayer = false; 
+    let isTurboMode = false; // YENİ: Turbo modu değişkeni
+    let animationFrameId; // YENİ: Loop hatasını önlemek için ID
+    
+    let p1, p2, ball;
+    let timer = MATCH_TIME;
+    let timerInterval;
+    let scores = { p1: 0, p2: 0 };
+    let particles = [];
+    let keys = {};
+
+    class Particle {
+        constructor(x, y, color, speed) {
+            this.x = x; this.y = y;
+            this.vx = (Math.random()-0.5) * speed;
+            this.vy = (Math.random()-0.5) * speed;
+            this.life = 1.0; this.color = color;
+        }
+        update() { this.x += this.vx; this.y += this.vy; this.life -= 0.03; }
+        draw(ctx) {
+            ctx.globalAlpha = this.life; ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, 5, 5); ctx.globalAlpha = 1.0;
+        }
+    }
+
+    class Player {
+        constructor(x, teamData, isP1) {
+            this.x = x; this.y = GROUND_Y;
+            this.vx = 0; this.vy = 0;
+            this.radius = 36;
+            this.team = teamData;
+            this.isP1 = isP1;
+            
+            // YENİ: Turbo moduna göre hız ayarları
+            if (isTurboMode) {
+                this.speed = 9; // Turbo hızı
+                this.jumpPower = -15; // Turbo zıplama
+            } else {
+                this.speed = 5; // Normal hız
+                this.jumpPower = -12; // Normal zıplama
+            }
+            
+            this.facing = isP1 ? 1 : -1;
+            this.kickAngle = 0;
+            this.isSliding = false;
+            this.slideTimer = 0;
+            this.stunned = 0;
+        }
+        
+        update() {
+            if (this.stunned > 0) {
+                this.stunned--;
+                this.kickAngle = Math.PI; 
+                return;
+            }
+
+            let moveL, moveR, jump, kick, superKick, slide, chip;
+            if (this.isP1) {
+                moveL = keys['a']; moveR = keys['d']; jump = keys['w']; 
+                kick = keys['s']; superKick = keys['v']; slide = keys['q']; 
+                chip = keys['e'];
+            } else {
+                moveL = keys['ArrowLeft']; moveR = keys['ArrowRight']; jump = keys['ArrowUp']; 
+                kick = keys['ArrowDown']; superKick = keys['l']; slide = keys['k'];
+                chip = keys['i'];
+            }
+
+            let slideSpeed = isTurboMode ? 18 : 12; // Turbo kayma daha hızlı
+
+            if (slide && !this.isSliding && this.y >= GROUND_Y - this.radius - 2) {
+                this.isSliding = true;
+                this.slideTimer = 20;
+                this.vx = this.facing * slideSpeed;
+                AudioEngine.play('slide');
+            }
+
+            if (this.isSliding) {
+                this.slideTimer--;
+                this.vx *= 0.9;
+                if (this.slideTimer <= 0) this.isSliding = false;
+            } else {
+                if (moveL) this.vx = -this.speed;
+                else if (moveR) this.vx = this.speed;
+                else this.vx = 0;
+
+                if (jump && this.y >= GROUND_Y - this.radius - 2) {
+                    this.vy = this.jumpPower;
+                }
+            }
+
+            this.vy += GRAVITY;
+            this.x += this.vx; this.y += this.vy;
+
+            if (this.y > GROUND_Y - this.radius) { this.y = GROUND_Y - this.radius; this.vy = 0; }
+            if (this.x < this.radius) this.x = this.radius;
+            if (this.x > canvas.width - this.radius) this.x = canvas.width - this.radius;
+
+            const targetKick = (kick || superKick || chip) ? (this.facing * -Math.PI/2) : 0;
+            this.kickAngle += (targetKick - this.kickAngle) * 0.4;
+        }
+
+        draw(ctx) {
+            ctx.save(); ctx.translate(this.x, this.y);
+            if (this.stunned > 0) { ctx.rotate(Math.sin(Date.now() / 50) * 0.2); ctx.globalAlpha = 0.7; }
+            if (this.isSliding) { ctx.translate(0, 20); ctx.rotate(this.facing * -1.2); }
+
+            ctx.fillStyle = this.team.colors[0]; ctx.fillRect(-18, 12, 36, 26);
+            ctx.fillStyle = this.team.colors[1]; ctx.fillRect(-5, 12, 10, 26);
+            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI*2);
+            ctx.fillStyle = this.team.skin; ctx.fill(); ctx.stroke();
+            ctx.beginPath(); ctx.arc(0, -6, this.radius, Math.PI, 0);
+            ctx.fillStyle = this.team.hair; ctx.fill();
+            
+            if (this.stunned > 0) {
+                ctx.strokeStyle = 'black'; ctx.lineWidth = 2;
+                ctx.beginPath(); 
+                ctx.moveTo(8*this.facing - 4, -8); ctx.lineTo(8*this.facing + 4, -2);
+                ctx.moveTo(8*this.facing + 4, -8); ctx.lineTo(8*this.facing - 4, -2);
+                ctx.stroke();
+            } else {
+                ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(10*this.facing, -6, 9, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(12*this.facing, -6, 4, 0, Math.PI*2); ctx.fill();
+            }
+
+            if (!this.isSliding) {
+                ctx.translate(5*this.facing, 38); ctx.rotate(this.kickAngle);
+                ctx.fillStyle = '#111';
+                ctx.beginPath();
+                if(this.facing===1) { ctx.moveTo(0,0); ctx.lineTo(22,0); ctx.lineTo(22,12); ctx.lineTo(-6,12); }
+                else { ctx.moveTo(0,0); ctx.lineTo(-22,0); ctx.lineTo(-22,12); ctx.lineTo(6,12); }
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
+    class Ball {
+        constructor() { this.radius = 16; this.reset(); this.trail = []; }
+        reset() { this.x = canvas.width/2; this.y = 200; this.vx = 0; this.vy = 0; this.rotation = 0; this.trail=[]; }
+        update() {
+            if (Math.abs(this.vx) > 15 || Math.abs(this.vy) > 15) {
+                this.trail.push({x:this.x, y:this.y, alpha:0.8});
+            }
+            this.trail.forEach(t => t.alpha -= 0.1);
+            this.trail = this.trail.filter(t => t.alpha > 0);
+
+            this.vy += GRAVITY;
+            this.x += this.vx; this.y += this.vy;
+            this.vx *= 0.99; this.vy *= 0.99;
+
+            if (this.y > GROUND_Y - this.radius) {
+                this.y = GROUND_Y - this.radius;
+                this.vy *= -0.7; this.vx *= 0.9;
+            }
+            if (this.y < this.radius) { this.y = this.radius; this.vy *= -0.8; }
+            
+            this.checkPost(50, 260); this.checkPost(canvas.width-50, 260);
+
+            if (this.x < 50 && this.y > 260) checkGoal(2);
+            else if (this.x < 0) { this.x = this.radius; this.vx *= -0.6; }
+            if (this.x > canvas.width - 50 && this.y > 260) checkGoal(1);
+            else if (this.x > canvas.width) { this.x = canvas.width - this.radius; this.vx *= -0.6; }
+
+            this.rotation += this.vx * 0.15;
+        }
+        checkPost(px, py) {
+            const dx=this.x-px, dy=this.y-py, dist=Math.sqrt(dx*dx+dy*dy);
+            if(dist < this.radius+6) {
+                const angle=Math.atan2(dy,dx);
+                this.x=px+Math.cos(angle)*(this.radius+7); this.y=py+Math.sin(angle)*(this.radius+7);
+                const s=Math.sqrt(this.vx**2+this.vy**2);
+                this.vx=Math.cos(angle)*s*0.9; this.vy=Math.sin(angle)*s*0.9;
+            }
+        }
+        draw(ctx) {
+            this.trail.forEach(t => {
+                ctx.beginPath(); ctx.arc(t.x, t.y, this.radius, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(241, 196, 15, ${t.alpha})`; ctx.fill();
+            });
+            ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+            ctx.beginPath(); ctx.arc(0,0,this.radius,0,Math.PI*2); ctx.fillStyle='white'; ctx.fill(); ctx.stroke();
+            ctx.fillStyle='#111';
+            for(let i=0; i<5; i++) {
+                ctx.beginPath(); ctx.moveTo(0,0);
+                const a=(i*2*Math.PI)/5; ctx.lineTo(Math.cos(a)*this.radius, Math.sin(a)*this.radius);
+                ctx.lineTo(Math.cos(a+0.5)*(this.radius/2), Math.sin(a+0.5)*(this.radius/2)); ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
+    // --- GELİŞTİRİLMİŞ PROFESYONEL AI (KENDİ KALESİNE ATMAYAN) ---
+    function updateAI() {
+        // Tuşları sıfırla
+        keys['ArrowLeft'] = false; keys['ArrowRight'] = false;
+        keys['ArrowUp'] = false; keys['ArrowDown'] = false;
+        keys['i'] = false; keys['k'] = false; keys['l'] = false;
+
+        if (!p2 || !ball || p2.stunned > 0) return;
+
+        const dx = ball.x - p2.x; // Topun AI'ya göre X farkı (pozitifse top sağda, negatifse solda)
+        const dy = ball.y - p2.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const opponentDist = Math.abs(p1.x - p2.x);
+
+        // --- 1. POZİSYON ALMA VE HAREKET ---
+        // Hedef: Topun her zaman "SAĞINDA" (kendi kalesiyle top arasında) kalmak.
+        // İdeal konum: Topun X'inden yaklaşık 30-50 piksel sağda (rakip kaleye doğru vurabilmek için)
+        
+        // Eğer top, AI'nın arkasına (kendi kalesine doğru) geçtiyse:
+        // ACİL DURUM: Asla vurma, sadece koşarak topun sağına geç.
+        if (ball.x > p2.x) {
+            keys['ArrowRight'] = true; // Topa yetişmek için sağa koş
+        } 
+        else {
+            // Top önümüzde. İdeal vuruş pozisyonunu al.
+            let idealX = ball.x + 40; // Topun 40px sağında durmaya çalış
+            
+            if (p2.x > idealX + 10) keys['ArrowLeft'] = true; // Çok sağdaysak sola git
+            else if (p2.x < idealX - 10) keys['ArrowRight'] = true; // Çok soldaysak sağa git
+        }
+
+        // --- 2. SAVUNMA & ZIPLAMA ---
+        // Rakip kayıyorsa zıpla
+        if (p1.isSliding && opponentDist < 150 && p1.facing === 1) {
+            keys['ArrowUp'] = true;
+        }
+        // Top yüksekten kendi kalemize doğru geliyorsa zıpla (Kafa vurup uzaklaştırmak için)
+        if (ball.vx > 0 && ball.x > canvas.width - 400 && ball.y < p2.y - 50) {
+             keys['ArrowUp'] = true;
+        }
+
+        // --- 3. ŞUT MANTIĞI (BUG FİX: Kendi kalesine atma!) ---
+        // Sadece topun SAĞINDAYSAK (yani yüzümüz sola, rakip kaleye dönükse veya topu oraya itebileceksek) vur.
+        const inShootingPosition = (p2.x > ball.x + 5); 
+
+        if (dist < 70 && inShootingPosition) {
+            let rand = Math.random();
+            
+            // Eğer rakip kaleye yakınsak ve önümüz boşsa sert vur
+            if (p1.x < 300 && rand < 0.1) {
+                keys['l'] = true; // Süper Şut
+            }
+            // Eğer rakip üzerimize geliyorsa aşırtma yap
+            else if (opponentDist < 120 && rand < 0.3) {
+                keys['i'] = true; // Aşırtma
+            }
+            // Normal şut
+            else {
+                keys['ArrowDown'] = true;
+            }
+        }
+
+        // --- 4. KAYMA (Stun) ---
+        // Rakip yakınsa ve top bizden uzaksa kayarak rakibi düşür
+        if (opponentDist < 120 && dist > 100 && p1.y > GROUND_Y - 50 && Math.random() < 0.02) {
+             keys['k'] = true;
+        }
+    }
+
+    function resolveCollision(player, ball) {
+        const dx = ball.x - player.x; const dy = ball.y - player.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const minDist = player.radius + ball.radius;
+
+        if (dist < minDist) {
+            const angle = Math.atan2(dy, dx);
+            const nx = Math.cos(angle); const ny = Math.sin(angle);
+            const overlap = minDist - dist;
+            ball.x += nx * overlap; ball.y += ny * overlap;
+
+            let isNormalKick = player.isP1 ? keys['s'] : keys['ArrowDown'];
+            let isSuperKick = player.isP1 ? keys['v'] : keys['l'];
+            let isChipShot = player.isP1 ? keys['e'] : keys['i']; 
+
+            let force = 0;
+            let lift = 0;
+
+            if (isSuperKick) {
+                force = 32; lift = -4;
+                AudioEngine.play('super');
+                createParticles(ball.x, ball.y, '#f1c40f', 20);
+            } 
+            else if (isChipShot) {
+                force = 14; 
+                lift = -18; 
+                AudioEngine.play('chip');
+                createParticles(ball.x, ball.y, '#3498db', 10);
+            }
+            else if (isNormalKick) {
+                force = 22; lift = -9;
+                AudioEngine.play('kick');
+                createParticles(ball.x, ball.y, '#fff', 8);
+            } 
+            else {
+                force = 3; lift = -2;
+            }
+
+            // Turbo modunda top biraz daha hızlı seker
+            let bounceFactor = isTurboMode ? 0.6 : 0.4;
+            
+            ball.vx = player.vx * bounceFactor + nx * force;
+            ball.vy = player.vy * bounceFactor + ny * force + lift;
+            
+            const speed = Math.sqrt(ball.vx**2 + ball.vy**2);
+            if(speed > 40) { ball.vx = (ball.vx/speed)*40; ball.vy = (ball.vy/speed)*40; }
+        }
+    }
+
+    function checkPlayerCollision() {
+        if (Math.abs(p1.x - p2.x) < 70 && Math.abs(p1.y - p2.y) < 50) {
+            if (p1.isSliding && !p2.isSliding && p2.stunned <= 0) {
+                p2.stunned = 60; p2.vx = 10; p2.vy = -5;
+                AudioEngine.play('stun'); createParticles(p2.x, p2.y, '#ff0000', 10);
+            }
+            else if (p2.isSliding && !p1.isSliding && p1.stunned <= 0) {
+                p1.stunned = 60; p1.vx = -10; p1.vy = -5;
+                AudioEngine.play('stun'); createParticles(p1.x, p1.y, '#ff0000', 10);
+            }
+        }
+    }
+
+    function createParticles(x, y, color, count) {
+        for(let i=0; i<count; i++) particles.push(new Particle(x, y, color, 10));
+    }
+
+    function checkGoal(team) {
+        if(gameState !== 'GAME') return;
+        gameState = 'SCORED';
+        AudioEngine.play('goal');
+        if(team===1) scores.p1++; else scores.p2++;
+        updateHUD();
+        createParticles(team===1 ? canvas.width-50 : 50, 300, team===1 ? '#e74c3c':'#3498db', 60);
+        document.getElementById('goal-message').classList.add('show');
+        setTimeout(() => {
+            document.getElementById('goal-message').classList.remove('show');
+            resetPositions(); gameState='GAME';
+        }, 2000);
+    }
+
+    function resetPositions() {
+        p1.x = 200; p1.y = GROUND_Y; p1.vx=0; p1.vy=0; p1.stunned=0; p1.isSliding=false;
+        p2.x = canvas.width-200; p2.y = GROUND_Y; p2.vx=0; p2.vy=0; p2.stunned=0; p2.isSliding=false;
+        ball.reset();
+    }
+
+    function drawStadium() {
+        const grad = ctx.createLinearGradient(0,0,0,GROUND_Y);
+        grad.addColorStop(0, '#2980b9'); grad.addColorStop(1, '#6dd5fa');
+        ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width, GROUND_Y);
+        
+        ctx.fillStyle = '#27ae60'; ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height-GROUND_Y);
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth=3;
+        ctx.beginPath(); ctx.moveTo(0,GROUND_Y+2); ctx.lineTo(canvas.width,GROUND_Y+2); ctx.stroke();
+        
+        ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(0, 260, 50, GROUND_Y-260); ctx.fillRect(canvas.width-50, 260, 50, GROUND_Y-260);
+        ctx.fillStyle = '#bdc3c7'; ctx.fillRect(45, 260, 5, GROUND_Y-260); ctx.fillRect(canvas.width-50, 260, 5, GROUND_Y-260);
+        ctx.fillRect(0, 260, 50, 5); ctx.fillRect(canvas.width-50, 260, 50, 5);
+    }
+
+    function loop() {
+        if (gameState === 'GAME' || gameState === 'SCORED') {
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            drawStadium();
+            if (gameState === 'GAME') {
+                if (isSinglePlayer) updateAI(); 
+                p1.update(); p2.update(); ball.update();
+                resolveCollision(p1, ball); resolveCollision(p2, ball);
+                checkPlayerCollision();
+            }
+            p1.draw(ctx); p2.draw(ctx); ball.draw(ctx);
+            particles.forEach((p,i) => { p.update(); p.draw(ctx); if(p.life<=0) particles.splice(i,1); });
+        }
+        // YENİ: requestAnimationFrame ID'sini sakla
+        animationFrameId = requestAnimationFrame(loop);
+    }
+
+    function showScreen(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+    
+    function goToSelection(single) { 
+        isSinglePlayer = single;
+        AudioEngine.init(); 
+        showScreen('selection-screen'); 
+        
+        const p2Title = document.getElementById('p2-card-title');
+        const p2Controls = document.getElementById('p2-controls-area');
+        
+        if (isSinglePlayer) {
+            p2Title.innerText = "CPU (YAPAY ZEKA)";
+            p2Controls.innerHTML = `
+                <div style="text-align:center; color:#f1c40f; font-size:18px; margin-top:20px;">
+                    YAPAY ZEKA<br>KONTROLÜNDE
+                </div>
+            `;
+        } else {
+            p2Title.innerText = "OYUNCU 2";
+            p2Controls.innerHTML = `
+                <div><span class="key-badge">Oklar</span> : Hareket</div>
+                <div><span class="key-badge">↓</span> : Düz Şut</div>
+                <div style="color:#2ecc71"><span class="key-badge">I</span> : AŞIRTMA (YÜKSEK)</div>
+                <div style="color:#3498db"><span class="key-badge">K</span> : KAYMA</div>
+                <div style="color:#f1c40f"><span class="key-badge">L</span> : SÜPER ŞUT</div>
+            `;
+        }
+        
+        updatePreviews(); 
+    }
+    
+    function goToMenu() { showScreen('menu-screen'); gameState='MENU'; }
+    
+    let p1Index=0, p2Index=1;
+    function cycleChar(p, d) {
+        if(p===1) p1Index = (p1Index+d+TEAMS.length)%TEAMS.length;
+        else p2Index = (p2Index+d+TEAMS.length)%TEAMS.length;
+        updatePreviews();
+    }
+    
+    function updatePreviews() {
+        const c1=document.getElementById('p1-preview').getContext('2d'); c1.clearRect(0,0,100,100);
+        let demoP1 = new Player(0, TEAMS[p1Index], true);
+        demoP1.x = 50; demoP1.y = 70;
+        demoP1.draw(c1); 
+        document.getElementById('p1-name').innerText = TEAMS[p1Index].name;
+        
+        const c2=document.getElementById('p2-preview').getContext('2d'); c2.clearRect(0,0,100,100);
+        let demoP2 = new Player(0, TEAMS[p2Index], false);
+        demoP2.x = 50; demoP2.y = 70;
+        demoP2.draw(c2); 
+        document.getElementById('p2-name').innerText = TEAMS[p2Index].name;
+    }
+
+    // YENİ: mode parametresi eklendi (true = turbo)
+    function startGame(mode) {
+        // HATA DÜZELTME: Eski döngü varsa iptal et
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+        isTurboMode = mode;
+        p1 = new Player(200, TEAMS[p1Index], true);
+        p2 = new Player(canvas.width-200, TEAMS[p2Index], false);
+        ball = new Ball(); particles=[]; scores={p1:0, p2:0};
+        updateHUD(); showScreen('game-ui'); gameState='GAME'; timer=MATCH_TIME;
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => { if(gameState==='GAME') { timer--; document.getElementById('timer').innerText=timer; if(timer<=0) endGame(); } }, 1000);
+        document.getElementById('hud-p1-name').innerText = TEAMS[p1Index].name;
+        document.getElementById('hud-p2-name').innerText = isSinglePlayer ? "CPU" : TEAMS[p2Index].name;
+        
+        // Loop'u başlat
+        loop();
+    }
+
+    // YENİ: Tekrar oyna fonksiyonu son oynanan moda göre başlatır
+    function restartGame() {
+        startGame(isTurboMode);
+    }
+
+    function updateHUD() { document.getElementById('score-p1').innerText=scores.p1; document.getElementById('score-p2').innerText=scores.p2; }
+    function endGame() {
+        gameState='OVER'; clearInterval(timerInterval); showScreen('result-screen');
+        const t = document.getElementById('winner-title');
+        if(scores.p1>scores.p2) { t.innerText="OYUNCU 1 KAZANDI"; t.style.color="#e74c3c"; }
+        else if(scores.p2>scores.p1) { t.innerText = isSinglePlayer ? "CPU KAZANDI" : "OYUNCU 2 KAZANDI"; t.style.color="#3498db"; }
+        else { t.innerText="BERABERE"; t.style.color="#fff"; }
+        document.getElementById('final-score').innerText = `${scores.p1} - ${scores.p2}`;
+    }
+
+    window.addEventListener('keydown', e => { 
+        keys[e.key] = true; 
+        if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code)) e.preventDefault(); 
+    });
+    window.addEventListener('keyup', e => keys[e.key] = false);
+
+    goToMenu();
+</script>
+</body>
+</html>

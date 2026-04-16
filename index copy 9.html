@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Enterprise AI Scanner</title>
+    
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
+    <style>
+        :root {
+            --primary-color: #00f2ff; /* Cyberpunk Blue */
+            --secondary-color: #ff0055; /* Alert Red */
+            --bg-color: #050505;
+            --hud-bg: rgba(10, 20, 30, 0.75);
+            --font-tech: "Courier New", Courier, monospace; /* Terminal Font */
+            --blur-val: 10px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+
+        body {
+            background-color: var(--bg-color);
+            overflow: hidden; height: 100vh; width: 100vw;
+            color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            position: fixed;
+        }
+
+        /* KATMANLAR */
+        #camera-feed {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;
+            filter: contrast(1.1) brightness(0.9); /* Daha sinematik görüntü */
+        }
+        
+        #fx-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none;
+        }
+
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        /* HUD ELEMENTLERİ (Pro Görünüm) */
+        .hud-header {
+            width: 100%; padding: 40px 20px 0 20px; display: flex; justify-content: space-between; align-items: flex-start;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+        }
+
+        .sys-status {
+            font-family: var(--font-tech); font-size: 10px; color: var(--primary-color);
+            line-height: 1.4; opacity: 0.8; text-shadow: 0 0 5px var(--primary-color);
+        }
+        
+        .hud-tag {
+            border: 1px solid var(--primary-color); padding: 4px 8px; font-size: 10px; 
+            font-family: var(--font-tech); color: var(--primary-color); background: rgba(0, 242, 255, 0.1);
+        }
+
+        /* ORTA AI ETİKETİ */
+        .dynamic-island-pro {
+            position: absolute; top: 50px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8); border: 1px solid #333;
+            padding: 8px 16px; border-radius: 4px; display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5); transition: all 0.3s; width: auto;
+        }
+        .di-dot { width: 8px; height: 8px; background: #555; border-radius: 50%; }
+        .di-dot.active { background: var(--secondary-color); box-shadow: 0 0 8px var(--secondary-color); animation: pulse 1s infinite; }
+        .di-text { font-family: var(--font-tech); font-size: 12px; font-weight: bold; letter-spacing: 1px; color: #fff; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* ALT KONTROL PANELİ */
+        .bottom-controls {
+            width: 100%; padding: 0 20px 40px 20px; display: flex; flex-direction: column; align-items: center;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+        }
+
+        /* BUTONLAR */
+        button { pointer-events: auto; cursor: pointer; border: none; outline: none; transition: all 0.2s; }
+        
+        .btn-main {
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2); color: white;
+            padding: 18px 40px; font-size: 16px; font-weight: 600; letter-spacing: 1px;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); /* Köşeli Tekno Şekil */
+        }
+        .btn-main:active { background: var(--primary-color); color: #000; }
+
+        .btn-secondary {
+            background: transparent; border: 1px solid #555; color: #aaa;
+            padding: 12px 24px; font-size: 12px; margin-top: 10px;
+            clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+        }
+
+        /* SCENES */
+        .scene {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: opacity 0.5s; pointer-events: none;
+        }
+        .scene.active { opacity: 1; visibility: visible; }
+        .scene.interactive { pointer-events: auto; }
+
+        /* SCAN UI */
+        .scan-reticle {
+            width: 250px; height: 250px; border: 2px solid rgba(255, 255, 255, 0.3);
+            position: relative; display: flex; align-items: center; justify-content: center;
+        }
+        .scan-reticle::before, .scan-reticle::after {
+            content: ''; position: absolute; width: 20px; height: 20px; border-color: var(--primary-color); border-style: solid; transition: all 0.2s;
+        }
+        .scan-reticle::before { top: -2px; left: -2px; border-width: 2px 0 0 2px; }
+        .scan-reticle::after { bottom: -2px; right: -2px; border-width: 0 2px 2px 0; }
+        
+        .scan-percent { font-family: var(--font-tech); font-size: 32px; font-weight: bold; color: var(--primary-color); }
+
+        /* PROCESSING SCREEN */
+        .terminal-log {
+            width: 80%; text-align: left; font-family: var(--font-tech); font-size: 12px; color: var(--primary-color);
+            margin-bottom: 20px; height: 100px; overflow: hidden; position: relative;
+        }
+        .terminal-log::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 40px;
+            background: linear-gradient(transparent, #000);
+        }
+        .log-line { margin-bottom: 4px; opacity: 0; animation: fadeIn 0.2s forwards; }
+        @keyframes fadeIn { to { opacity: 0.8; } }
+
+        /* RESULT SCREEN */
+        .result-panel {
+            width: 90%; background: rgba(20, 20, 20, 0.9); border: 1px solid #333; padding: 20px;
+            backdrop-filter: blur(20px); border-radius: 4px; position: relative; pointer-events: auto;
+        }
+        .rp-header { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .rp-title { font-size: 18px; font-weight: bold; color: white; }
+        .rp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .rp-item { font-family: var(--font-tech); font-size: 11px; color: #888; }
+        .rp-item b { color: var(--primary-color); display: block; font-size: 14px; margin-top: 2px; }
+
+        model-viewer { width: 100%; height: 350px; background: #000; border: 1px solid #333; margin-bottom: 15px; }
+
+        /* GİZLİ ELEMENTLER */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <video id="camera-feed" autoplay playsinline muted></video>
+    <canvas id="fx-canvas"></canvas>
+
+    <div id="ui-layer">
+        
+        <div class="hud-header">
+            <div class="sys-status" id="hud-left">
+                SYS: ONLINE<br>
+                GPS: N/A<br>
+                CAM: ACTIVE
+            </div>
+            <div class="dynamic-island-pro" id="ai-island">
+                <div class="di-dot" id="ai-dot"></div>
+                <div class="di-text" id="ai-text">STANDBY</div>
+            </div>
+            <div class="hud-tag">V 2.4.0 PRO</div>
+        </div>
+
+        <div id="scene-start" class="scene active interactive">
+            <div style="text-align: center; margin-bottom: 100px;">
+                <h1 style="font-size: 40px; font-weight: 800; letter-spacing: -1px;">OBJECT<br>SCANNER</h1>
+                <p style="color: #888; margin-top: 10px; font-size: 14px;">Enterprise Grade 3D Reconstruction</p>
+                <div id="sensor-msg" style="margin-top:20px; font-size: 11px; color: var(--secondary-color); font-family: var(--font-tech);">
+                    [!] SENSORS NOT CALIBRATED
+                </div>
+            </div>
+            
+            <button class="btn-main" id="btn-start">INITIALIZE SCAN</button>
+        </div>
+
+        <div id="scene-scan" class="scene">
+            <div class="scan-reticle">
+                <span class="scan-percent" id="scan-percent">0%</span>
+            </div>
+            <div style="margin-top: 30px; font-family: var(--font-tech); font-size: 12px; color: #aaa; text-align: center;">
+                <span id="scan-instruction">ORBIT TARGET OBJECT</span><br>
+                <span id="scan-axis" style="color: var(--primary-color);">AXIS: Z-0</span>
+            </div>
+        </div>
+
+        <div id="scene-process" class="scene" style="background: #000; z-index: 50;">
+            <h2 style="margin-bottom: 20px;">PROCESSING</h2>
+            <div class="terminal-log" id="terminal">
+                </div>
+            <div style="width: 200px; height: 2px; background: #333; margin-top: 20px; overflow: hidden;">
+                <div id="process-bar" style="width: 0%; height: 100%; background: var(--primary-color);"></div>
+            </div>
+        </div>
+
+        <div id="scene-result" class="scene interactive" style="background: rgba(0,0,0,0.8); backdrop-filter: blur(20px);">
+            <div class="result-panel">
+                <div class="rp-header">
+                    <span class="rp-title">ANALYSIS REPORT</span>
+                    <span style="font-family: var(--font-tech); color: var(--success-green);">MATCH FOUND</span>
+                </div>
+
+                <model-viewer 
+                    id="viewer-3d" src="" poster="" 
+                    shadow-intensity="1" camera-controls auto-rotate ar 
+                    ar-modes="webxr scene-viewer quick-look">
+                </model-viewer>
+
+                <div class="rp-grid">
+                    <div class="rp-item">OBJECT TYPE <b id="res-type">UNKNOWN</b></div>
+                    <div class="rp-item">CONFIDENCE <b id="res-conf">0%</b></div>
+                    <div class="rp-item">POLYGONS <b id="res-poly">0</b></div>
+                    <div class="rp-item">EST. VOLUME <b id="res-vol">0 cm³</b></div>
+                </div>
+
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <button class="btn-main" style="flex: 1; padding: 12px; font-size: 14px;" id="btn-ar">VIEW AR</button>
+                    <button class="btn-secondary" style="margin: 0; flex: 1;" id="btn-reset">NEW SCAN</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // --- AYARLAR ---
+            const CONFIG = {
+                smoothFactor: 0.1,  // Hareket yumuşatma
+                scanSpeed: 100 / 300, // 300 derece dönüş = %100
+                colors: { primary: '#00f2ff', secondary: '#ff0055', text: '#ffffff' }
+            };
+
+            const MODEL_MAP = {
+                'person': { url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/CesiumMan/glTF-Binary/CesiumMan.glb', poly: '12,400', vol: '75,000' },
+                'chair': { url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/SheenChair/glTF-Binary/SheenChair.glb', poly: '8,250', vol: '45,200' },
+                'cup': { url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/WaterBottle/glTF-Binary/WaterBottle.glb', poly: '2,100', vol: '500' },
+                'bottle': { url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/WaterBottle/glTF-Binary/WaterBottle.glb', poly: '2,300', vol: '750' },
+                'laptop': { url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BoomBox/glTF-Binary/BoomBox.glb', poly: '5,600', vol: '2,400' },
+                'default': { url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb', poly: '1,500', vol: '1,200' }
+            };
+
+            // --- DEĞİŞKENLER ---
+            const video = document.getElementById('camera-feed');
+            const canvas = document.getElementById('fx-canvas');
+            const ctx = canvas.getContext('2d');
+            let net = null;
+            let animationId;
+            
+            // Durum
+            let state = {
+                isScanning: false,
+                progress: 0,
+                rotation: 0,
+                lastAlpha: null,
+                detected: { class: null, score: 0, bbox: null },
+                snapshot: null,
+                particles: []
+            };
+
+            // --- 1. BAŞLATMA ---
+            async function init() {
+                try {
+                    // Kamera
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
+                    });
+                    video.srcObject = stream;
+                    video.onloadeddata = () => {
+                        resizeCanvas();
+                        loadAI();
+                        startLoop();
+                    };
+                } catch (e) {
+                    console.error(e);
+                    alert("Camera Access Denied or Not Available");
+                }
+            }
+
+            async function loadAI() {
+                updateAIStatus("LOADING CORE...", false);
+                try {
+                    net = await cocoSsd.load();
+                    updateAIStatus("NEURAL NET READY", false);
+                } catch (e) {
+                    updateAIStatus("AI FAILURE", true);
+                }
+            }
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resizeCanvas);
+
+            // --- 2. GÖRÜNTÜ İŞLEME DÖNGÜSÜ (HUD & AI) ---
+            async function startLoop() {
+                // AI Tespiti
+                if (net && video.readyState === 4) {
+                    try {
+                        const predictions = await net.detect(video);
+                        if (predictions.length > 0) {
+                            // En iyi sonucu al
+                            const best = predictions.reduce((p, c) => (p.score > c.score ? p : c));
+                            state.detected = { 
+                                class: best.class, 
+                                score: best.score, 
+                                bbox: best.bbox // [x, y, width, height]
+                            };
+                            
+                            // UI Güncelle
+                            if(state.isScanning) {
+                                updateAIStatus(`TARGET: ${best.class.toUpperCase()}`, true);
+                            }
+                        } else {
+                            state.detected.bbox = null;
+                        }
+                    } catch (e) {}
+                }
+
+                // Canvas Çizimi (HUD)
+                drawHUD();
+
+                requestAnimationFrame(startLoop);
+            }
+
+            function drawHUD() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // 1. Point Cloud (Eğer tarıyorsa)
+                if (state.isScanning) {
+                    updateParticles();
+                }
+
+                // 2. Bounding Box (Terminatör Görüşü)
+                if (state.detected.bbox) {
+                    const [x, y, w, h] = state.detected.bbox;
+                    
+                    // Video koordinatlarını ekran koordinatlarına çevir
+                    const scaleX = canvas.width / video.videoWidth;
+                    const scaleY = canvas.height / video.videoHeight;
+                    
+                    // Ölçekleme (Cover moduna göre düzeltme gerekebilir ama şimdilik stretch)
+                    const sx = x * scaleX;
+                    const sy = y * scaleY;
+                    const sw = w * scaleX;
+                    const sh = h * scaleY;
+
+                    // Köşe Çizimi (Şekilli)
+                    ctx.strokeStyle = CONFIG.colors.primary;
+                    ctx.lineWidth = 2;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = CONFIG.colors.primary;
+
+                    // Sadece köşeleri çiz (Daha havalı)
+                    const cornerSize = 20;
+                    
+                    ctx.beginPath();
+                    // Sol Üst
+                    ctx.moveTo(sx, sy + cornerSize); ctx.lineTo(sx, sy); ctx.lineTo(sx + cornerSize, sy);
+                    // Sağ Üst
+                    ctx.moveTo(sx + sw - cornerSize, sy); ctx.lineTo(sx + sw, sy); ctx.lineTo(sx + sw, sy + cornerSize);
+                    // Sağ Alt
+                    ctx.moveTo(sx + sw, sy + sh - cornerSize); ctx.lineTo(sx + sw, sy + sh); ctx.lineTo(sx + sw - cornerSize, sy + sh);
+                    // Sol Alt
+                    ctx.moveTo(sx + cornerSize, sy + sh); ctx.lineTo(sx, sy + sh); ctx.lineTo(sx, sy + sh - cornerSize);
+                    ctx.stroke();
+                    ctx.shadowBlur = 0; // Reset
+
+                    // Etiket (Confidence)
+                    ctx.fillStyle = CONFIG.colors.primary;
+                    ctx.font = "12px Courier New";
+                    ctx.fillText(`${(state.detected.score * 100).toFixed(1)}% MATCH`, sx, sy - 10);
+                }
+            }
+
+            // --- 3. PARTICLE SYSTEM (POINT CLOUD SİMÜLASYONU) ---
+            function spawnParticles() {
+                // Rastgele noktalar ekle
+                for(let i=0; i<3; i++) {
+                    state.particles.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        z: Math.random() * 2 + 1, // Hız
+                        life: 1.0
+                    });
+                }
+            }
+
+            function updateParticles() {
+                ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+                
+                state.particles.forEach((p, index) => {
+                    // Hareket (Dönüş yönüne ters hareket hissi verilebilir, şimdilik statik drift)
+                    p.y += 0.5; 
+                    p.life -= 0.01;
+                    
+                    if (p.life > 0) {
+                        ctx.globalAlpha = p.life;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2);
+                        ctx.fill();
+                    } else {
+                        state.particles.splice(index, 1);
+                    }
+                });
+                ctx.globalAlpha = 1.0;
+            }
+
+            // --- 4. SENSÖR VE TARAMA MANTIĞI ---
+            const btnStart = document.getElementById('btn-start');
+            btnStart.addEventListener('click', async () => {
+                // İzinler
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    try {
+                        const resp = await DeviceOrientationEvent.requestPermission();
+                        if (resp === 'granted') enableSensors();
+                    } catch (e) { startFallbackMode(); }
+                } else { enableSensors(); }
+
+                transitionScene('start', 'scan');
+                state.isScanning = true;
+                state.progress = 0;
+                
+                // Fallback (Sensör yoksa)
+                setTimeout(() => {
+                    if (state.progress === 0 && state.isScanning) startFallbackMode();
+                }, 2000);
+            });
+
+            function enableSensors() {
+                window.addEventListener('deviceorientation', (e) => {
+                    if (!state.isScanning) return;
+                    
+                    const alpha = e.alpha;
+                    if (state.lastAlpha !== null) {
+                        let delta = Math.abs(alpha - state.lastAlpha);
+                        if (delta > 300) delta = 360 - delta;
+                        
+                        state.rotation += delta;
+                        // İlerleme güncelle
+                        let p = Math.min((state.rotation * CONFIG.scanSpeed), 100);
+                        state.progress = p;
+                        
+                        // UI Güncelle
+                        document.getElementById('scan-percent').innerText = Math.floor(p) + '%';
+                        document.getElementById('scan-axis').innerText = `AXIS: Z-${Math.floor(alpha)}`;
+                        
+                        // Görsel efekt
+                        spawnParticles();
+
+                        if (p >= 100) finishScan();
+                    }
+                    state.lastAlpha = alpha;
+                });
+                document.getElementById('sensor-msg').innerText = "SENSORS CALIBRATED & ACTIVE";
+                document.getElementById('sensor-msg').style.color = "#00ff00";
+            }
+
+            function startFallbackMode() {
+                document.getElementById('scan-instruction').innerText = "AUTO-SCAN SEQUENCE INITIATED...";
+                let interval = setInterval(() => {
+                    if (!state.isScanning) { clearInterval(interval); return; }
+                    state.progress += 0.5;
+                    document.getElementById('scan-percent').innerText = Math.floor(state.progress) + '%';
+                    spawnParticles();
+                    if(state.progress >= 100) finishScan();
+                }, 30);
+            }
+
+            function finishScan() {
+                state.isScanning = false;
+                
+                // Snapshot al
+                const tCanv = document.createElement('canvas');
+                tCanv.width = video.videoWidth; tCanv.height = video.videoHeight;
+                tCanv.getContext('2d').drawImage(video, 0, 0);
+                state.snapshot = tCanv.toDataURL('image/jpeg');
+
+                transitionScene('scan', 'process');
+                runTerminalSequence();
+            }
+
+            // --- 5. TERMİNAL VE SONUÇ ---
+            function runTerminalSequence() {
+                const logs = [
+                    "INITIATING POINT CLOUD...",
+                    "FILTERING NOISE DATA...",
+                    `OBJECT DETECTED: ${state.detected.class ? state.detected.class.toUpperCase() : 'UNKNOWN'}`,
+                    "GENERATING POLYGON MESH...",
+                    "APPLYING TEXTURE MAPS...",
+                    "COMPILING FINAL ASSET..."
+                ];
+                
+                const term = document.getElementById('terminal');
+                const bar = document.getElementById('process-bar');
+                let i = 0;
+
+                let interval = setInterval(() => {
+                    if (i >= logs.length) {
+                        clearInterval(interval);
+                        showResult();
+                        return;
+                    }
+                    
+                    const div = document.createElement('div');
+                    div.className = 'log-line';
+                    div.innerText = `> ${logs[i]}`;
+                    term.appendChild(div);
+                    term.scrollTop = term.scrollHeight;
+                    
+                    bar.style.width = ((i + 1) / logs.length * 100) + '%';
+                    i++;
+                }, 600);
+            }
+
+            function showResult() {
+                transitionScene('process', 'result');
+                
+                const key = state.detected.class || 'default';
+                const data = MODEL_MAP[key] || MODEL_MAP['default'];
+
+                // Verileri Doldur
+                document.getElementById('res-type').innerText = key.toUpperCase();
+                document.getElementById('res-conf').innerText = state.detected.class ? ((state.detected.score * 100).toFixed(1) + '%') : 'N/A';
+                document.getElementById('res-poly').innerText = data.poly;
+                document.getElementById('res-vol').innerText = data.vol;
+                
+                // Modeli Yükle
+                const viewer = document.getElementById('viewer-3d');
+                viewer.src = data.url;
+                if(state.snapshot) viewer.poster = state.snapshot;
+            }
+
+            // --- YARDIMCI FONKSİYONLAR ---
+            function updateAIStatus(text, isActive) {
+                const el = document.getElementById('ai-text');
+                const dot = document.getElementById('ai-dot');
+                el.innerText = text;
+                if (isActive) dot.classList.add('active');
+                else dot.classList.remove('active');
+            }
+
+            function transitionScene(from, to) {
+                document.getElementById(`scene-${from}`).classList.remove('active');
+                if(document.getElementById(`scene-${from}`).classList.contains('interactive')) 
+                    document.getElementById(`scene-${from}`).classList.remove('interactive');
+                
+                setTimeout(() => {
+                    document.getElementById(`scene-${to}`).classList.add('active');
+                    if(to === 'start' || to === 'result')
+                        document.getElementById(`scene-${to}`).classList.add('interactive');
+                }, 500);
+            }
+
+            // Butonlar
+            document.getElementById('btn-reset').onclick = () => window.location.reload();
+
+            // Başlat
+            init();
+        });
+    </script>
+</body>
+</html>

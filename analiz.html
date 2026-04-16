@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S. - MARK 85 HYBRID SYSTEM</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+    <style>
+        /* --- TEMEL AYARLAR --- */
+        body { margin: 0; background: #000; overflow: hidden; font-family: 'Rajdhani', sans-serif; }
+        
+        #container { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
+
+        /* KATMANLAR */
+        #video-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; transform: scaleX(-1); opacity: 0.8; filter: contrast(1.1) brightness(0.9); }
+        #three-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; transform: scaleX(-1); }
+        #physics-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; transform: scaleX(-1); }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 4; pointer-events: none; }
+
+        /* --- UI ELEMENTLERİ --- */
+        .scan-line { position: absolute; width: 100%; height: 3px; background: rgba(0, 255, 255, 0.4); box-shadow: 0 0 15px rgba(0, 255, 255, 0.6); animation: scan 4s infinite linear; top: -10%; }
+        @keyframes scan { 0% { top: -10%; } 100% { top: 110%; } }
+
+        .corner { position: absolute; width: 80px; height: 80px; border: 2px solid rgba(0, 255, 255, 0.6); box-shadow: 0 0 10px rgba(0, 255, 255, 0.3); }
+        .tl { top: 20px; left: 20px; border-right: none; border-bottom: none; border-radius: 20px 0 0 0; }
+        .tr { top: 20px; right: 20px; border-left: none; border-bottom: none; border-radius: 0 20px 0 0; }
+        .bl { bottom: 20px; left: 20px; border-right: none; border-top: none; border-radius: 0 0 0 20px; }
+        .br { bottom: 20px; right: 20px; border-left: none; border-top: none; border-radius: 0 0 20px 0; }
+
+        /* Butonlar */
+        .hud-btn {
+            pointer-events: auto; background: rgba(0, 20, 40, 0.6); border: 1px solid #00ffff; color: #00ffff;
+            padding: 10px 20px; font-family: 'Orbitron'; font-size: 14px; cursor: pointer;
+            transition: 0.3s; text-transform: uppercase; margin: 5px;
+        }
+        .hud-btn:hover { background: rgba(0, 255, 255, 0.2); box-shadow: 0 0 15px #00ffff; }
+        .hud-btn.active { background: rgba(255, 0, 0, 0.3); border-color: #ff3333; color: #ff3333; }
+        
+        #controls { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; }
+
+        /* Bilgi Panelleri */
+        #info-panel {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            width: 400px; background: rgba(0, 10, 20, 0.9); border: 1px solid #00ffff;
+            padding: 15px; border-radius: 5px; text-align: center;
+        }
+        #obj-name { font-family: 'Orbitron'; font-size: 24px; color: #fff; text-shadow: 0 0 10px #00ffff; }
+        #obj-desc { font-size: 14px; color: #00ffff; margin-top: 5px; }
+
+        #data-stream {
+            position: absolute; left: 30px; top: 50%; transform: translateY(-50%);
+            color: rgba(0, 255, 255, 0.6); font-size: 11px; font-family: 'Orbitron'; line-height: 1.6;
+        }
+
+        #target-status {
+            position: absolute; right: 30px; top: 50%; transform: translateY(-50%);
+            color: #ff3333; font-size: 14px; font-family: 'Orbitron'; text-align: right;
+            display: none;
+        }
+
+        /* İmha Ünitesi */
+        .incinerator-zone {
+            position: absolute; bottom: 40px; right: 40px; width: 120px; height: 120px;
+            border: 2px dashed rgba(255, 50, 50, 0.6); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255, 50, 50, 0.8); font-family: 'Orbitron'; font-size: 10px;
+            animation: pulse-danger 2s infinite; background: radial-gradient(circle, rgba(255,0,0,0.1), transparent);
+        }
+        @keyframes pulse-danger { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
+
+        /* Yükleme Ekranı */
+        #start-screen {
+            position: absolute; z-index: 100; background: #000; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .loader {
+            border: 4px solid rgba(0, 255, 255, 0.2); border-top: 4px solid #00ffff;
+            border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+    <div id="container">
+        <video id="video-input" autoplay playsinline muted></video>
+        <canvas id="three-canvas"></canvas>
+        <canvas id="physics-canvas"></canvas>
+        
+        <div id="ui-layer">
+            <div class="scan-line"></div>
+            <div class="corner tl"></div><div class="corner tr"></div>
+            <div class="corner bl"></div><div class="corner br"></div>
+
+            <div id="controls">
+                <button class="hud-btn" id="mode-toggle" onclick="toggleMode()">MOD: ANALİZ</button>
+                <button class="hud-btn" id="focus-toggle" onclick="toggleFocusMode()">MOD: ODAKLANMA</button>
+            </div>
+
+            <div id="data-stream">SYSTEM: ONLINE<br>TRACKING: HYBRID<br>PHYSICS: ENABLED</div>
+            
+            <div id="target-status">
+                TARGET LOCK: <span id="target-name">NONE</span><br>
+                STATUS: SEEKING...
+            </div>
+
+            <div id="info-panel">
+                <div id="obj-name">TANIMLANIYOR...</div>
+                <div id="obj-desc">J.A.R.V.I.S. veritabanı taranıyor.</div>
+            </div>
+
+            <div class="incinerator-zone">DISPOSAL<br>UNIT</div>
+        </div>
+
+        <div id="start-screen">
+            <h1 style="color:#00ffff; font-family:'Orbitron'; font-size:40px; text-shadow:0 0 20px #00ffff;">J.A.R.V.I.S.</h1>
+            <h2 style="color:#666; font-family:'Rajdhani';">MARK 85 - HYBRID PROTOCOL</h2>
+            <div class="loader" id="loader"></div>
+            <button class="hud-btn" id="start-btn" onclick="initSystem()">SİSTEMİ BAŞLAT</button>
+        </div>
+    </div>
+
+    <script>
+        // --- GLOBAL DEĞİŞKENLER ---
+        let modelingMode = false;
+        let focusMode = false;
+        let isRunning = false;
+        let width, height;
+        let targetObject = null;
+        
+        // Yapay Zeka (AI) Değişkenleri
+        let cocoModel = null;
+        let lastSpoken = "";
+        let lastSpokenTime = 0;
+
+        // Three.js (3D Modelleme) Değişkenleri
+        let scene, camera, renderer, threeGroup;
+
+        // Ses Tanıma (Voice Recognition)
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.lang = 'tr-TR';
+            recognition.onresult = (event) => {
+                const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
+                processVoiceCommand(transcript);
+            };
+        }
+
+        // Fizik Motoru
+        const canvas2D = document.getElementById('physics-canvas');
+        const ctx2D = canvas2D.getContext('2d');
+        let physicsObjects = [];
+
+        // Veri Tabanı
+        const STARK_DB = {
+            "person": { name: "BİYOLOJİK FORM", desc: "Yaşam belirtileri stabil. Sınıf: İnsan.", voice: ["insan", "kişi", "adam"] },
+            "cell phone": { name: "CEP TELEFONU", desc: "Mobil iletişim cihazı.", voice: ["telefon", "mobil"] },
+            "laptop": { name: "TERMİNAL", desc: "Veri işleme ünitesi.", voice: ["bilgisayar", "laptop"] },
+            "mouse": { name: "FARE", desc: "Giriş aygıtı.", voice: ["fare", "mouse"] },
+            "keyboard": { name: "KLAVYE", desc: "Metin giriş modülü.", voice: ["klavye"] },
+            "bottle": { name: "ŞİŞE", desc: "Sıvı haznesi.", voice: ["şişe", "su"] },
+            "cup": { name: "BARDAK", desc: "İçecek kabı.", voice: ["bardak"] },
+            "pen": { name: "KALEM", desc: "Yazı aracı.", voice: ["kalem"] },
+            "unknown": { name: "TANIMSIZ", desc: "Veri yok.", voice: [] }
+        };
+
+        const PHYSICS = { friction: 0.98, spring: 0.1, throwMult: 2.0, grabDist: 100 };
+
+        class Vector {
+            constructor(x, y) { this.x = x || 0; this.y = y || 0; }
+            add(v) { this.x += v.x; this.y += v.y; }
+            mult(n) { this.x *= n; this.y *= n; }
+        }
+
+        class BioStabilizer {
+            constructor() { this.pos = new Vector(0,0); }
+            update(rawX, rawY) {
+                const dx = rawX - this.pos.x;
+                const dy = rawY - this.pos.y;
+                const dist = Math.hypot(dx, dy);
+                let alpha = dist > 100 ? 0.8 : (dist > 20 ? 0.4 : 0.1);
+                this.pos.x += dx * alpha;
+                this.pos.y += dy * alpha;
+                return this.pos;
+            }
+        }
+
+        class PhysicsHologram {
+            constructor(x, y, type) {
+                this.pos = new Vector(x, y);
+                this.vel = new Vector(0, 0);
+                this.type = type;
+                this.size = type === 'arc' ? 120 : 140;
+                this.isLocked = false;
+                this.isDying = false;
+                this.scale = 1.0;
+                this.angle = 0;
+            }
+
+            update(handPos, isGripping) {
+                if(this.isDying) { this.scale -= 0.05; this.angle += 0.2; return; }
+                if (this.isLocked) {
+                    const dx = handPos.x - this.pos.x;
+                    const dy = handPos.y - this.pos.y;
+                    this.vel.x += dx * PHYSICS.spring;
+                    this.vel.y += dy * PHYSICS.spring;
+                    this.vel.mult(0.5);
+                    this.pos.add(this.vel);
+                } else {
+                    this.pos.add(this.vel);
+                    this.vel.mult(PHYSICS.friction);
+                    if(this.pos.x < 0 || this.pos.x > width) this.vel.x *= -1;
+                    if(this.pos.y < 0 || this.pos.y > height) this.vel.y *= -1;
+                }
+                this.angle += 0.02;
+            }
+
+            draw(ctx) {
+                if (this.scale <= 0) return;
+                ctx.save();
+                ctx.translate(this.pos.x, this.pos.y);
+                ctx.scale(this.scale, this.scale);
+                ctx.rotate(this.angle);
+                ctx.shadowBlur = this.isLocked ? 30 : 10;
+                ctx.shadowColor = this.isLocked ? "#ffff00" : "#00ffff";
+                ctx.strokeStyle = this.isLocked ? "#ffff00" : "rgba(0, 255, 255, 0.6)";
+                ctx.lineWidth = 2;
+                if (this.type === 'arc') {
+                    ctx.beginPath(); ctx.arc(0,0, this.size/2, 0, Math.PI*2); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(this.size/2, 0); ctx.stroke();
+                } else {
+                    ctx.strokeRect(-this.size/3, -this.size/3, this.size/1.5, this.size/1.5);
+                    ctx.rotate(Math.PI/4);
+                    ctx.strokeRect(-this.size/3, -this.size/3, this.size/1.5, this.size/1.5);
+                }
+                ctx.restore();
+            }
+        }
+
+        // --- FONKSİYONLAR ---
+
+        function toggleMode() {
+            modelingMode = !modelingMode;
+            if(focusMode) toggleFocusMode(); // Focus açıksa kapat
+            const btn = document.getElementById('mode-toggle');
+            btn.innerText = modelingMode ? "MOD: MODELLEME (3D)" : "MOD: ANALİZ (2D)";
+            speak(modelingMode ? "Modelleme protokolü aktif." : "Analiz moduna dönüldü.");
+        }
+
+        function toggleFocusMode() {
+            focusMode = !focusMode;
+            modelingMode = false;
+            const btn = document.getElementById('focus-toggle');
+            const status = document.getElementById('target-status');
+            
+            if(focusMode) {
+                btn.classList.add('active');
+                status.style.display = 'block';
+                speak("Odaklanma modu aktif. Hedef objeyi söyleyin.");
+                if(recognition) recognition.start();
+            } else {
+                btn.classList.remove('active');
+                status.style.display = 'none';
+                targetObject = null;
+                speak("Odaklanma modu kapatıldı. Fizik motoru yeniden devrede.");
+                if(recognition) recognition.stop();
+            }
+        }
+
+        function processVoiceCommand(text) {
+            console.log("Duyulan:", text);
+            for (let key in STARK_DB) {
+                if (STARK_DB[key].voice.some(v => text.includes(v))) {
+                    targetObject = key;
+                    document.getElementById('target-name').innerText = STARK_DB[key].name;
+                    speak(STARK_DB[key].name + " hedefleniyor.");
+                    return;
+                }
+            }
+        }
+
+        function initThree() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.position.z = 5;
+            threeGroup = new THREE.Group();
+            scene.add(threeGroup);
+        }
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas2D.width = width;
+            canvas2D.height = height;
+            if(camera) {
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            }
+        }
+        window.addEventListener('resize', resize);
+
+        const stabilizer = new BioStabilizer();
+        let lastHandPos = new Vector(0,0);
+        let handLandmarks = null;
+
+        async function initSystem() {
+            document.getElementById('start-btn').style.display = 'none';
+            document.getElementById('loader').style.display = 'block';
+            try {
+                resize();
+                initThree();
+                cocoModel = await cocoSsd.load();
+                const video = document.getElementById('video-input');
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = stream;
+
+                const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+                hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
+                hands.onResults(onHandResults);
+
+                const cameraPipe = new Camera(video, {
+                    onFrame: async () => { 
+                        if(isRunning) {
+                            await hands.send({image: video});
+                            aiLoop();
+                        }
+                    },
+                    width: 1280, height: 720
+                });
+
+                video.onloadedmetadata = () => {
+                    setTimeout(() => {
+                        document.getElementById('start-screen').style.display = 'none';
+                        isRunning = true;
+                        cameraPipe.start();
+                        spawnPhysicsObjects();
+                        speak("Sistem çevrimiçi.");
+                    }, 1000);
+                };
+            } catch(e) { alert("Hata: " + e.message); }
+        }
+
+        function spawnPhysicsObjects() {
+            physicsObjects.push(new PhysicsHologram(width*0.3, height*0.4, 'cube'));
+            physicsObjects.push(new PhysicsHologram(width*0.7, height*0.6, 'arc'));
+        }
+
+        async function aiLoop() {
+            const video = document.getElementById('video-input');
+            if(video.readyState < 2) return;
+            const predictions = await cocoModel.detect(video);
+            
+            while(threeGroup.children.length > 0) threeGroup.remove(threeGroup.children[0]);
+
+            predictions.forEach(prediction => {
+                if(prediction.score > 0.6) {
+                    let className = prediction.class.toLowerCase();
+                    
+                    // ODAKLANMA MODU MANTIĞI
+                    if (focusMode && targetObject === className) {
+                        drawLockOnHUD(prediction);
+                    }
+
+                    // NORMAL ANALİZ UI
+                    const info = STARK_DB[className] || STARK_DB["unknown"];
+                    document.getElementById('obj-name').innerText = info.name;
+                    document.getElementById('obj-desc').innerText = info.desc;
+
+                    if (modelingMode) {
+                        renderDigitalModel(prediction);
+                    }
+                }
+            });
+            renderer.render(scene, camera);
+        }
+
+        function drawLockOnHUD(prediction) {
+            const [x, y, w, h] = prediction.bbox;
+            // Video ters olduğu için koordinatları düzelt
+            const rx = width - (x + w); 
+            
+            ctx2D.save();
+            ctx2D.strokeStyle = "#ff3333";
+            ctx2D.lineWidth = 3;
+            ctx2D.setLineDash([10, 5]);
+            
+            // Ana Çerçeve
+            ctx2D.strokeRect(rx, y, w, h);
+            
+            // Köşe Vizörleri
+            ctx2D.setLineDash([]);
+            ctx2D.beginPath();
+            // Sol Üst
+            ctx2D.moveTo(rx, y+20); ctx2D.lineTo(rx, y); ctx2D.lineTo(rx+20, y);
+            // Sağ Üst
+            ctx2D.moveTo(rx+w-20, y); ctx2D.lineTo(rx+w, y); ctx2D.lineTo(rx+w, y+20);
+            // Sol Alt
+            ctx2D.moveTo(rx, y+h-20); ctx2D.lineTo(rx, y+h); ctx2D.lineTo(rx+20, y+h);
+            // Sağ Alt
+            ctx2D.moveTo(rx+w-20, y+h); ctx2D.lineTo(rx+w, y+h); ctx2D.lineTo(rx+w, y+h-20);
+            ctx2D.stroke();
+
+            // Hedef Yazısı
+            ctx2D.fillStyle = "#ff3333";
+            ctx2D.font = "bold 14px Orbitron";
+            ctx2D.fillText("LOCKED: " + prediction.class.toUpperCase(), rx, y - 10);
+            
+            // Merkez Artı
+            ctx2D.beginPath();
+            ctx2D.moveTo(rx+w/2-10, y+h/2); ctx2D.lineTo(rx+w/2+10, y+h/2);
+            ctx2D.moveTo(rx+w/2, y+h/2-10); ctx2D.lineTo(rx+w/2, y+h/2+10);
+            ctx2D.stroke();
+            
+            ctx2D.restore();
+        }
+
+        function onHandResults(results) {
+            ctx2D.clearRect(0, 0, width, height);
+            
+            // EĞER ODAKLANMA MODUNDAYSAK FİZİĞİ ATLA
+            if (focusMode) {
+                if(results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                    const hl = results.multiHandLandmarks[0];
+                    const sx = (1 - hl[9].x) * width;
+                    const sy = hl[9].y * height;
+                    drawHandCursor(sx, sy, false);
+                }
+                return; 
+            }
+
+            // FİZİK OBJELERİNİ ÇİZ (Sadece Analiz/Modelleme Modunda)
+            physicsObjects.forEach(obj => {
+                obj.update(lastHandPos, !!lockedObj);
+                obj.draw(ctx2D);
+                const distBin = Math.hypot(obj.pos.x - (width-60), obj.pos.y - (height-60));
+                if(distBin < 80 && !obj.isLocked && !obj.isDying) obj.isDying = true;
+            });
+            physicsObjects = physicsObjects.filter(o => o.scale > 0);
+            if(physicsObjects.length < 1) setTimeout(spawnPhysicsObjects, 1500);
+
+            if(results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                handLandmarks = results.multiHandLandmarks[0];
+                const rawX = (1 - handLandmarks[9].x) * width;
+                const rawY = handLandmarks[9].y * height;
+                const smooth = stabilizer.update(rawX, rawY);
+                const vel = new Vector(smooth.x - lastHandPos.x, smooth.y - lastHandPos.y);
+                lastHandPos = new Vector(smooth.x, smooth.y);
+
+                const isGripping = Math.hypot(handLandmarks[4].x - handLandmarks[8].x, handLandmarks[4].y - handLandmarks[8].y) < 0.08;
+
+                if(lockedObj) {
+                    if(!isGripping) {
+                        lockedObj.isLocked = false;
+                        lockedObj.vel = new Vector(vel.x * PHYSICS.throwMult, vel.y * PHYSICS.throwMult);
+                        lockedObj = null;
+                    }
+                } else {
+                    physicsObjects.forEach(obj => {
+                        if(Math.hypot(smooth.x - obj.pos.x, smooth.y - obj.pos.y) < PHYSICS.grabDist && isGripping && !obj.isDying) {
+                            lockedObj = obj;
+                            obj.isLocked = true;
+                        }
+                    });
+                }
+                drawHandCursor(smooth.x, smooth.y, isGripping);
+            }
+        }
+
+        let lockedObj = null;
+
+        function renderDigitalModel(prediction) {
+            const [x, y, w, h] = prediction.bbox;
+            const nx = ((x + w/2) / window.innerWidth) * 2 - 1;
+            const ny = -((y + h/2) / window.innerHeight) * 2 + 1;
+            let scale = 1;
+            let rotX = 0, rotY = 0;
+            if (handLandmarks) {
+                rotY = (handLandmarks[0].x - 0.5) * 5;
+                rotX = (handLandmarks[0].y - 0.5) * 5;
+                scale = Math.hypot(handLandmarks[4].x - handLandmarks[8].x, handLandmarks[4].y - handLandmarks[8].y) * 8; 
+            }
+            const geometry = new THREE.BoxGeometry(w/200 * scale, h/200 * scale, 0.5 * scale);
+            const edges = new THREE.EdgesGeometry(geometry);
+            const material = new THREE.LineBasicMaterial({ color: 0xff00ff, linewidth: 2 });
+            const cube = new THREE.LineSegments(edges, material);
+            cube.position.set(nx * 3.5, ny * 3.5, 0);
+            cube.rotation.y = rotY + Date.now() * 0.001;
+            cube.rotation.x = rotX;
+            threeGroup.add(cube);
+        }
+
+        function drawHandCursor(x, y, gripping) {
+            ctx2D.save();
+            ctx2D.translate(x, y);
+            ctx2D.strokeStyle = gripping ? "#ff00ff" : "#00ffff";
+            ctx2D.lineWidth = 2;
+            ctx2D.beginPath(); ctx2D.arc(0,0, 30, 0, Math.PI*2); ctx2D.stroke();
+            ctx2D.restore();
+        }
+
+        function speak(text) {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = "tr-TR";
+            window.speechSynthesis.speak(u);
+        }
+
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('auto') === 'true') {
+                setTimeout(() => { initSystem(); }, 500); 
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Robot Arena</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+
+    <style>
+        body {
+            background-color: #222;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            margin-top: 20px;
+            background: url('https://img.freepik.com/free-vector/futuristic-technological-background_23-2148495686.jpg'); /* Basit bir arena arka planı */
+            background-size: cover;
+            border: 4px solid #555;
+            box-shadow: 0 0 20px #0ff;
+            overflow: hidden;
+        }
+
+        /* Robotların Temel Görünümü */
+        .robot {
+            position: absolute;
+            bottom: 20px;
+            width: 80px;
+            height: 120px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: left 0.1s ease-out;
+        }
+
+        /* Oyuncu Robotu */
+        #player-robot {
+            left: 200px;
+            /* Basit bir mavi robot görseli (yer tutucu) */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150"><rect x="25" y="10" width="50" height="40" fill="%2300f"/><rect x="15" y="50" width="70" height="70" fill="%2300a"/><rect x="5" y="60" width="20" height="40" fill="%2300f"/><rect x="75" y="60" width="20" height="40" fill="%2300f"/><rect x="30" y="120" width="20" height="30" fill="%2300f"/><rect x="50" y="120" width="20" height="30" fill="%2300a"/></svg>');
+        }
+        
+        /* AI Robotu */
+        #ai-robot {
+            left: 520px;
+            /* Basit bir kırmızı robot görseli (yer tutucu) */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150"><rect x="25" y="10" width="50" height="40" fill="%23f00"/><rect x="15" y="50" width="70" height="70" fill="%23a00"/><rect x="5" y="60" width="20" height="40" fill="%23f00"/><rect x="75" y="60" width="20" height="40" fill="%23f00"/><rect x="30" y="120" width="20" height="30" fill="%23f00"/><rect x="50" y="120" width="20" height="30" fill="%23a00"/></svg>');
+            transform: scaleX(-1); /* Yönünü sola çevir */
+        }
+
+        /* Saldırı Efektleri */
+        .attack-hitbox {
+            position: absolute;
+            background-color: rgba(255, 255, 0, 0.5);
+            border: 2px solid yellow;
+            display: none; /* Başlangıçta gizli */
+        }
+
+        /* Can Barları */
+        #ui-container {
+            display: flex;
+            justify-content: space-between;
+            width: 800px;
+            margin-top: 10px;
+        }
+        .health-bar-container {
+            width: 300px;
+            height: 30px;
+            background-color: #444;
+            border: 2px solid #fff;
+        }
+        .health-bar {
+            height: 100%;
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+        #player-health { background-color: blue; }
+        #ai-health { background-color: red; }
+
+        /* Debug ve Kamera Alanı */
+        #debug-container {
+            display: flex;
+            margin-top: 20px;
+            border-top: 1px solid #555;
+            padding-top: 10px;
+        }
+        #video-container {
+            position: relative;
+            width: 320px;
+            height: 240px;
+        }
+        #webcam {
+            position: absolute;
+            width: 320px;
+            height: 240px;
+            transform: scaleX(-1); /* Ayna görüntüsü */
+        }
+        #output-canvas {
+            position: absolute;
+            width: 320px;
+            height: 240px;
+            transform: scaleX(-1);
+            pointer-events: none;
+        }
+        #status-log {
+            width: 400px;
+            height: 240px;
+            overflow-y: scroll;
+            background-color: #111;
+            padding: 10px;
+            margin-left: 20px;
+            font-size: 12px;
+        }
+        .punching { filter: brightness(1.5); }
+        .ducking { transform: scaleY(0.7) translateY(60px) !important; }
+        .ai-ducking { transform: scaleX(-1) scaleY(0.7) translateY(60px) !important; }
+
+    </style>
+</head>
+<body>
+
+    <h1>WEB KONTROLLÜ ROBOT ARENASI</h1>
+
+    <div id="ui-container">
+        <div class="health-bar-container">
+            <div id="player-health" class="health-bar" style="width: 100%;"></div>
+        </div>
+        <h2 id="winner-text" style="display:none; color: yellow;">KAZANAN!</h2>
+        <div class="health-bar-container">
+            <div id="ai-health" class="health-bar" style="width: 100%;"></div>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <div id="player-robot" class="robot"></div>
+        <div id="ai-robot" class="robot"></div>
+        <div id="player-attack-box" class="attack-hitbox" style="width: 60px; height: 40px; top: 50px;"></div>
+        <div id="ai-attack-box" class="attack-hitbox" style="width: 60px; height: 40px; top: 50px;"></div>
+    </div>
+
+    <div id="debug-container">
+        <div id="video-container">
+            <video id="webcam" autoplay playsinline></video>
+            <canvas id="output-canvas"></canvas>
+        </div>
+        <div id="status-log">
+            <p>Sistem başlatılıyor...</p>
+            <p>Lütfen kameraya izin verin ve tüm vücudunuzun veya en azından belden yukarısının göründüğünden emin olun.</p>
+        </div>
+    </div>
+
+    <script>
+        const STATUS_LOG = document.getElementById('status-log');
+        function log(msg) {
+            STATUS_LOG.innerHTML += `<p>${msg}</p>`;
+            STATUS_LOG.scrollTop = STATUS_LOG.scrollHeight;
+        }
+
+        let detector;
+        let video;
+        let canvas, ctx;
+        let animationId;
+
+        // Oyun Durumu
+        const gameState = {
+            isGameOver: false,
+            arenaWidth: 800,
+            groundY: 380
+        };
+
+        // OYUNCU OBJESİ
+        const player = {
+            element: document.getElementById('player-robot'),
+            healthElement: document.getElementById('player-health'),
+            attackBox: document.getElementById('player-attack-box'),
+            x: 200,
+            y: 0,
+            width: 80,
+            height: 120,
+            health: 100,
+            isAttacking: false,
+            isDucking: false,
+            poseHistory: [], // Hareket analizi için geçmişi tut
+            stats: { punchesThrown: 0, timeDucked: 0, aggressiveScore: 0 } // AI'ın öğrenmesi için istatistikler
+        };
+
+        // AI OBJESİ
+        const ai = {
+            element: document.getElementById('ai-robot'),
+            healthElement: document.getElementById('ai-health'),
+            attackBox: document.getElementById('ai-attack-box'),
+            x: 520,
+            y: 0,
+            width: 80,
+            height: 120,
+            health: 100,
+            isAttacking: false,
+            isDucking: false,
+            state: 'IDLE', // IDLE, CHASE, ATTACK, DEFEND, RETREAT
+            lastActionTime: 0,
+            reactionTime: 1000, // AI tepki süresi (ms)
+            aggressionLevel: 0.5, // 0.0 (Pasif) - 1.0 (Agresif)
+            learningRate: 0.05
+        };
+
+        async function init() {
+            log("TensorFlow.js yükleniyor...");
+            await tf.ready();
+            log("MoveNet modeli hazırlanıyor...");
+            
+            detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, {
+                modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
+            });
+            log("Model hazır. Kamera başlatılıyor...");
+
+            video = document.getElementById('webcam');
+            canvas = document.getElementById('output-canvas');
+            ctx = canvas.getContext('2d');
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 320, height: 240, frameRate: { ideal: 30 } } 
+                });
+                video.srcObject = stream;
+                await new Promise(resolve => video.onloadedmetadata = resolve);
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                log("Kamera aktif. Dövüş başlasın!");
+                gameLoop();
+            } catch (e) {
+                log("Kamera hatası: " + e.message);
+            }
+        }
+
+        // --- OYUNCU KONTROL MANTIĞI (Hareket Algılama) ---
+        function analyzePlayerPose(pose) {
+            if (!pose || pose.keypoints.length === 0) return;
+            const kp = pose.keypoints;
+            
+            // Kilit noktaları bul (Güven skoru 0.3 üstü olanlar)
+            const find = (name) => kp.find(k => k.name === name && k.score > 0.3);
+            const nose = find('nose');
+            const leftWrist = find('left_wrist');
+            const rightWrist = find('right_wrist');
+            const leftShoulder = find('left_shoulder');
+            const rightShoulder = find('right_shoulder');
+
+            if (!nose || !leftShoulder || !rightShoulder) return; // Yeterli veri yoksa çık
+
+            // 1. Hareket Algılama (Sağa/Sola Eğilme)
+            const shoulderCenterX = (leftShoulder.x + rightShoulder.x) / 2;
+            const videoCenter = video.videoWidth / 2;
+            // Eğer omuzların merkezi videonun merkezinden çok saparsa hareket et
+            if (shoulderCenterX < videoCenter - 30) {
+                player.x = Math.max(0, player.x - 5); // Sola git
+            } else if (shoulderCenterX > videoCenter + 30) {
+                player.x = Math.min(gameState.arenaWidth - player.width, player.x + 5); // Sağa git
+            }
+
+            // 2. Eğilme Algılama (Ducking)
+            const avgShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+            // Eğer burun omuz hizasına çok yaklaşırsa eğilmiş demektir (basit yaklaşım)
+            if (nose.y > avgShoulderY - 20) {
+                if (!player.isDucking) {
+                    player.isDucking = true;
+                    player.element.classList.add('ducking');
+                    player.stats.timeDucked++; // AI öğrenmesi için kaydet
+                }
+            } else {
+                if (player.isDucking) {
+                    player.isDucking = false;
+                    player.element.classList.remove('ducking');
+                }
+            }
+
+            // 3. Yumruk Algılama (Basit Hız/Konum Kontrolü)
+            // Bilek omuzdan çok ileri giderse yumruk say
+            let punching = false;
+            if (leftWrist && leftWrist.y < leftShoulder.y && leftWrist.x > leftShoulder.x + 40) punching = true; // Sol yumruk
+            if (rightWrist && rightWrist.y < rightShoulder.y && rightWrist.x < rightShoulder.x - 40) punching = true; // Sağ yumruk
+
+            if (punching && !player.isAttacking && !player.isDucking) {
+                performAttack(player);
+                player.stats.punchesThrown++; // AI öğrenmesi için kaydet
+            }
+
+            // AI Öğrenme Metriği Güncelleme
+            player.stats.aggressiveScore = (player.stats.punchesThrown * 2) - player.stats.timeDucked;
+        }
+
+        function performAttack(attacker) {
+            if (gameState.isGameOver || attacker.isDucking) return;
+            attacker.isAttacking = true;
+            attacker.element.classList.add('punching');
+            
+            // Hitbox'ı konumlandır
+            attacker.attackBox.style.display = 'block';
+            attacker.attackBox.style.left = (attacker === player ? attacker.x + attacker.width : attacker.x - 60) + 'px';
+
+            // Hasar Kontrolü
+            const defender = attacker === player ? ai : player;
+            checkHit(attacker, defender);
+
+            setTimeout(() => {
+                attacker.isAttacking = false;
+                attacker.element.classList.remove('punching');
+                attacker.attackBox.style.display = 'none';
+            }, 300); // Yumruk süresi
+        }
+
+        function checkHit(attacker, defender) {
+             // Basit mesafe tabanlı çarpışma (X ekseninde yakınlık ve defender eğilmiyorsa)
+            const distance = Math.abs(attacker.x - defender.x);
+            if (distance < 100 && !defender.isDucking) {
+                defender.health -= 10;
+                updateHealthUI();
+                log((attacker === player ? "Oyuncu" : "AI") + " vurdu! Kalan Can: " + defender.health);
+            }
+        }
+
+
+        // --- AI MANTIĞI (Adaptif Kural Tabanlı) ---
+        function updateAI(timestamp) {
+            if (gameState.isGameOver) return;
+
+            // AI Öğrenme Süreci (Adaptasyon)
+            // Oyuncu agresifse AI daha defansif olur, pasifse AI daha agresif olur.
+            if (player.stats.aggressiveScore > 50) {
+                ai.aggressionLevel = Math.max(0.2, ai.aggressionLevel - ai.learningRate); // Defansifleş
+            } else if (player.stats.aggressiveScore < -20) {
+                ai.aggressionLevel = Math.min(0.9, ai.aggressionLevel + ai.learningRate); // Agresifleş
+            }
+
+            // Karar verme zamanı geldi mi?
+            if (timestamp - ai.lastActionTime < ai.reactionTime) return;
+            ai.lastActionTime = timestamp;
+
+            const distanceToPlayer = Math.abs(ai.x - player.x);
+            const randomChance = Math.random();
+
+            // AI Durum Makinesi (State Machine)
+            switch(ai.state) {
+                case 'IDLE':
+                    // Boşta dururken ne yapacağına karar ver
+                    if (distanceToPlayer > 300) {
+                        ai.state = 'CHASE';
+                    } else if (distanceToPlayer < 120) {
+                         // Yakınsa saldır ya da geri çekil (agresifliğe bağlı)
+                         ai.state = randomChance < ai.aggressionLevel ? 'ATTACK' : 'RETREAT';
+                    }
+                    break;
+                case 'CHASE':
+                    // Oyuncuya yaklaş
+                    if (ai.x > player.x + 100) {
+                        ai.x -= 15; // Sola git
+                    } else {
+                        ai.state = 'IDLE'; // Yeterince yakın
+                    }
+                    break;
+                case 'RETREAT':
+                    // Geri çekil
+                    if (ai.x < gameState.arenaWidth - ai.width - 20) {
+                         ai.x += 20; // Sağa kaç
+                    }
+                    ai.state = 'IDLE';
+                    break;
+                case 'ATTACK':
+                    // Saldırı türü seç (Normal yumruk veya bazen aparkat gibi davranan eğilip vurma)
+                    if (randomChance < 0.3) {
+                        // Fake at (eğilip kalk)
+                        aiDucking(true);
+                        setTimeout(() => aiDucking(false), 300);
+                    } else {
+                        performAttack(ai);
+                    }
+                    ai.state = 'RETREAT'; // Vurduktan sonra genelde geri çekil
+                    break;
+                case 'DEFEND':
+                    // Oyuncu saldırıyorsa eğil
+                    if (player.isAttacking && randomChance < (1 - ai.aggressionLevel + 0.2)) {
+                         aiDucking(true);
+                         setTimeout(() => aiDucking(false), 500);
+                    }
+                    ai.state = 'IDLE';
+                    break;
+            }
+
+            // Oyuncu saldırıyorsa öncelikli olarak savunma durumunu kontrol et
+            if (player.isAttacking && ai.state !== 'DEFEND' && !ai.isDucking) {
+                 ai.state = 'DEFEND';
+            }
+
+            // AI'ın tepki süresini agresifliğe göre değiştir (Agresif AI daha hızlı düşünür)
+            ai.reactionTime = 1000 - (ai.aggressionLevel * 500);
+        }
+
+        function aiDucking(isDucking) {
+            ai.isDucking = isDucking;
+            if (isDucking) {
+                ai.element.classList.add('ai-ducking');
+            } else {
+                ai.element.classList.remove('ai-ducking');
+            }
+        }
+
+        function updateHealthUI() {
+            player.healthElement.style.width = player.health + '%';
+            ai.healthElement.style.width = ai.health + '%';
+
+            if (player.health <= 0 || ai.health <= 0) {
+                gameState.isGameOver = true;
+                const winnerText = document.getElementById('winner-text');
+                winnerText.style.display = 'block';
+                winnerText.innerText = player.health <= 0 ? "AI KAZANDI!" : "OYUNCU KAZANDI!";
+                log("Oyun Bitti!");
+            }
+        }
+
+        // --- OYUN DÖNGÜSÜ ---
+        async function gameLoop(timestamp) {
+            if (gameState.isGameOver) return;
+
+            // 1. Poz Algılama
+            if (detector && video.readyState === 4) {
+                try {
+                    const poses = await detector.estimatePoses(video);
+                    if (poses && poses.length > 0) {
+                        analyzePlayerPose(poses[0]);
+                        drawDebugPose(poses[0]); // İskeleti çiz
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            // 2. AI Güncelleme
+            updateAI(timestamp);
+
+            // 3. Görüntüleme (Rendering)
+            player.element.style.left = player.x + 'px';
+            ai.element.style.left = ai.x + 'px';
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Debug için iskelet çizimi
+        function drawDebugPose(pose) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'red';
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            pose.keypoints.forEach(kp => {
+                if (kp.score > 0.3) {
+                    ctx.beginPath();
+                    ctx.arc(kp.x, kp.y, 5, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            });
+        }
+
+        // Başlat
+        init();
+
+    </script>
+</body>
+</html>

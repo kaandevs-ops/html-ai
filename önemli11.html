@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Stark OS: Ultimate Sync</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <style>
+        /* --- STARK ARAYÜZ TASARIMI (Senin Kodundan) --- */
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
+        
+        /* Kamera Önizlemesi (Sağ Alt) */
+        #video { 
+            position: fixed; bottom: 15px; right: 15px; width: 220px; 
+            border: 2px solid #00f2ff; border-radius: 12px; 
+            transform: scaleX(-1); /* Ayna efekti */
+            filter: brightness(1.2) contrast(1.1); 
+            z-index: 10; 
+            opacity: 0.8;
+        }
+
+        /* UI Bilgileri (Sol Üst) */
+        #ui { position: fixed; top: 30px; left: 30px; color: #00f2ff; text-transform: uppercase; letter-spacing: 2px; pointer-events: none; z-index: 20; }
+        .title { font-size: 22px; font-weight: 900; margin-bottom: 10px; text-shadow: 0 0 10px #00f2ff; }
+        .hud-line { font-size: 12px; opacity: 0.7; margin-bottom: 5px; }
+        #status { font-weight: bold; color: #ffeb3b; }
+        
+        /* Three.js Container */
+        #canvas-container { width: 100vw; height: 100vh; display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <div class="title">MARK-85 INTERFACE</div>
+        <div class="hud-line">SYSTEM: <span id="status">SEARCHING...</span></div>
+        <div class="hud-line" id="coords-display">TARGET: NULL</div>
+        <div class="hud-line" id="window-offset">SYNC: CALIBRATING</div>
+    </div>
+
+    <video id="video"></video>
+    
+    <div id="canvas-container"></div>
+
+<script>
+    /** * --- BÖLÜM 1: STARK MANTIĞI (GLOBAL KOORDİNATLAR) --- 
+     * Burası küpün tek bir monitördeymiş gibi davranmasını sağlayan matematik.
+     */
+    
+    const bc = new BroadcastChannel('stark_ultimate_net');
+    
+    // Küpün tüm monitördeki (Screen) konumu
+    let globalTargetX = window.screen.width / 2;
+    let globalTargetY = window.screen.height / 2;
+    
+    let currentX = globalTargetX;
+    let currentY = globalTargetY;
+
+    // "Pinch" (Tutma) hareketi kontrolü
+    let isControlling = false;
+
+    /** --- BÖLÜM 2: THREE.JS GÖRSELLİĞİ (Senin Tasarımın) --- */
+    const scene = new THREE.Scene();
+
+    // ÖNEMLİ DEĞİŞİKLİK: PerspectiveCamera yerine OrthographicCamera kullanıyoruz.
+    // Neden? Çünkü pencereler arası geçişte perspektif bozulması (yamulma) olmaması için
+    // 2D ekran koordinatlarıyla 3D objeyi tam üst üste bindirmemiz gerekiyor.
+    const camera = new THREE.OrthographicCamera(
+        window.innerWidth / -2, window.innerWidth / 2,
+        window.innerHeight / 2, window.innerHeight / -2,
+        1, 1000
+    );
+    camera.position.z = 100;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    // -- KÜP TASARIMI (Senin Dosyandaki Havalı Küp) --
+    // Dış Tel Kafes
+    const geometry = new THREE.BoxGeometry(150, 150, 150); // Boyutları Orthographic kameraya göre ayarladım
+    const material = new THREE.LineBasicMaterial({ color: 0x00f2ff, linewidth: 2 });
+    const cube = new THREE.LineSegments(new THREE.EdgesGeometry(geometry), material);
+    scene.add(cube);
+
+    // İç Çekirdek (Hologram Hissi)
+    const innerGeo = new THREE.BoxGeometry(100, 100, 100);
+    const innerMat = new THREE.MeshBasicMaterial({ color: 0x00f2ff, transparent: true, opacity: 0.15 });
+    const innerCube = new THREE.Mesh(innerGeo, innerMat);
+    cube.add(innerCube);
+
+    /** --- BÖLÜM 3: EŞLEŞTİRME VE LOOP --- */
+    
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // 1. Yumuşak Geçiş (Lerp) - Küp süzülerek gelir
+        currentX += (globalTargetX - currentX) * 0.15;
+        currentY += (globalTargetY - currentY) * 0.15;
+
+        // 2. MATEMATİKSEL BÜYÜ (Global -> Yerel Çevirimi)
+        // Küpün "Evrensel" konumundan, bu pencerenin "Sol Üst" köşesini çıkarıyoruz.
+        // Böylece küp, pencere ekranın neresindeyse oraya denk geliyor.
+        const localX = currentX - window.screenX;
+        const localY = currentY - window.screenY;
+
+        // 3. Three.js Koordinatına Dönüştür
+        // HTML: Sol-Üst (0,0) -> Three.js: Merkez (0,0)
+        cube.position.x = localX - (window.innerWidth / 2);
+        cube.position.y = -(localY - (window.innerHeight / 2)); // Y ekseni ters
+
+        // 4. Görsellik (Dönme Efekti)
+        cube.rotation.x += 0.01;
+        cube.rotation.y += 0.015;
+        innerCube.rotation.x -= 0.02; // İçteki ters dönsün, daha teknolojik durur
+
+        // Bilgi Ekranını Güncelle
+        document.getElementById('coords-display').innerText = `GLOBAL: ${Math.floor(currentX)}, ${Math.floor(currentY)}`;
+        document.getElementById('window-offset').innerText = `OFFSET: ${window.screenX}, ${window.screenY}`;
+        
+        // Pencere boyutu değişirse kamerayı düzelt
+        if (renderer.domElement.width !== window.innerWidth) {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.left = window.innerWidth / -2;
+            camera.right = window.innerWidth / 2;
+            camera.top = window.innerHeight / 2;
+            camera.bottom = window.innerHeight / -2;
+            camera.updateProjectionMatrix();
+        }
+
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    /** --- BÖLÜM 4: MEDIAPIPE (EL KONTROLÜ) --- */
+    const videoElement = document.getElementById('video');
+    const statusText = document.getElementById('status');
+
+    function onResults(results) {
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            const h = results.multiHandLandmarks[0];
+            const index = h[8]; // İşaret parmağı ucu
+            
+            // EL GÖRÜLDÜ
+            isControlling = true;
+            statusText.innerText = "HAND LINKED";
+            statusText.style.color = "#00f2ff"; // Stark Mavisi
+
+            // --- ANA HESAPLAMA ---
+            // Kameradaki 0-1 oranını, EKRANIN (Monitor) tamamına yayıyoruz.
+            // Bu sayede elin sağa gidince küp yan monitöre/pencereye geçebiliyor.
+            const screenW = window.screen.width;
+            const screenH = window.screen.height;
+
+            const targetX = (1 - index.x) * screenW; // Ayna modu için (1-x)
+            const targetY = index.y * screenH;
+
+            // Kendimizi güncelle
+            globalTargetX = targetX;
+            globalTargetY = targetY;
+
+            // Diğer pencerelere haber ver (Ben yönetiyorum!)
+            bc.postMessage({ x: targetX, y: targetY });
+
+        } else {
+            isControlling = false;
+            // El yoksa beklemeye geç, ama Broadcast dinlemeye devam et
+        }
+    }
+
+    // Diğer pencereden veri gelirse
+    bc.onmessage = (e) => {
+        if (!isControlling) {
+            // Eğer ben eli görmüyorsam, diğer pencerenin dediğini yaparım
+            globalTargetX = e.data.x;
+            globalTargetY = e.data.y;
+            statusText.innerText = "SLAVE MODE";
+            statusText.style.color = "#ffeb3b"; // Sarı (Beklemede)
+        }
+    };
+
+    const hands = new Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+
+    hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.5
+    });
+
+    hands.onResults(onResults);
+
+    const cameraUtils = new Camera(videoElement, {
+        onFrame: async () => { await hands.send({ image: videoElement }); },
+        width: 640, height: 480
+    });
+    cameraUtils.start();
+
+</script>
+</body>
+</html>

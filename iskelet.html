@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiFi Vision Simulation - Project JARVIS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+
+        /* Video ve Canvas üst üste ve tam ekran */
+        video {
+            display: none; /* Ham videoyu gizle, canvas kullanacağız */
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* Videodaki o yeşil gece görüşü efekti */
+            filter: sepia(100%) hue-rotate(90deg) saturate(300%) contrast(1.2) brightness(0.8);
+            z-index: 1;
+        }
+
+        /* Arayüz Katmanı (UI) */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none; /* Tıklamaları engelleme */
+            box-shadow: inset 0 0 100px rgba(0, 255, 0, 0.2);
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 0, 0.05) 3px
+            );
+        }
+
+        /* Köşe Bilgileri */
+        .hud-text {
+            position: absolute;
+            font-size: 14px;
+            text-shadow: 0 0 5px #00ff00;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px;
+        }
+
+        .top-left { top: 20px; left: 20px; border-left: 2px solid #00ff00; }
+        .top-right { top: 20px; right: 20px; text-align: right; border-right: 2px solid #00ff00; }
+        .bottom-left { bottom: 20px; left: 20px; }
+        .bottom-right { bottom: 20px; right: 20px; text-align: right; }
+
+        /* Hedef Kare (Target Box) */
+        #target-box {
+            position: absolute;
+            border: 2px solid #00ff00;
+            box-shadow: 0 0 10px #00ff00, inset 0 0 10px #00ff00;
+            display: none;
+            transition: all 0.1s ease;
+        }
+        #target-label {
+            position: absolute;
+            top: -20px;
+            left: 0;
+            background: #00ff00;
+            color: #000;
+            font-weight: bold;
+            font-size: 10px;
+            padding: 2px 5px;
+        }
+
+        /* Radar Animasyonu */
+        .radar {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            height: 90%;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: pulse 4s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { transform: translate(-50%, -50%) scale(1.2); opacity: 0; }
+        }
+
+        /* Yükleniyor Ekranı */
+        #loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <video id="input_video"></video>
+    <canvas id="output_canvas"></canvas>
+
+    <div id="ui-layer">
+        <div class="radar"></div>
+        
+        <div class="hud-text top-left">
+            SYSTEM: ONLINE<br>
+            MODE: WIFI_SENSING<br>
+            FREQ: 5.8 GHz<br>
+            RF_GAIN: +12dB
+        </div>
+
+        <div class="hud-text top-right">
+            RADAR CONTACT<br>
+            <span id="fps-meter">FPS: 0</span><br>
+            TARGETS: <span id="target-count">0</span>
+        </div>
+
+        <div class="hud-text bottom-left">
+            SCANNING...<br>
+            [||||||||||||] 100%
+        </div>
+
+        <div class="hud-text bottom-right">
+            JARVIS VISION V2.4<br>
+            SECURE CONNECTION
+        </div>
+
+        <div id="target-box">
+            <div id="target-label">HUMAN DETECTED</div>
+        </div>
+    </div>
+
+    <div id="loader">
+        <h1>SİSTEM BAŞLATILIYOR...</h1>
+        <p>Lütfen bekleyin, RF modülleri yükleniyor.</p>
+    </div>
+</div>
+
+<script>
+    const videoElement = document.getElementById('input_video');
+    const canvasElement = document.getElementById('output_canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+    const loader = document.getElementById('loader');
+    const targetBox = document.getElementById('target-box');
+    const targetCountSpan = document.getElementById('target-count');
+    const fpsMeter = document.getElementById('fps-meter');
+
+    let lastFrameTime = 0;
+
+    // MediaPipe Pose Kurulumu
+    const pose = new Pose({locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+    }});
+
+    pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+    });
+
+    pose.onResults(onResults);
+
+    // Kamera Başlatma
+    const camera = new Camera(videoElement, {
+        onFrame: async () => {
+            await pose.send({image: videoElement});
+        },
+        width: 1280,
+        height: 720
+    });
+
+    camera.start()
+        .then(() => {
+            loader.style.display = 'none';
+        })
+        .catch(err => {
+            console.error(err);
+            loader.innerHTML = "<h1>KAMERA HATASI</h1><p>Lütfen kamera izni verin.</p>";
+        });
+
+
+    // Sonuçları İşleme ve Çizim
+    function onResults(results) {
+        // FPS Hesaplama
+        const now = performance.now();
+        const fps = 1000 / (now - lastFrameTime);
+        lastFrameTime = now;
+        fpsMeter.innerText = `FPS: ${Math.round(fps)}`;
+
+        // Canvas Boyutlandırma
+        canvasElement.width = window.innerWidth;
+        canvasElement.height = window.innerHeight;
+
+        // 1. Orijinal Görüntüyü Çiz (CSS ile yeşil filtre uygulanacak)
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        
+        // Görüntüyü ekrana sığdırarak çiz (Cover etkisi)
+        canvasCtx.drawImage(
+            results.image, 0, 0, canvasElement.width, canvasElement.height
+        );
+
+        // 2. Izgara (Grid) Efekti Ekle (Radar görünümü için)
+        drawGrid(canvasCtx, canvasElement.width, canvasElement.height);
+
+        if (results.poseLandmarks) {
+            targetCountSpan.innerText = "1"; // İskelet bulundu
+            
+            // Çizim Ayarları - VİDEODAKİ GİBİ BEYAZ/GRİ İSKELET
+            const connectionColor = '#FFFFFF'; 
+            const landmarkColor = '#FFFFFF';
+            const lineWidth = 4;
+
+            // İskelet Bağlantılarını Çiz
+            drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS,
+                 {color: connectionColor, lineWidth: lineWidth});
+            
+            // Eklem Noktalarını Çiz
+            drawLandmarks(canvasCtx, results.poseLandmarks,
+                 {color: landmarkColor, lineWidth: 2, radius: 4});
+
+            // Hedef Kutusunu Güncelle (Kutuyu kişinin etrafına çiz)
+            updateTargetBox(results.poseLandmarks);
+        } else {
+            targetCountSpan.innerText = "0";
+            targetBox.style.display = 'none';
+        }
+
+        canvasCtx.restore();
+    }
+
+    // Basit bir ızgara çizimi (Tech efekti için)
+    function drawGrid(ctx, w, h) {
+        ctx.strokeStyle = "rgba(0, 255, 0, 0.1)";
+        ctx.lineWidth = 1;
+        const step = 50;
+
+        // Dikey çizgiler
+        for (let x = 0; x < w; x += step) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, h);
+            ctx.stroke();
+        }
+        // Yatay çizgiler
+        for (let y = 0; y < h; y += step) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(w, y);
+            ctx.stroke();
+        }
+    }
+
+    // HTML DOM üzerindeki kutuyu kişinin konumuna göre güncelleme
+    function updateTargetBox(landmarks) {
+        // En uç noktaları bul (Bounding Box hesaplama)
+        let minX = 1, minY = 1, maxX = 0, maxY = 0;
+
+        for (const lm of landmarks) {
+            if (lm.x < minX) minX = lm.x;
+            if (lm.x > maxX) maxX = lm.x;
+            if (lm.y < minY) minY = lm.y;
+            if (lm.y > maxY) maxY = lm.y;
+        }
+
+        // Koordinatları ekran boyutuna çevir
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        const boxX = minX * width;
+        const boxY = minY * height;
+        const boxW = (maxX - minX) * width;
+        const boxH = (maxY - minY) * height;
+
+        // Biraz pay bırak (padding)
+        const padding = 20;
+
+        targetBox.style.display = 'block';
+        targetBox.style.left = `${boxX - padding}px`;
+        targetBox.style.top = `${boxY - padding}px`;
+        targetBox.style.width = `${boxW + (padding*2)}px`;
+        targetBox.style.height = `${boxH + (padding*2)}px`;
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,40 @@
+# Turkish-AI Requirements — v2
+# Temizlendi: sadece gerçekten kullanılan paketler listelendi
+
+# ─── Zorunlu: ML Core ──────────────────────────────────────────────────────
+torch>=2.1.0                  # Ana deep learning framework
+numpy>=1.24.0                 # Sayısal hesaplama
+
+# ─── Zorunlu: Veri İşleme ──────────────────────────────────────────────────
+regex>=2023.10.3              # BPE tokenizer için gelişmiş regex
+
+# ─── Zorunlu: Web Scraping (veri toplama) ──────────────────────────────────
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+
+# ─── Zorunlu: Yardımcı ─────────────────────────────────────────────────────
+tqdm>=4.66.0                  # Eğitim progress bar
+colorama>=0.4.6               # Windows terminal renk desteği
+
+# ─── Opsiyonel: Hız (CUDA varsa büyük fark yapar) ──────────────────────────
+# faiss-cpu>=1.7.4            # Vektör hafıza araması (VectorMemory)
+# faiss-gpu>=1.7.4            # GPU versiyonu (CUDA gerekli)
+
+# ─── Opsiyonel: Eğitim izleme ──────────────────────────────────────────────
+# wandb>=0.16.0               # Eğitim grafiklerini web'de takip et
+
+# ─── Opsiyonel: Daha iyi veri toplama ──────────────────────────────────────
+# newspaper3k>=0.2.8          # Haber makalelerini çek
+# wikipedia-api>=0.6.0        # Wikipedia API (scraper yerine)
+
+# ─── Opsiyonel: Büyük model eğitimi ────────────────────────────────────────
+# accelerate>=0.24.0          # Multi-GPU eğitim
+# bitsandbytes>=0.41.0        # 4-bit/8-bit quantization
+
+# ─── Kaldırıldı (koda bağlı değil) ────────────────────────────────────────
+# redis, sqlalchemy, chromadb → memory_system.py sadece sqlite3 kullanıyor
+# sentencepiece, tokenizers   → kendi BPE tokenizer yazıldı
+# transformers, peft          → kendi transformer yazıldı
+# datasets                    → veri doğrudan yükleniyor
+# scipy, pandas               → henüz kullanılmıyor
+# scrapy                      → requests+bs4 yeterli

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS V5 - PROFESSIONAL</title>
+    
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        
+        body { 
+            margin: 0; overflow: hidden; background-color: #050505; 
+            font-family: 'Share Tech Mono', monospace; color: #00f3ff; user-select: none;
+        }
+
+        #input-video { position: absolute; top: 0; left: 0; opacity: 0; pointer-events: none; }
+        
+        /* SOL PANEL */
+        #ui-panel {
+            position: absolute; top: 20px; left: 20px; width: 260px;
+            background: rgba(0, 10, 20, 0.8); 
+            border: 1px solid #00f3ff;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+            padding: 20px; clip-path: polygon(0 0, 100% 0, 100% 95%, 90% 100%, 0 100%);
+            z-index: 100;
+        }
+
+        h3 { margin: 0 0 15px 0; text-align: center; border-bottom: 2px solid #00f3ff; padding-bottom: 10px; font-size: 20px; letter-spacing: 2px; }
+        .control-group { margin-bottom: 15px; }
+        label { font-size: 12px; display: block; margin-bottom: 5px; color: #aaa; }
+        
+        button {
+            background: rgba(0, 243, 255, 0.1); color: #00f3ff; border: 1px solid #00f3ff;
+            padding: 8px; cursor: pointer; width: 100%; font-family: 'Share Tech Mono', monospace; font-weight: bold;
+            transition: 0.2s; text-transform: uppercase;
+        }
+        button:hover { background: #00f3ff; color: #000; }
+
+        input[type="range"] { width: 100%; accent-color: #00f3ff; }
+        .color-picker { display: flex; gap: 8px; justify-content: center; }
+        .color-btn { width: 20px; height: 20px; border: 1px solid #fff; cursor: pointer; }
+
+        /* HUD (HEADS UP DISPLAY) */
+        #hud-top {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 20px; pointer-events: none;
+        }
+        .hud-box {
+            border: 1px solid #00f3ff; padding: 5px 15px; background: rgba(0,0,0,0.5);
+            font-size: 12px; text-align: center; color: #00f3ff;
+        }
+
+        #gesture-status {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            font-size: 30px; font-weight: bold; color: #fff; 
+            text-shadow: 0 0 10px #00f3ff; pointer-events: none;
+            text-transform: uppercase; letter-spacing: 3px;
+        }
+
+        /* TARGET LOCK ANIMASYONU */
+        #target-lock {
+            position: absolute; width: 100px; height: 100px;
+            border: 2px solid rgba(255, 0, 0, 0.8); border-radius: 50%;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            display: none; pointer-events: none; z-index: 90;
+            box-shadow: 0 0 15px red;
+            animation: lockSpin 2s infinite linear;
+        }
+        @keyframes lockSpin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+
+        #loader {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            color: #00f3ff; z-index: 999;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="loader">
+        <div style="font-size: 30px;">JARVIS SYSTEM V5</div>
+        <div style="font-size: 12px; margin-top: 10px;">INITIALIZING SENSORS...</div>
+    </div>
+
+    <video id="input-video" autoplay playsinline></video>
+    
+    <div id="hud-top">
+        <div class="hud-box">CPU: 34%</div>
+        <div class="hud-box">MEM: 128MB</div>
+        <div class="hud-box">CAM: ACTIVE</div>
+    </div>
+    
+    <div id="target-lock"></div>
+    <div id="gesture-status">SYSTEM READY</div>
+
+    <div id="ui-panel">
+        <h3>CONTROLS</h3>
+        
+        <div class="control-group">
+            <button onclick="document.getElementById('file-input').click()">📂 IMPORT MODEL</button>
+            <input type="file" id="file-input" accept=".glb,.gltf,.png,.jpg,.jpeg" style="display: none;">
+        </div>
+
+        <div class="control-group">
+            <label>RENDER MODE</label>
+            <button id="btn-hologram">WIREFRAME</button>
+        </div>
+
+        <div class="control-group">
+            <label>INTERFACE COLOR</label>
+            <div class="color-picker">
+                <div class="color-btn" style="background: #00f3ff;" onclick="setColor(0x00f3ff)"></div>
+                <div class="color-btn" style="background: #ff3333;" onclick="setColor(0xff3333)"></div>
+                <div class="color-btn" style="background: #33ff33;" onclick="setColor(0x33ff33)"></div>
+                <div class="color-btn" style="background: #ffaa00;" onclick="setColor(0xffaa00)"></div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>HOLOGRAM OPACITY</label>
+            <input type="range" id="opacity-slider" min="0.1" max="1" step="0.05" value="0.8">
+        </div>
+
+        <div class="control-group" style="border-top: 1px solid #00f3ff; padding-top: 10px; margin-top: 20px;">
+            <label style="color: #fff;">COMMANDS:</label>
+            <div style="font-size: 10px; color: #888; line-height: 1.6;">
+                ✊ FIST -> DRAG (MOVE)<br>
+                👆 "L" SHAPE -> ZOOM<br>
+                ✋ OPEN -> ROTATE<br>
+                ✌️ 2 FINGERS -> SPIN H<br>
+                🤟 3 FINGERS -> SPIN V
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        // --- DEĞİŞKENLER ---
+        const videoElement = document.getElementById('input-video');
+        const statusElement = document.getElementById('gesture-status');
+        const lockElement = document.getElementById('target-lock');
+        const loaderElement = document.getElementById('loader');
+
+        let scene, camera, renderer, targetObject, cursor;
+        let isHologram = true;
+        let baseColor = 0x00f3ff;
+        let targetOpacity = 0.8;
+        
+        let initialZoomY = 0; // Zoom başlangıç noktası
+        let initialScale = 1;
+
+        // --- BAŞLATMA ---
+        function init() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.03); // Uzay hissi
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+
+            // Zemin Izgarası (Dönen)
+            const grid = new THREE.GridHelper(30, 30, baseColor, 0x111111);
+            grid.position.y = -2;
+            grid.name = "floorGrid";
+            scene.add(grid);
+
+            // Işıklar
+            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+            const dl = new THREE.DirectionalLight(0xffffff, 1);
+            dl.position.set(2, 5, 5);
+            scene.add(dl);
+
+            // İmleç (Cursor) - Hedef Göstergesi
+            const cursorGeo = new THREE.RingGeometry(0.15, 0.17, 32);
+            const cursorMat = new THREE.MeshBasicMaterial({ color: baseColor, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
+            cursor = new THREE.Mesh(cursorGeo, cursorMat);
+            cursor.renderOrder = 999;
+            scene.add(cursor);
+
+            // Yıldızlar
+            addStars();
+
+            createDefaultObject();
+            animate();
+        }
+
+        function addStars() {
+            const geo = new THREE.BufferGeometry();
+            const pos = [];
+            for(let i=0; i<2000; i++) pos.push((Math.random()-0.5)*50, (Math.random()-0.5)*50, (Math.random()-0.5)*50);
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+            const stars = new THREE.Points(geo, new THREE.PointsMaterial({color: 0xffffff, size: 0.05, transparent: true, opacity: 0.5}));
+            scene.add(stars);
+        }
+
+        function createDefaultObject() {
+            if(targetObject) scene.remove(targetObject);
+            // Karmaşık bir şekil: Icosahedron içinde küre
+            const group = new THREE.Group();
+            
+            const outerGeo = new THREE.IcosahedronGeometry(1.5, 1);
+            const outerMat = new THREE.MeshBasicMaterial({ color: baseColor, wireframe: true, transparent: true, opacity: targetOpacity });
+            const outer = new THREE.Mesh(outerGeo, outerMat);
+            
+            const innerGeo = new THREE.IcosahedronGeometry(0.5, 2);
+            const innerMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: false });
+            const inner = new THREE.Mesh(innerGeo, innerMat);
+
+            group.add(outer);
+            group.add(inner);
+            targetObject = group;
+            scene.add(targetObject);
+        }
+
+        // --- DOSYA YÜKLEME ---
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const url = URL.createObjectURL(file);
+            const ext = file.name.split('.').pop().toLowerCase();
+
+            if(ext === 'glb' || ext === 'gltf') {
+                new GLTFLoader().load(url, (gltf) => {
+                    if(targetObject) scene.remove(targetObject);
+                    targetObject = gltf.scene;
+                    const box = new THREE.Box3().setFromObject(targetObject);
+                    const center = box.getCenter(new THREE.Vector3());
+                    targetObject.position.sub(center);
+                    updateTheme();
+                    scene.add(targetObject);
+                });
+            } else if(['jpg','png','jpeg'].includes(ext)) {
+                new THREE.TextureLoader().load(url, (tex) => {
+                    if(targetObject) scene.remove(targetObject);
+                    targetObject = new THREE.Mesh(new THREE.PlaneGeometry(4,4), new THREE.MeshBasicMaterial({map:tex, transparent:true, side:THREE.DoubleSide}));
+                    updateTheme();
+                    scene.add(targetObject);
+                });
+            }
+        });
+
+        // --- UI GÜNCELLEME ---
+        document.getElementById('btn-hologram').addEventListener('click', () => { isHologram = !isHologram; updateTheme(); });
+        document.getElementById('opacity-slider').addEventListener('input', (e) => { targetOpacity = parseFloat(e.target.value); updateTheme(); });
+        window.setColor = (hex) => { baseColor = hex; cursor.material.color.setHex(hex); scene.getObjectByName("floorGrid").material.color.setHex(hex); updateTheme(); };
+
+        function updateTheme() {
+            if(!targetObject) return;
+            targetObject.traverse(c => {
+                if(c.isMesh) {
+                    if(isHologram) c.material = new THREE.MeshBasicMaterial({ color: baseColor, wireframe: true, transparent: true, opacity: targetOpacity });
+                    else c.material = new THREE.MeshStandardMaterial({ color: baseColor, roughness: 0.3, metalness: 0.8, transparent: true, opacity: targetOpacity });
+                }
+            });
+            const hexStr = '#' + baseColor.toString(16).padStart(6, '0');
+            statusElement.style.textShadow = `0 0 20px ${hexStr}`;
+            document.querySelectorAll('.hud-box').forEach(el => { el.style.color = hexStr; el.style.borderColor = hexStr; });
+            document.querySelector('h3').style.borderBottomColor = hexStr;
+            document.getElementById('ui-panel').style.borderColor = hexStr;
+        }
+
+        // --- MEDIAPIPE (CORE) ---
+        const hands = new window.Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+        hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
+        hands.onResults(onResults);
+
+        const cam = new window.Camera(videoElement, {
+            onFrame: async () => { await hands.send({image: videoElement}); },
+            width: 320, height: 240
+        });
+        cam.start();
+
+        // --- ANALİZ VE HAREKET ALGORİTMASI ---
+        let lastX = 0, lastY = 0;
+
+        function onResults(results) {
+            loaderElement.style.display = 'none';
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const lm = results.multiHandLandmarks[0];
+
+                // El pozisyonu (0-1 arası) -> Sahne pozisyonu
+                const x = (1 - lm[9].x) * 10 - 5;
+                const y = (1 - lm[9].y) * 8 - 4;
+                
+                cursor.position.set(x, y, 0);
+
+                // Parmak Durumları
+                const thumbOpen = lm[4].x < lm[3].x; // Basit başparmak kontrolü (Sağ/Sol ele göre değişebilir ama genelde çalışır)
+                const indexOpen = lm[8].y < lm[6].y;
+                const middleOpen = lm[12].y < lm[10].y;
+                const ringOpen = lm[16].y < lm[14].y;
+                const pinkyOpen = lm[20].y < lm[18].y;
+
+                // Lock Element Konumu
+                lockElement.style.left = (1 - lm[9].x) * 100 + "%";
+                lockElement.style.top = lm[9].y * 100 + "%";
+
+                // --- GESTURE ALGORİTMASI (ÇAKIŞMA ÖNLEYİCİ) ---
+
+                // 1. ZOOM: "L" ŞEKLİ (Silah İşareti)
+                // İşaret AÇIK, Başparmak AÇIK, Diğerleri KAPALI
+                if (indexOpen && !middleOpen && !ringOpen && !pinkyOpen) { // Başparmak kontrolünü esnek bıraktım, L şekli
+                    statusElement.innerText = "ZOOM MODE 👆";
+                    statusElement.style.color = "#ffff00";
+                    lockElement.style.display = "none";
+                    
+                    // Zoom Başlangıcı
+                    if(initialZoomY === 0) {
+                        initialZoomY = y;
+                        if(targetObject) initialScale = targetObject.scale.x;
+                    }
+
+                    if(targetObject) {
+                        // El yukarı çıkarsa büyüt, aşağı inerse küçült
+                        const delta = y - initialZoomY;
+                        let newScale = initialScale + (delta * 0.5);
+                        if(newScale < 0.2) newScale = 0.2;
+                        if(newScale > 5) newScale = 5;
+                        targetObject.scale.setScalar(newScale);
+                    }
+                } 
+                else {
+                    initialZoomY = 0; // Zoom reset
+                }
+
+                // 2. DRAG: YUMRUK (FIST)
+                // İşaret KAPALI, Orta KAPALI... (Tümü kapalı)
+                // "else if" kullandığımız için Zoom (L şekli) ile karışamaz. Çünkü L şeklinde işaret açık.
+                if (!indexOpen && !middleOpen && !ringOpen && !pinkyOpen) {
+                    statusElement.innerText = "DRAG LOCKED ✊";
+                    statusElement.style.color = "#ff0000";
+                    
+                    // Kilit Efekti Göster
+                    lockElement.style.display = "block";
+                    lockElement.style.borderColor = "red";
+                    lockElement.style.boxShadow = "0 0 15px red";
+
+                    if(targetObject) {
+                        // Objeyi cursor'a kilitle
+                        targetObject.position.lerp(new THREE.Vector3(x, y, 0), 0.2);
+                    }
+                }
+                
+                // 3. SPIN H: 2 PARMAK (ZAFER)
+                else if (indexOpen && middleOpen && !ringOpen && !pinkyOpen) {
+                    statusElement.innerText = "SPIN HORIZONTAL ✌️";
+                    statusElement.style.color = "#00ff00";
+                    lockElement.style.display = "none";
+                    if(targetObject) targetObject.rotation.y += 0.05;
+                }
+
+                // 4. SPIN V: 3 PARMAK
+                else if (indexOpen && middleOpen && ringOpen && !pinkyOpen) {
+                    statusElement.innerText = "SPIN VERTICAL 🤟";
+                    statusElement.style.color = "#0088ff";
+                    lockElement.style.display = "none";
+                    if(targetObject) targetObject.rotation.x += 0.05;
+                }
+
+                // 5. ROTATE: AÇIK EL
+                else if (indexOpen && middleOpen && ringOpen && pinkyOpen) {
+                    statusElement.innerText = "FREE ROTATE ✋";
+                    statusElement.style.color = "#ffffff";
+                    
+                    // Mavi Kilit Efekti
+                    lockElement.style.display = "block";
+                    lockElement.style.borderColor = baseColor ? '#' + baseColor.toString(16) : '#fff';
+                    lockElement.style.boxShadow = `0 0 15px ${lockElement.style.borderColor}`;
+
+                    if(targetObject) {
+                        targetObject.rotation.y += (x - lastX) * 1.5;
+                        targetObject.rotation.x -= (y - lastY) * 1.5;
+                    }
+                }
+
+                else {
+                    if(statusElement.innerText.includes("ZOOM")) { /* Zoom çıkışı bekleme */ }
+                    else {
+                        statusElement.innerText = "READY";
+                        statusElement.style.color = "#888";
+                        lockElement.style.display = "none";
+                    }
+                }
+
+                lastX = x;
+                lastY = y;
+
+            } else {
+                statusElement.innerText = "NO HAND";
+                lockElement.style.display = "none";
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if(renderer) {
+                // Sahneyi hafifçe döndür (Atmosferik)
+                const grid = scene.getObjectByName("floorGrid");
+                if(grid) grid.rotation.y += 0.001;
+                
+                renderer.render(scene, camera);
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init();
+    </script>
+</body>
+</html>

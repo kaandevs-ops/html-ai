@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Iron Man Modu - Çiz ve Yönet</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <style>
+        body { margin: 0; background: #111; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        
+        .container { position: relative; width: 100vw; height: 100vh; }
+
+        /* Video: Tekno hissi için biraz mavi filtre */
+        video {
+            position: absolute; width: 100%; height: 100%;
+            object-fit: cover; transform: scaleX(-1);
+            opacity: 0.3; filter: hue-rotate(180deg) contrast(1.2);
+        }
+
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+
+        /* UI */
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        .sidebar { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); pointer-events: auto; display: flex; flex-direction: column; gap: 15px; }
+        
+        .btn {
+            width: 60px; height: 60px; border-radius: 10px; /* Karemsi butonlar */
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            background: rgba(0, 20, 40, 0.8); color: cyan;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 20px; transition: 0.2s; position: relative;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+        }
+        .btn.active { border-color: cyan; box-shadow: 0 0 25px cyan; background: rgba(0, 255, 255, 0.2); }
+        
+        .loader {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border: 3px solid cyan; border-top-color: transparent;
+            animation: spin 1s linear infinite; display: none;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* İmleç - Jarvis Tarzı */
+        #cursor {
+            position: absolute; width: 30px; height: 30px;
+            border: 2px dashed cyan; border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none; z-index: 20; display: none;
+            box-shadow: 0 0 10px cyan;
+            transition: width 0.1s, height 0.1s;
+        }
+        /* Yakalama Efekti */
+        #cursor.grabbing {
+            border-style: solid; background: rgba(0, 255, 255, 0.3);
+            width: 20px; height: 20px;
+        }
+        
+        .status {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            color: cyan; font-family: 'Courier New', monospace;
+            background: rgba(0,0,0,0.8); padding: 10px 30px; border: 1px solid cyan;
+            font-size: 18px; font-weight: bold; letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .instructions {
+            position: absolute; bottom: 30px; width: 100%; text-align: center;
+            color: rgba(0, 255, 255, 0.6); font-family: monospace; font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <video id="input_video"></video>
+        <canvas id="output_canvas"></canvas>
+        <div id="cursor"></div>
+
+        <div class="status" id="status-text">SİSTEM BAŞLATILIYOR...</div>
+
+        <div class="ui-layer">
+            <div class="sidebar">
+                <div class="btn" style="background:rgba(255,0,0,0.3); color:#ff5555" data-color="#ff3b30"></div>
+                <div class="btn" style="background:rgba(0,255,0,0.3); color:#55ff55" data-color="#32d74b"></div>
+                <div class="btn active" style="background:rgba(0,100,255,0.3); color:#00ccff" data-color="#00ccff"></div>
+                <div class="btn" style="border-color:red; color:red" data-action="clear">X</div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            ☝️ İŞARET: ÇİZ | ✊ YUMRUK: TUT & TAŞI | ✋ AÇIK: GEZİN
+        </div>
+    </div>
+
+    <script>
+        const videoElement = document.getElementById('input_video');
+        const canvasElement = document.getElementById('output_canvas');
+        const ctx = canvasElement.getContext('2d');
+        const cursor = document.getElementById('cursor');
+        const statusText = document.getElementById('status-text');
+
+        // --- SİSTEM DEĞİŞKENLERİ ---
+        function resize() {
+            canvasElement.width = window.innerWidth;
+            canvasElement.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        let drawColor = "#00ccff"; // Iron Man Mavisi
+        
+        // Nesne Yönetimi
+        let objects = []; // Ekranda oluşturulan küpler burada saklanır
+        let currentStroke = []; // Şu an çizilmekte olan çizgi
+        let draggedObject = null; // Şu an tutulan nesne
+        let dragOffsetX = 0, dragOffsetY = 0;
+
+        let pX = 0, pY = 0; 
+        
+        // UI Etkileşim
+        let hoverTimer = 0;
+        let lastHoveredBtn = null;
+
+        // Matematik
+        function lerp(start, end, amt) { return (1 - amt) * start + amt * end; }
+        function getDist(p1, p2) { return Math.hypot(p1.x - p2.x, p1.y - p2.y); }
+
+        // Kare/Dikdörtgen Oluşturucu
+        function createObjectFromStroke(points, color) {
+            if (points.length < 5) return; // Çok kısa çizimleri yoksay
+            
+            // Çizilen şeklin sınırlarını bul (Bounding Box)
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            points.forEach(p => {
+                if(p.x < minX) minX = p.x;
+                if(p.y < minY) minY = p.y;
+                if(p.x > maxX) maxX = p.x;
+                if(p.y > maxY) maxY = p.y;
+            });
+
+            const w = maxX - minX;
+            const h = maxY - minY;
+
+            // Çok küçükse oluşturma
+            if(w < 20 || h < 20) return;
+
+            // Nesneyi listeye ekle
+            objects.push({
+                x: minX, y: minY, w: w, h: h,
+                color: color,
+                isHovered: false
+            });
+        }
+
+        // --- ANA DÖNGÜ ---
+        const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+        hands.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.7,
+            minTrackingConfidence: 0.7
+        });
+
+        hands.onResults((results) => {
+            // Her karede ekranı temizle ve her şeyi yeniden çiz (Oyun motoru mantığı)
+            ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+            // 1. VAR OLAN NESNELERİ ÇİZ
+            objects.forEach(obj => {
+                ctx.fillStyle = obj.color;
+                // Şeffaflık ekle (Hologram hissi)
+                ctx.globalAlpha = 0.6;
+                ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+                
+                // Kenarlık
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = obj.isHovered ? "white" : obj.color; // Seçiliyse beyaz parlasın
+                ctx.globalAlpha = 1.0;
+                ctx.strokeRect(obj.x, obj.y, obj.w, obj.h);
+            });
+
+            // El Yoksa çık
+            if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+                cursor.style.display = "none";
+                statusText.innerText = "SİNYAL YOK";
+                // Eğer çizim yarım kaldıysa iptal et
+                currentStroke = [];
+                draggedObject = null;
+                return;
+            }
+
+            const lm = results.multiHandLandmarks[0];
+            
+            // --- PARMAK ANALİZİ ---
+            const wrist = lm[0];
+            const indexTip = lm[8]; const indexPip = lm[6];
+            const middleTip = lm[12]; const middlePip = lm[10];
+            const thumbTip = lm[4]; const thumbIp = lm[3];
+            const ringTip = lm[16];
+
+            // Koordinatlar
+            const rawX = (1 - indexTip.x) * canvasElement.width;
+            const rawY = indexTip.y * canvasElement.height;
+            const x = lerp(pX, rawX, 0.5); // Hızlı tepki için 0.5
+            const y = lerp(pY, rawY, 0.5);
+            pX = x; pY = y;
+
+            cursor.style.display = "block";
+            cursor.style.left = x + "px"; cursor.style.top = y + "px";
+
+            // --- DURUM TESPİTİ ---
+            
+            // 1. İŞARET AÇIK MI? (Bileğe uzaklık kontrolü)
+            const isIndexOpen = getDist(wrist, indexTip) > getDist(wrist, indexPip) * 1.1;
+            const isMiddleOpen = getDist(wrist, middleTip) > getDist(wrist, middlePip) * 1.1;
+            const isRingOpen = getDist(wrist, ringTip) > getDist(wrist, lm[13]) * 1.1;
+
+            // 2. MODLAR
+            // Çizim Modu: İşaret Açık, Orta Kapalı (Klasik)
+            const isDrawingMode = isIndexOpen && !isMiddleOpen && !isRingOpen;
+            
+            // Tutma Modu (Yumruk): Tüm parmaklar kapalı (veya İşaret+Orta+Yüzük kapalı)
+            // Basitlik için: İşaret ve Orta kapalıysa "TUTUYOR" sayalım.
+            const isGrabbingMode = !isIndexOpen && !isMiddleOpen;
+
+            // Gezinme Modu: El açık
+            const isHoverMode = isIndexOpen && isMiddleOpen;
+
+            // --- MANTIK AKIŞI ---
+
+            // A) SÜRÜKLEME (GRAB) MANTIĞI
+            if (isGrabbingMode) {
+                cursor.classList.add('grabbing');
+                
+                if (draggedObject) {
+                    // Zaten bir şey tutuyoruz, taşıyalım
+                    statusText.innerText = "TAŞINIYOR ✊";
+                    draggedObject.x = x - dragOffsetX;
+                    draggedObject.y = y - dragOffsetY;
+                    draggedObject.isHovered = true; // Parlak kalsın
+                } else {
+                    // Henüz bir şey tutmadık, tutacak bir şey var mı?
+                    // Ters döngü (en üstteki nesneyi önce tutmak için)
+                    for (let i = objects.length - 1; i >= 0; i--) {
+                        const obj = objects[i];
+                        if (x > obj.x && x < obj.x + obj.w && y > obj.y && y < obj.y + obj.h) {
+                            draggedObject = obj;
+                            dragOffsetX = x - obj.x;
+                            dragOffsetY = y - obj.y;
+                            break; // Bir tane tutunca dur
+                        }
+                    }
+                }
+            } else {
+                // Tutma bırakıldı
+                cursor.classList.remove('grabbing');
+                draggedObject = null;
+            }
+
+            // B) ÇİZİM MANTIĞI
+            if (isDrawingMode && !draggedObject) { // Eğer bir şey taşımıyorsak çizebiliriz
+                statusText.innerText = "ÇİZİM OLUŞTURULUYOR ✍️";
+                cursor.style.borderColor = drawColor;
+                
+                // Çizgiyi hafızaya ekle
+                currentStroke.push({x: x, y: y});
+
+                // Anlık önizleme çiz
+                ctx.beginPath();
+                ctx.strokeStyle = drawColor;
+                ctx.lineWidth = 4;
+                if(currentStroke.length > 0) ctx.moveTo(currentStroke[0].x, currentStroke[0].y);
+                for(let p of currentStroke) ctx.lineTo(p.x, p.y);
+                ctx.stroke();
+
+            } else {
+                // Çizim modu bitti (elini çekti veya yumruk yaptı)
+                // Eğer hafızada çizgi varsa, bunu NESNEYE dönüştür!
+                if (currentStroke.length > 0) {
+                    createObjectFromStroke(currentStroke, drawColor);
+                    currentStroke = []; // Hafızayı temizle
+                }
+            }
+
+            // C) HOVER (ÜZERİNE GELME) EFEKTİ
+            if (!draggedObject) {
+                let foundHover = false;
+                objects.forEach(obj => {
+                    if (x > obj.x && x < obj.x + obj.w && y > obj.y && y < obj.y + obj.h) {
+                        obj.isHovered = true;
+                        foundHover = true;
+                    } else {
+                        obj.isHovered = false;
+                    }
+                });
+                
+                if(!isDrawingMode && !isGrabbingMode) {
+                    statusText.innerText = foundHover ? "HEDEF KİLİTLENDİ 🎯" : "HAZIR ✋";
+                }
+            }
+
+            // UI Check (Sadece Gezinme modunda tıkla)
+            if(isHoverMode || isDrawingMode) {
+                 const elem = document.elementFromPoint(x, y);
+                 const btn = elem ? elem.closest('.btn') : null;
+                 if(btn) {
+                    if(lastHoveredBtn!==btn) { hoverTimer=0; document.querySelectorAll('.loader').forEach(l=>l.style.display='none'); lastHoveredBtn=btn;}
+                    hoverTimer++;
+                    if(btn.querySelector('.loader')) btn.querySelector('.loader').style.display='block';
+                    
+                    if(hoverTimer > 20) { // Tıkla
+                        if(btn.dataset.action === "clear") { objects = []; }
+                        else if(btn.dataset.color) { drawColor = btn.dataset.color; document.querySelectorAll('.btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+                        hoverTimer=0;
+                        btn.style.transform = "scale(0.9)"; setTimeout(()=>btn.style.transform="", 150);
+                    }
+                 } else {
+                    hoverTimer=0; lastHoveredBtn=null; document.querySelectorAll('.loader').forEach(l=>l.style.display='none');
+                 }
+            }
+
+        });
+
+        const camera = new Camera(videoElement, {
+            onFrame: async () => { await hands.send({image: videoElement}); },
+            width: 1280,
+            height: 720
+        });
+        camera.start();
+
+    </script>
+</body>
+</html>

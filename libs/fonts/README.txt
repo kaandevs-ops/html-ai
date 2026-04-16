@@ -1,0 +1,1 @@
+KaTeX fonts are loaded automatically from CDN. This folder is intentionally left empty.

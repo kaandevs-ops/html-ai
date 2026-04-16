@@ -1,0 +1,14 @@
+node_modules/
+turkish_ai/venv/
+turkish_ai/datasets/
+turkish_ai/checkpoints/
+wa-session/
+uploads_rag/
+kayıtlar/
+.env
+*.json
+!package.json
+!package-lock.json
+.DS_Store
+models/
+turkish_ai/data/

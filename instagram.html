@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-bg: #ffffff;
+            --secondary-bg: #fafafa;
+            --border-color: #dbdbdb;
+            --text-primary: #262626;
+            --text-secondary: #8e8e8e;
+            --link-color: #0095f6;
+            --error-color: #ed4956;
+            --like-color: #ed4956;
+            --hover-overlay: rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--secondary-bg);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--primary-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 0 20px;
+        }
+
+        .header-container {
+            width: 100%;
+            max-width: 975px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-family: 'Billabong', cursive;
+            font-size: 28px;
+            cursor: pointer;
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 400;
+        }
+
+        .search-box {
+            position: relative;
+            display: none;
+        }
+
+        .search-input {
+            width: 268px;
+            height: 36px;
+            padding: 3px 16px;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            background: var(--primary-bg);
+            border-color: var(--text-secondary);
+        }
+
+        .header-icons {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+        }
+
+        .header-icon {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .header-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .profile-pic-small {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 60px;
+            width: 244px;
+            height: calc(100vh - 60px);
+            background: var(--primary-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 12px 0;
+            z-index: 50;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 12px 12px 24px;
+            cursor: pointer;
+            transition: background 0.2s;
+            gap: 16px;
+        }
+
+        .nav-item:hover {
+            background: var(--hover-overlay);
+        }
+
+        .nav-item.active {
+            font-weight: 600;
+        }
+
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .nav-text {
+            font-size: 16px;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            margin-left: 244px;
+            margin-top: 60px;
+            padding: 30px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 64px;
+            min-height: calc(100vh - 60px);
+        }
+
+        .feed {
+            width: 100%;
+            max-width: 470px;
+        }
+
+        /* STORIES */
+        .stories {
+            background: var(--primary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px 0;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .stories-container {
+            display: flex;
+            gap: 16px;
+            padding: 0 16px;
+        }
+
+        .story {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            min-width: 66px;
+        }
+
+        .story-ring {
+            width: 66px;
+            height: 66px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            padding: 2px;
+            margin-bottom: 4px;
+        }
+
+        .story-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px solid var(--primary-bg);
+            object-fit: cover;
+        }
+
+        .story-username {
+            font-size: 12px;
+            color: var(--text-primary);
+            max-width: 66px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* POST */
+        .post {
+            background: var(--primary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            gap: 12px;
+        }
+
+        .post-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .post-user {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .post-username {
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .post-location {
+            font-size: 12px;
+            color: var(--text-primary);
+        }
+
+        .post-options {
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .post-media-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+        }
+
+        .post-media {
+            width: 100%;
+            display: block;
+            max-height: 600px;
+            object-fit: contain;
+        }
+
+        .post-video {
+            width: 100%;
+            max-height: 600px;
+            display: block;
+        }
+
+        .like-animation {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 100px;
+            height: 100px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .like-animation.active {
+            transform: translate(-50%, -50%) scale(1.2);
+            opacity: 1;
+        }
+
+        .post-actions {
+            display: flex;
+            align-items: center;
+            padding: 6px 16px;
+            gap: 16px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            transition: opacity 0.2s;
+        }
+
+        .action-btn:hover {
+            opacity: 0.5;
+        }
+
+        .action-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .save-btn {
+            margin-left: auto;
+        }
+
+        .post-likes {
+            padding: 0 16px;
+            margin-bottom: 8px;
+        }
+
+        .likes-count {
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .post-caption {
+            padding: 0 16px;
+            margin-bottom: 4px;
+        }
+
+        .caption-username {
+            font-weight: 600;
+            margin-right: 6px;
+            font-size: 14px;
+        }
+
+        .caption-text {
+            font-size: 14px;
+            line-height: 18px;
+        }
+
+        .view-comments {
+            padding: 0 16px;
+            margin-bottom: 4px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .comments-section {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .comments-section.open {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 8px 16px;
+        }
+
+        .comment {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .comment-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .comment-content {
+            flex: 1;
+        }
+
+        .comment-username {
+            font-weight: 600;
+            font-size: 14px;
+            margin-right: 6px;
+        }
+
+        .comment-text {
+            font-size: 14px;
+            line-height: 18px;
+        }
+
+        .comment-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .post-time {
+            padding: 0 16px;
+            margin-bottom: 12px;
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+
+        .add-comment {
+            border-top: 1px solid var(--border-color);
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .comment-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            padding: 12px 0;
+        }
+
+        .post-btn {
+            color: var(--link-color);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            opacity: 0.3;
+            transition: opacity 0.2s;
+        }
+
+        .post-btn.active {
+            opacity: 1;
+        }
+
+        /* SUGGESTIONS */
+        .suggestions {
+            width: 319px;
+            position: sticky;
+            top: 90px;
+            height: fit-content;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .user-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .user-fullname {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .switch-btn {
+            color: var(--link-color);
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .suggestions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .suggestions-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .see-all {
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .suggestion {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .suggestion-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .suggestion-info {
+            flex: 1;
+        }
+
+        .suggestion-username {
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .suggestion-relation {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .follow-btn {
+            color: var(--link-color);
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--primary-bg);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            font-size: 16px;
+            flex: 1;
+            text-align: center;
+        }
+
+        .modal-close {
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 24px;
+        }
+
+        .upload-area:hover {
+            background: var(--secondary-bg);
+            border-color: var(--text-secondary);
+        }
+
+        .upload-icon {
+            width: 96px;
+            height: 77px;
+            margin: 0 auto 24px;
+        }
+
+        .upload-text {
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+
+        .upload-subtext {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .preview-container {
+            display: none;
+            gap: 24px;
+        }
+
+        .preview-container.active {
+            display: flex;
+        }
+
+        .preview-media-container {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .preview-media {
+            width: 100%;
+            border-radius: 8px;
+            max-height: 500px;
+            object-fit: contain;
+        }
+
+        .preview-details {
+            width: 340px;
+        }
+
+        .preview-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .caption-textarea {
+            width: 100%;
+            min-height: 120px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+            margin-bottom: 16px;
+        }
+
+        .username-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 16px;
+        }
+
+        .share-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--link-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .share-btn:hover {
+            opacity: 0.8;
+        }
+
+        .share-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* REELS */
+        .reels-container {
+            display: none;
+            position: fixed;
+            top: 60px;
+            left: 244px;
+            right: 0;
+            bottom: 0;
+            background: #000;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            z-index: 40;
+        }
+
+        .reels-container.active {
+            display: block;
+        }
+
+        .reel {
+            height: calc(100vh - 60px);
+            position: relative;
+            scroll-snap-align: start;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reel-video {
+            height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        .reel-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 24px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+            color: white;
+        }
+
+        .reel-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .reel-username {
+            font-weight: 600;
+        }
+
+        .reel-follow {
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .reel-caption {
+            margin-bottom: 12px;
+        }
+
+        .reel-actions {
+            position: absolute;
+            right: 24px;
+            bottom: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .reel-action {
+            color: white;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .reel-action-icon {
+            width: 32px;
+            height: 32px;
+            margin-bottom: 4px;
+        }
+
+        .reel-action-text {
+            font-size: 12px;
+        }
+
+        /* MOBILE */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: var(--primary-bg);
+            border-top: 1px solid var(--border-color);
+            z-index: 100;
+        }
+
+        .mobile-nav-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 100%;
+            padding: 0 20px;
+        }
+
+        .mobile-nav-icon {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1264px) {
+            .suggestions {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px 0;
+                gap: 0;
+            }
+
+            .header-container {
+                max-width: 100%;
+            }
+
+            .search-box {
+                display: none;
+            }
+
+            .mobile-nav {
+                display: block;
+            }
+
+            .feed {
+                max-width: 100%;
+            }
+
+            .post {
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+            }
+
+            .stories {
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+            }
+
+            .reels-container.active {
+                left: 0;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .search-box {
+                display: block;
+            }
+        }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* LIKED STATE */
+        .liked {
+            fill: var(--like-color);
+        }
+
+        .saved {
+            fill: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">Instagram</div>
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="Ara">
+            </div>
+            <div class="header-icons">
+                <svg class="header-icon" id="home-icon" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M9.005 16.545a2.997 2.997 0 0 1 2.997-2.997A2.997 2.997 0 0 1 15 16.545V22h7V11.543L12 2 2 11.543V22h7.005z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2"></path>
+                </svg>
+                <svg class="header-icon" id="create-icon" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M2 12v3.45c0 2.849.698 4.005 1.606 4.944.94.909 2.098 1.608 4.946 1.608h6.896c2.848 0 4.006-.7 4.946-1.608C21.302 19.455 22 18.3 22 15.45V8.552c0-2.849-.698-4.006-1.606-4.945C19.454 2.7 18.296 2 15.448 2H8.552c-2.848 0-4.006.699-4.946 1.607C2.698 4.547 2 5.703 2 8.552z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="6.545" x2="17.455" y1="12.001" y2="12.001"></line>
+                    <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="12.003" x2="12.003" y1="6.545" y2="17.455"></line>
+                </svg>
+                <svg class="header-icon" id="reels-icon" fill="currentColor" viewBox="0 0 24 24">
+                    <line fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2" x1="2.049" x2="21.95" y1="7.002" y2="7.002"></line>
+                    <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="13.504" x2="16.362" y1="2.001" y2="7.002"></line>
+                    <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="7.207" x2="10.002" y1="2.11" y2="7.002"></line>
+                    <path d="M2 12.001v3.449c0 2.849.698 4.006 1.606 4.945.94.908 2.098 1.607 4.946 1.607h6.896c2.848 0 4.006-.699 4.946-1.607.908-.939 1.606-2.096 1.606-4.945V8.552c0-2.848-.698-4.006-1.606-4.945C19.454 2.699 18.296 2 15.448 2H8.552c-2.848 0-4.006.699-4.946 1.607C2.698 4.546 2 5.704 2 8.552z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    <path d="M9.763 17.664a.908.908 0 0 1-.454-.787V11.63a.909.909 0 0 1 1.364-.788l4.545 2.624a.909.909 0 0 1 0 1.575l-4.545 2.624a.91.91 0 0 1-.91 0z" fill-rule="evenodd"></path>
+                </svg>
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23ddd'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23666' font-family='Arial' font-size='14' font-weight='600'%3EU%3C/text%3E%3C/svg%3E" class="profile-pic-small" alt="Profile">
+            </div>
+        </div>
+    </header>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="nav-item active" data-page="home">
+            <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M22 23h-6.001a1 1 0 0 1-1-1v-5.455a2.997 2.997 0 1 0-5.993 0V22a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V11.543a1.002 1.002 0 0 1 .31-.724l10-9.543a1.001 1.001 0 0 1 1.38 0l10 9.543a1.002 1.002 0 0 1 .31.724V22a1 1 0 0 1-1 1Z"></path>
+            </svg>
+            <span class="nav-text">Ana Sayfa</span>
+        </div>
+        <div class="nav-item">
+            <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 10.5A8.5 8.5 0 1 1 10.5 2a8.5 8.5 0 0 1 8.5 8.5Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="16.511" x2="22" y1="16.511" y2="22"></line>
+            </svg>
+            <span class="nav-text">Ara</span>
+        </div>
+        <div class="nav-item">
+            <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
+                <polygon fill="none" points="13.941 13.953 7.581 16.424 10.06 10.056 16.42 7.585 13.941 13.953" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></polygon>
+                <polygon fill-rule="evenodd" points="10.06 10.056 13.949 13.945 7.581 16.424 10.06 10.056"></polygon>
+                <circle cx="12.001" cy="12.005" fill="none" r="10.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></circle>
+            </svg>
+            <span class="nav-text">Keşfet</span>
+        </div>
+        <div class="nav-item" data-page="reels">
+            <svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
+                <line fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2" x1="2.049" x2="21.95" y1="7.002" y2="7.002"></line>
+<line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="13.504" x2="16.362" y1="2.001" y2="7.002"></line>
+<line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="7.207" x2="10.002" y1="2.11" y2="7.002"></line>
+<path d="M2 12.001v3.449c0 2.849.698 4.006 1.606 4.945.94.908 2.098 1.607 4.946 1.607h6.896c2.848 0 4.006-.699 4.946-1.607.908-.939 1.606-2.096 1.606-4.945V8.552c0-2.848-.698-4.006-1.606-4.945C19.454 2.699 18.296 2 15.448 2H8.552c-2.848 0-4.006.699-4.946 1.607C2.698 4.546 2 5.704 2 8.552z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M9.763 17.664a.908.908 0 0 1-.454-.787V11.63a.909.909 0 0 1 1.364-.788l4.545 2.624a.909.909 0 0 1 0 1.575l-4.545 2.624a.91.91 0 0 1-.91 0z" fill-rule="evenodd"></path>
+</svg>
+<span class="nav-text">Reels</span>
+</div>
+<div class="nav-item">
+<svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
+<path d="M12.003 2.001a9.705 9.705 0 1 1 0 19.4 10.876 10.876 0 0 1-2.895-.384.798.798 0 0 0-.533.04l-1.984.876a.801.801 0 0 1-1.123-.708l-.054-1.78a.806.806 0 0 0-.27-.569 9.49 9.49 0 0 1-3.14-7.175 9.65 9.65 0 0 1 10-9.7Z" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="1.739"></path>
+<path d="M17.79 10.132a.659.659 0 0 0-.962-.873l-2.556 2.05a.63.63 0 0 1-.758.002L11.06 9.47a1.576 1.576 0 0 0-2.277.42l-2.567 3.98a.659.659 0 0 0 .961.875l2.556-2.049a.63.63 0 0 1 .759-.002l2.452 1.84a1.576 1.576 0 0 0 2.278-.42Z" fill-rule="evenodd"></path>
+</svg>
+<span class="nav-text">Mesajlar</span>
+</div>
+<div class="nav-item">
+<svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
+<path d="M16.792 3.904A4.989 4.989 0 0 1 21.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.167 2.5 9.122a4.989 4.989 0 0 1 4.708-5.218 4.21 4.21 0 0 1 3.675 1.941c.84 1.175.98 1.763 1.12 1.763s.278-.588 1.11-1.766a4.17 4.17 0 0 1 3.679-1.938m0-2a6.04 6.04 0 0 0-4.797 2.127 6.052 6.052 0 0 0-4.787-2.127A6.985 6.985 0 0 0 .5 9.122c0 3.61 2.55 5.827 5.015 7.97.283.246.569.494.853.747l1.027.918a44.998 44.998 0 0 0 3.518 3.018 2 2 0 0 0 2.174 0 45.263 45.263 0 0 0 3.626-3.115l.922-.824c.293-.26.59-.519.885-.774 2.334-2.025 4.98-4.32 4.98-7.94a6.985 6.985 0 0 0-6.708-7.218Z"></path>
+</svg>
+<span class="nav-text">Bildirimler</span>
+</div>
+<div class="nav-item" id="create-nav">
+<svg class="nav-icon" fill="currentColor" viewBox="0 0 24 24">
+<path d="M2 12v3.45c0 2.849.698 4.005 1.606 4.944.94.909 2.098 1.608 4.946 1.608h6.896c2.848 0 4.006-.7 4.946-1.608C21.302 19.455 22 18.3 22 15.45V8.552c0-2.849-.698-4.006-1.606-4.945C19.454 2.7 18.296 2 15.448 2H8.552c-2.848 0-4.006.699-4.946 1.607C2.698 4.547 2 5.703 2 8.552z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="6.545" x2="17.455" y1="12.001" y2="12.001"></line>
+<line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="12.003" x2="12.003" y1="6.545" y2="17.455"></line>
+</svg>
+<span class="nav-text">Oluştur</span>
+</div>
+<div class="nav-item">
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='12' cy='12' r='11' fill='%23ddd'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23666' font-family='Arial' font-size='12' font-weight='600'%3EU%3C/text%3E%3C/svg%3E" style="width: 24px; height: 24px; border-radius: 50%;" alt="Profile">
+<span class="nav-text">Profil</span>
+</div>
+</aside>
+<!-- MAIN CONTENT -->
+<main class="main-content">
+    <div class="feed" id="feed">
+        <!-- STORIES -->
+        <div class="stories">
+            <div class="stories-container">
+                <div class="story">
+                    <div class="story-ring">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='29' fill='%23e1e8ed'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23657786' font-family='Arial' font-size='20' font-weight='600'%3EA%3C/text%3E%3C/svg%3E" class="story-img" alt="Story">
+                    </div>
+                    <div class="story-username">user_one</div>
+                </div>
+                <div class="story">
+                    <div class="story-ring">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='29' fill='%23ffd1dc'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23c71585' font-family='Arial' font-size='20' font-weight='600'%3EB%3C/text%3E%3C/svg%3E" class="story-img" alt="Story">
+                    </div>
+                    <div class="story-username">user_two</div>
+                </div>
+                <div class="story">
+                    <div class="story-ring">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='29' fill='%23b0e0e6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23006994' font-family='Arial' font-size='20' font-weight='600'%3EC%3C/text%3E%3C/svg%3E" class="story-img" alt="Story">
+                    </div>
+                    <div class="story-username">user_three</div>
+                </div>
+                <div class="story">
+                    <div class="story-ring">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='29' fill='%23f0e68c'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23b8860b' font-family='Arial' font-size='20' font-weight='600'%3ED%3C/text%3E%3C/svg%3E" class="story-img" alt="Story">
+                    </div>
+                    <div class="story-username">user_four</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- POSTS will be injected here -->
+    </div>
+
+    <!-- SUGGESTIONS -->
+    <div class="suggestions">
+        <div class="user-profile">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Ccircle cx='28' cy='28' r='27' fill='%23ddd'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23666' font-family='Arial' font-size='22' font-weight='600'%3EU%3C/text%3E%3C/svg%3E" class="user-avatar" alt="User">
+            <div class="user-info">
+                <div class="user-name">kullanici_adi</div>
+                <div class="user-fullname">Tam Adınız</div>
+            </div>
+            <div class="switch-btn">Geçiş Yap</div>
+        </div>
+
+        <div class="suggestions-header">
+            <div class="suggestions-title">Senin için öneriler</div>
+            <div class="see-all">Tümünü Gör</div>
+        </div>
+
+        <div class="suggestion">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23e1e8ed'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23657786' font-family='Arial' font-size='14' font-weight='600'%3EJ%3C/text%3E%3C/svg%3E" class="suggestion-avatar" alt="Suggestion">
+            <div class="suggestion-info">
+                <div class="suggestion-username">johnsmith</div>
+                <div class="suggestion-relation">mike_ross + 3 kişi takip ediyor</div>
+            </div>
+            <div class="follow-btn">Takip Et</div>
+        </div>
+
+        <div class="suggestion">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23ffd1dc'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23c71585' font-family='Arial' font-size='14' font-weight='600'%3ES%3C/text%3E%3C/svg%3E" class="suggestion-avatar" alt="Suggestion">
+            <div class="suggestion-info">
+                <div class="suggestion-username">sarahjones</div>
+                <div class="suggestion-relation">emily_clark + 2 kişi takip ediyor</div>
+            </div>
+            <div class="follow-btn">Takip Et</div>
+        </div>
+
+        <div class="suggestion">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23b0e0e6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23006994' font-family='Arial' font-size='14' font-weight='600'%3EM%3C/text%3E%3C/svg%3E" class="suggestion-avatar" alt="Suggestion">
+            <div class="suggestion-info">
+                <div class="suggestion-username">markwilson</div>
+                <div class="suggestion-relation">david_brown + 5 kişi takip ediyor</div>
+            </div>
+            <div class="follow-btn">Takip Et</div>
+        </div>
+    </div>
+</main>
+
+<!-- REELS CONTAINER -->
+<div class="reels-container" id="reels-container">
+    <!-- Reels will be injected here -->
+</div>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav">
+    <div class="mobile-nav-container">
+        <svg class="mobile-nav-icon" id="mobile-home" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M9.005 16.545a2.997 2.997 0 0 1 2.997-2.997A2.997 2.997 0 0 1 15 16.545V22h7V11.543L12 2 2 11.543V22h7.005z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2"></path>
+        </svg>
+        <svg class="mobile-nav-icon" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 10.5A8.5 8.5 0 1 1 10.5 2a8.5 8.5 0 0 1 8.5 8.5Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="16.511" x2="22" y1="16.511" y2="22"></line>
+        </svg>
+        <svg class="mobile-nav-icon" id="mobile-create" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M2 12v3.45c0 2.849.698 4.005 1.606 4.944.94.909 2.098 1.608 4.946 1.608h6.896c2.848 0 4.006-.7 4.946-1.608C21.302 19.455 22 18.3 22 15.45V8.552c0-2.849-.698-4.006-1.606-4.945C19.454 2.7 18.296 2 15.448 2H8.552c-2.848 0-4.006.699-4.946 1.607C2.698 4.547 2 5.703 2 8.552z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="6.545" x2="17.455" y1="12.001" y2="12.001"></line>
+            <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="12.003" x2="12.003" y1="6.545" y2="17.455"></line>
+        </svg>
+        <svg class="mobile-nav-icon" id="mobile-reels" fill="currentColor" viewBox="0 0 24 24">
+            <line fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2" x1="2.049" x2="21.95" y1="7.002" y2="7.002"></line>
+            <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="13.504" x2="16.362" y1="2.001" y2="7.002"></line>
+            <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="7.207" x2="10.002" y1="2.11" y2="7.002"></line>
+            <path d="M2 12.001v3.449c0 2.849.698 4.006 1.606 4.945.94.908 2.098 1.607 4.946 1.607h6.896c2.848 0 4.006-.699 4.946-1.607.908-.939 1.606-2.096 1.606-4.945V8.552c0-2.848-.698-4.006-1.606-4.945C19.454 2.699 18.296 2 15.448 2H8.552c-2.848 0-4.006.699-4.946 1.607C2.698 4.546 2 5.704 2 8.552z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            <path d="M9.763 17.664a.908.908 0 0 1-.454-.787V11.63a.909.909 0 0 1 1.364-.788l4.545 2.624a.909.909 0 0 1 0 1.575l-4.545 2.624a.91.91 0 0 1-.91 0z" fill-rule="evenodd"></path>
+        </svg>
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='12' cy='12' r='11' fill='%23ddd'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23666' font-family='Arial' font-size='12' font-weight='600'%3EU%3C/text%3E%3C/svg%3E" class="mobile-nav-icon" style="border-radius: 50%;" alt="Profile">
+    </div>
+</div>
+
+<!-- CREATE POST MODAL -->
+<div class="modal" id="create-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-close" id="modal-close">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="21" x2="3" y1="3" y2="21"></line>
+                    <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="21" x2="3" y1="21" y2="3"></line>
+                </svg>
+            </div>
+            <div class="modal-title">Yeni gönderi oluştur</div>
+            <div></div>
+        </div>
+        <div class="modal-body">
+            <div class="upload-area" id="upload-area">
+                <svg class="upload-icon" viewBox="0 0 96 77">
+                    <path d="M83.2 15.8c-6.8-6.8-16.8-8.6-25.3-4.4l-4.4-4.4c-4.6-4.6-12.1-4.6-16.7 0L20.4 23.4c-4.6 4.6-4.6 12.1 0 16.7l4.4 4.4c-4.2 8.5-2.4 18.5 4.4 25.3 6.8 6.8 16.8 8.6 25.3 4.4l4.4 4.4c4.6 4.6 12.1 4.6 16.7 0l16.4-16.4c4.6-4.6 4.6-12.1 0-16.7l-4.4-4.4c4.2-8.5 2.4-18.5-4.4-25.3zm-3.5 3.5c5.7 5.7 7.3 14.2 4 21.3l-2.8-2.8c-3.1-3.1-8.1-3.1-11.2 0s-3.1 8.1 0 11.2l2.8 2.8c-7.1 3.3-15.6 1.7-21.3-4s-7.3-14.2-4-21.3l2.8 2.8c3.1 3.1 8.1 3.1 11.2 0s3.1-8.1 0-11.2l-2.8-2.8c7.1-3.3 15.6-1.7 21.3 4z" fill="currentColor"/>
+                </svg>
+                <div class="upload-text">Fotoğraf ve videoları buraya sürükleyin</div>
+                <div class="upload-subtext">veya bilgisayarınızdan seçin</div>
+                <input type="file" id="file-input" class="file-input" accept="image/*,video/*">
+            </div>
+
+            <div class="preview-container" id="preview-container">
+                <div class="preview-media-container">
+                    <img id="preview-image" class="preview-media" style="display: none;">
+                    <video id="preview-video" class="preview-media" style="display: none;" controls></video>
+                </div>
+                <div class="preview-details">
+                    <div class="preview-user">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23ddd'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23666' font-family='Arial' font-size='14' font-weight='600'%3EU%3C/text%3E%3C/svg%3E" class="post-avatar" alt="User">
+                        <span class="post-username" id="modal-username">kullanici_adi</span>
+                    </div>
+                    <input type="text" id="username-input" class="username-input" placeholder="Kullanıcı adınızı girin">
+                    <textarea id="caption-input" class="caption-textarea" placeholder="Açıklama yazın..."></textarea>
+                    <button class="share-btn" id="share-btn">Paylaş</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==================== STATE MANAGEMENT ====================
+    const AppState = {
+        posts: [],
+        reels: [],
+        currentPage: 'home',
+        selectedFile: null,
+        selectedFileType: null,
+        selectedFileURL: null
+    };
+
+    // ==================== STORAGE ====================
+    const Storage = {
+        savePost(post) {
+            const posts = this.getPosts();
+            posts.unshift(post);
+            localStorage.setItem('instagram_posts', JSON.stringify(posts));
+        },
+        
+        getPosts() {
+            const posts = localStorage.getItem('instagram_posts');
+            return posts ? JSON.parse(posts) : [];
+        },
+
+        saveReels(reels) {
+            localStorage.setItem('instagram_reels', JSON.stringify(reels));
+        },
+
+        getReels() {
+            const reels = localStorage.getItem('instagram_reels');
+            return reels ? JSON.parse(reels) : [];
+        },
+
+        toggleLike(postId) {
+            const posts = this.getPosts();
+            const post = posts.find(p => p.id === postId);
+            if (post) {
+                post.liked = !post.liked;
+                post.likes += post.liked ? 1 : -1;
+                localStorage.setItem('instagram_posts', JSON.stringify(posts));
+            }
+            return post;
+        },
+
+        toggleSave(postId) {
+            const posts = this.getPosts();
+            const post = posts.find(p => p.id === postId);
+            if (post) {
+                post.saved = !post.saved;
+                localStorage.setItem('instagram_posts', JSON.stringify(posts));
+            }
+            return post;
+        },
+
+        addComment(postId, comment) {
+            const posts = this.getPosts();
+            const post = posts.find(p => p.id === postId);
+            if (post) {
+                post.comments.push(comment);
+                localStorage.setItem('instagram_posts', JSON.stringify(posts));
+            }
+            return post;
+        }
+    };
+
+    // ==================== INITIAL DATA ====================
+    const initialPosts = [
+        {
+            id: 'post_1',
+            username: 'traveler_jane',
+            avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23ff6b6b'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-family='Arial' font-size='14' font-weight='600'%3EJ%3C/text%3E%3C/svg%3E",
+            media: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="600"%3E%3Cdefs%3E%3ClinearGradient id="sky" x1="0%25" y1="0%25" x2="0%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%2387CEEB;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23E0F6FF;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="600" height="600" fill="url(%23sky)"/%3E%3Ccircle cx="500" cy="80" r="50" fill="%23FFD700"/%3E%3Cpath d="M 0 400 Q 150 380 300 400 T 600 400 L 600 600 L 0 600 Z" fill="%232E8B57"/%3E%3Cpath d="M 0 500 Q 200 480 400 500 T 600 500 L 600 600 L 0 600 Z" fill="%231e5631"/%3E%3Cpath d="M 250 250 L 280 350 L 220 350 Z" fill="%238B4513"/%3E%3Cpath d="M 200 150 L 300 150 L 280 250 L 220 250 Z" fill="%23228B22"/%3E%3C/svg%3E',
+            mediaType: 'image',
+            caption: 'Doğanın huzuru 🌲✨ #nature #peace #mountain',
+            likes: 1247,
+            comments: [
+                { username: 'nature_lover', text: 'Harika bir manzara! 😍', time: '2s' },
+                { username: 'photo_expert', text: 'Muhteşem kare 📸', time: '5d' }
+            ],
+            time: '2 SAAT ÖNCE',
+            liked: false,
+            saved: false
+        },
+        {
+            id: 'post_2',
+            username: 'foodie_mike',
+            avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%234ecdc4'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-family='Arial' font-size='14' font-weight='600'%3EM%3C/text%3E%3C/svg%3E",
+            media: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="600"%3E%3Crect width="600" height="600" fill="%23f5f5dc"/%3E%3Ccircle cx="300" cy="300" r="200" fill="%23FFD700" opacity="0.3"/%3E%3Ccircle cx="300" cy="300" r="150" fill="%23ff6347"/%3E%3Ccircle cx="300" cy="280" r="130" fill="%23FFD700"/%3E%3Cellipse cx="280" cy="250" rx="15" ry="20" fill="%23ff4500"/%3E%3Cellipse cx="320" cy="250" rx="15" ry="20" fill="%23ff4500"/%3E%3Cellipse cx="260" cy="280" rx="12" ry="15" fill="%23228B22"/%3E%3Cellipse cx="340" cy="280" rx="12" ry="15" fill="%23228B22"/%3E%3Cpath d="M 250 320 Q 300 350 350 320" stroke="%238B4513" stroke-width="3" fill="none"/%3E%3Ctext x="300" y="450" font-family="Arial" font-size="36" fill="%238B4513" text-anchor="middle"%3E🍔%3C/text%3E%3C/svg%3E',
+            mediaType: 'image',
+            caption: 'En iyi burger deneyimi! 🍔🔥 #food #burger #delicious',
+            likes: 892,
+            comments: [
+                { username: 'hungry_soul', text: 'Çok lezzetli görünüyor! 🤤', time: '1s' }
+            ],
+            time: '5 SAAT ÖNCE',
+            liked: false,
+            saved: false
+        }
+    ];
+
+    const initialReels = [
+        {
+            id: 'reel_1',
+            username: 'dance_master',
+            avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23e056fd'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-family='Arial' font-size='14' font-weight='600'%3ED%3C/text%3E%3C/svg%3E",
+            video: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="700"%3E%3Cdefs%3E%3ClinearGradient id="bg" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23667eea;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23764ba2;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="700" fill="url(%23bg)"/%3E%3Ctext x="200" y="350" font-family="Arial" font-size="72" fill="white" text-anchor="middle"%3E▶%3C/text%3E%3Ctext x="200" y="450" font-family="Arial" font-size="24" fill="white" text-anchor="middle" opacity="0.8"%3EDance Reel%3C/text%3E%3C/svg%3E',
+            caption: 'Yeni dans rutini! 💃🔥 #dance #viral #reels',
+            likes: 15420,
+            comments: 234
+        },
+        {
+            id: 'reel_2',
+            username: 'chef_pro',
+            avatar: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23f77f00'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-family='Arial' font-size='14' font-weight='600'%3EC%3C/text%3E%3C/svg%3E",
+            video: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="700"%3E%3Cdefs%3E%3ClinearGradient id="bg2" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23f77f00;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23d62828;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="400" height="700" fill="url(%23bg2)"/%3E%3Ctext x="200" y="350" font-family="Arial" font-size="72" fill="white" text-anchor="middle"%3E▶%3C/text%3E%3Ctext x="200" y="450" font-family="Arial" font-size="24" fill="white" text-anchor="middle" opacity="0.8"%3ECooking Reel%3C/text%3E%3C/svg%3E',
+            caption: '30 saniyede pasta! 🎂✨ #cooking #recipe #food',
+            likes: 8932,
+            comments: 156
+        }
+    ];
+
+    // ==================== INIT ====================
+    function init() {
+        // Load posts from storage or use initial data
+        const storedPosts = Storage.getPosts();
+        AppState.posts = storedPosts.length > 0 ? storedPosts : initialPosts;
+        
+        // If using initial data, save it
+        if (storedPosts.length === 0) {
+            initialPosts.forEach(post => Storage.savePost(post));
+            AppState.posts = Storage.getPosts();
+        }
+
+        // Load reels
+        const storedReels = Storage.getReels();
+        AppState.reels = storedReels.length > 0 ? storedReels : initialReels;
+        
+        if (storedReels.length === 0) {
+            Storage.saveReels(initialReels);
+        }
+
+        renderFeed();
+        renderReels();
+        attachEventListeners();
+    }
+
+    // ==================== RENDER FUNCTIONS ====================
+    function renderFeed() {
+        const feed = document.getElementById('feed');
+        const existingStories = feed.querySelector('.stories');
+        
+        const postsHTML = AppState.posts.map(post => createPostHTML(post)).join('');
+        
+        feed.innerHTML = '';
+        if (existingStories) {
+            feed.appendChild(existingStories);
+        }
+        feed.innerHTML += postsHTML;
+    }
+
+    function createPostHTML(post) {
+        const heartIcon = post.liked 
+            ? '<svg class="action-icon liked" fill="#ed4956" viewBox="0 0 48 48"><path d="M34.6 3.1c-4.5 0-7.9 1.8-10.6 5.6-2.7-3.7-6.1-5.5-10.6-5.5C6 3.1 0 9.6 0 17.6c0 7.3 5.4 12 10.6 16.5.6.5 1.3 1.1 1.9 1.7l2.3 2c4.4 3.9 6.6 5.9 7.6 6.5.5.3 1.1.5 1.6.5s1.1-.2 1.6-.5c1-.6 2.8-2.2 7.8-6.8l2-1.8c.7-.6 1.3-1.2 2-1.7C42.7 29.6 48 25 48 17.6c0-8-6-14.5-13.4-14.5z"></path></svg>'
+            : '<svg class="action-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M16.792 3.904A4.989 4.989 0 0 1 21.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.167 2.5 9.122a4.989 4.989 0 0 1 4.708-5.218 4.21 4.21 0 0 1 3.675 1.941c.84 1.175.98 1.763 1.12 1.763s.278-.588 1.11-1.766a4.17 4.17 0 0 1 3.679-1.938m0-2a6.04 6.04 0 0 0-4.797 2.127 6.052 6.052 0 0 0-4.787-2.127A6.985 6.985 0 0 0 .5 9.122c0 3.61 2.55 5.827 5.015 7.97.283.246.569.494.853.747l1.027.918a44.998 44.998 0 0 0 3.518 3.018 2 2 0 0 0 2.174 0 45.263 45.263 0 0 0 3.626-3.115l.922-.824c.293-.26.59-.519.885-.774 2.334-2.025 4.98-4.32 4.98-7.94a6.985 6.985 0 0 0-6.708-7.218Z"></path></svg>';
+
+        const saveIcon = post.saved
+            ? '<svg class="action-icon saved" fill="currentColor" viewBox="0 0 24 24"><polygon fill="currentColor" points="20 21 12 13.44 4 21 4 3 20 3 20 21"></polygon></svg>'
+            : '<svg class="action-icon" fill="currentColor" viewBox="0 0 24 24"><polygon fill="none" points="20 21 12 13.44 4 21 4 3 20 3 20 21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></polygon></svg>';
+
+        const mediaHTML = post.mediaType === 'video' 
+            ? `<video class="post-video" src="${post.media}" controls></video>`
+            : `<img class="post-media" src="${post.media}" alt="Post">`;
+
+        const commentsHTML = post.comments.map(c => `
+            <div class="comment">
+                <img src="${post.avatar}" class="comment-avatar" alt="${c.username}">
+                <div class="comment-content">
+                    <div>
+                        <span class="comment-username">${c.username}</span>
+                        <span class="comment-text">${c.text}</span>
+                    </div>
+                    <div class="comment-time">${c.time}</div>
+                </div>
+            </div>
+        `).join('');
+
+        return `
+            <div class="post" data-post-id="${post.id}">
+                <div class="post-header">
+                    <img src="${post.avatar}" class="post-avatar" alt="${post.username}">
+                    <div class="post-user">
+                        <span class="post-username">${post.username}</span>
+                    </div>
+                    <div class="post-options">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="12" r="1.5"></circle>
+                            <circle cx="6" cy="12" r="1.5"></circle>
+                            <circle cx="18" cy="12" r="1.5"></circle>
+                        </svg>
+                    </div>
+                </div>
+                <div class="post-media-container">
+                    ${mediaHTML}
+                    <svg class="like-animation" width="100" height="100" viewBox="0 0 48 48">
+                        <path fill="#fff" d="M34.6 3.1c-4.5 0-7.9 1.8-10.6 5.6-2.7-3.7-6.1-5.5-10.6-5.5C6 3.1 0 9.6 0 17.6c0 7.3 5.4 12 10.6 16.5.6.5 1.3 1.1 1.9 1.7l2.3 2c4.4 3.9 6.6 5.9 7.6 6.5.5.3 1.1.5 1.6.5s1.1-.2 1.6-.5c1-.6 2.8-2.2 7.8-6.8l2-1.8c.7-.6 1.3-1.2 2-1.7C42.7 29.6 48 25 48 17.6c0-8-6-14.5-13.4-14.5z"></path>
+                    </svg>
+                </div>
+                <div class="post-actions">
+                    <button class="action-btn like-btn">
+                        ${heartIcon}
+                    </button>
+                    <button class="action-btn comment-btn">
+                        <svg class="action-icon" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20.656 17.008a9.993 9.993 0 1 0-3.59 3.615L22 22Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                    </button>
+                    <button class="action-btn share-btn">
+                        <svg class="action-icon" fill="currentColor" viewBox="0 0 24 24">
+                            <line fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2" x1="22" x2="9.218" y1="3" y2="10.083"></line>
+                            <polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" stroke-linejoin="round" stroke-width="2"></polygon>
+                        </svg>
+                    </button>
+                    <button class="action-btn save-btn">
+                        ${saveIcon}
+                    </button>
+                </div>
+                <div class="post-likes">
+                    <span class="likes-count">${post.likes.toLocaleString('tr-TR')} beğenme</span>
+                </div>
+                <div class="post-caption">
+                    <span class="caption-username">${post.username}</span>
+                    <span class="caption-text">${post.caption}</span>
+                </div>
+                ${post.comments.length > 0 ? `<div class="view-comments">Yorumların tümünü gör (${post.comments.length})</div>` : ''}
+                <div class="comments-section">
+                    ${commentsHTML}
+                </div>
+                <div class="post-time">${post.time}</div>
+                <div class="add-comment">
+                    <input type="text" class="comment-input" placeholder="Yorum ekle...">
+                    <button class="post-btn">Paylaş</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderReels() {
+        const container = document.getElementById('reels-container');
+        const reelsHTML = AppState.reels.map(reel => `
+            <div class="reel">
+                <img class="reel-video" src="${reel.video}" alt="Reel">
+                <div class="reel-overlay">
+                    <div class="reel-user">
+                        <img src="${reel.avatar}" class="post-avatar" alt="${reel.username}">
+                        <span class="reel-username">${reel.username}</span>
+                        <span class="reel-follow">• Takip Et</span>
+                    </div>
+                    <div class="reel-caption">${reel.caption}</div>
+                </div>
+                <div class="reel-actions">
+                    <div class="reel-action">
+                        <svg class="reel-action-icon" fill="#fff" viewBox="0 0 24 24">
+                            <path d="M16.792 3.904A4.989 4.989 0 0 1 21.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.167 2.5 9.122a4.989 4.989 0 0 1 4.708-5.218 4.21 4.21 0 0 1 3.675 1.941c.84 1.175.98 1.763 1.12 1.763s.278-.588 1.11-1.766a4.17 4.17 0 0 1 3.679-1.938m0-2a6.04 6.04 0 0 0-4.797 2.127 6.052 6.052 0 0 0-4.787-2.127A6.985 6.985 0 0 0 .5 9.122c0 3.61 2.55 5.827 5.015 7.97.283.246.569.494.853.747l1.027.918a44.998 44.998 0 0 0 3.518 3.018 2 2 0 0 0 2.174 0 45.263 45.263 0 0 0 3.626-3.115l.922-.824c.293-.26.59-.519.885-.774 2.334-2.025 4.98-4.32 4.98-7.94a6.985 6.985 0 0 0-6.708-7.218Z"></path>
+                        </svg>
+                        <div class="reel-action-text">${(reel.likes / 1000).toFixed(1)}B</div>
+                    </div>
+                    <div class="reel-action">
+                        <svg class="reel-action-icon" fill="#fff" viewBox="0 0 24 24">
+                            <path d="M20.656 17.008a9.993 9.993 0 1 0-3.59 3.615L22 22Z" fill="none" stroke="#fff" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        <div class="reel-action-text">${reel.comments}</div>
+                    </div>
+                    <div class="reel-action">
+                        <svg class="reel-action-icon" fill="#fff" viewBox="0 0 24 24">
+                            <line fill="none" stroke="#fff" stroke-linejoin="round" stroke-width="2" x1="22" x2="9.218" y1="3" y2="10.083"></line>
+                            <polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="#fff" stroke-linejoin="round" stroke-width="2"></polygon>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        container.innerHTML = reelsHTML;
+    }
+
+    // ==================== EVENT LISTENERS ====================
+    function attachEventListeners() {
+        // Create post modal
+        document.getElementById('create-icon').addEventListener('click', openCreateModal);
+        document.getElementById('create-nav').addEventListener('click', openCreateModal);
+        document.getElementById('mobile-create').addEventListener('click', openCreateModal);
+        document.getElementById('modal-close').addEventListener('click', closeCreateModal);
+        
+        // File upload
+        document.getElementById('upload-area').addEventListener('click', () => {
+            document.getElementById('file-input').click();
+        });
+        document.getElementById('file-input').addEventListener('change', handleFileSelect);
+        
+        // Share button
+        document.getElementById('share-btn').addEventListener('click', handleSharePost);
+        
+        // Caption input
+        document.getElementById('caption-input').addEventListener('input', (e) => {
+            const shareBtn = document.getElementById('share-btn');
+            shareBtn.classList.toggle('active', e.target.value.trim().length > 0);
+        });
+
+        // Username input
+        document.getElementById('username-input').addEventListener('input', (e) => {
+            document.getElementById('modal-username').textContent = e.target.value || 'kullanici_adi';
+        });
+
+        // Post interactions (event delegation)
+        document.getElementById('feed').addEventListener('click', handleFeedClick);
+        document.getElementById('feed').addEventListener('dblclick', handleDoubleTap);
+        document.getElementById('feed').addEventListener('keypress', handleCommentSubmit);
+        document.getElementById('feed').addEventListener('input', handleCommentInput);
+
+        // Navigation
+        document.querySelectorAll('[data-page="reels"]').forEach(el => {
+            el.addEventListener('click', showReels);
+        });
+        document.getElementById('reels-icon').addEventListener('click', showReels);
+        document.getElementById('mobile-reels').addEventListener('click', showReels);
+
+        document.querySelectorAll('[data-page="home"]').forEach(el => {
+            el.addEventListener('click', showHome);
+        });
+        document.getElementById('home-icon').addEventListener('click', showHome);
+        document.getElementById('mobile-home').addEventListener('click', showHome);
+
+        // Close modal on outside click
+        document.getElementById('create-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'create-modal') {
+                closeCreateModal();
+            }
+        });
+    }
+
+    function handleFeedClick(e) {
+        const post = e.target.closest('.post');
+        if (!post) return;
+
+        const postId = post.dataset.postId;
+
+        // Like button
+        if (e.target.closest('.like-btn')) {
+            toggleLike(post, postId);
+        }
+
+        // Save button
+        if (e.target.closest('.save-btn')) {
+            toggleSave(post, postId);
+        }
+
+        // View comments
+        if (e.target.closest('.view-comments')) {
+            const commentsSection = post.querySelector('.comments-section');
+            commentsSection.classList.toggle('open');
+        }
+
+        // Comment button
+        if (e.target.closest('.comment-btn')) {
+            const commentInput = post.querySelector('.comment-input');
+            commentInput.focus();
+        }
+    }
+
+    function handleDoubleTap(e) {
+        const mediaContainer = e.target.closest('.post-media-container');
+        if (!mediaContainer) return;
+
+        const post = e.target.closest('.post');
+        const postId = post.dataset.postId;
+        const postData = AppState.posts.find(p => p.id === postId);
+
+        if (!postData.liked) {
+            toggleLike(post, postId);
+            
+            // Animate heart
+            const likeAnimation = mediaContainer.querySelector('.like-animation');
+            likeAnimation.classList.add('active');
+            setTimeout(() => {
+                likeAnimation.classList.remove('active');
+            }, 600);
+        }
+    }
+
+    function handleCommentSubmit(e) {
+        if (e.key !== 'Enter') return;
+
+        const input = e.target;
+        if (!input.classList.contains('comment-input')) return;
+
+        const post = input.closest('.post');
+        const postId = post.dataset.postId;
+        const text = input.value.trim();
+
+        if (text) {
+            const comment = {
+                username: document.getElementById('username-input').value || 'kullanici_adi',
+                text: text,
+                time: 'şimdi'
+            };
+
+            Storage.addComment(postId, comment);
+            AppState.posts = Storage.getPosts();
+            
+            // Update UI
+            const commentsSection = post.querySelector('.comments-section');
+            const viewComments = post.querySelector('.view-comments');
+            const postData = AppState.posts.find(p => p.id === postId);
+
+            const commentHTML = `
+                <div class="comment">
+                    <img src="${postData.avatar}" class="comment-avatar" alt="${comment.username}">
+                    <div class="comment-content">
+                        <div>
+                            <span class="comment-username">${comment.username}</span>
+                            <span class="comment-text">${comment.text}</span>
+                        </div>
+                        <div class="comment-time">${comment.time}</div>
+                    </div>
+                </div>
+            `;
+
+            commentsSection.insertAdjacentHTML('beforeend', commentHTML);
+            commentsSection.classList.add('open');
+
+            if (viewComments) {
+                viewComments.textContent = `Yorumların tümünü gör (${postData.comments.length})`;
+            } else {
+                const captionEl = post.querySelector('.post-caption');
+                captionEl.insertAdjacentHTML('afterend', `<div class="view-comments">Yorumların tümünü gör (${postData.comments.length})</div>`);
+            }
+
+            input.value = '';
+            const postBtn = post.querySelector('.post-btn');
+            postBtn.classList.remove('active');
+        }
+    }
+
+    function handleCommentInput(e) {
+        const input = e.target;
+        if (!input.classList.contains('comment-input')) return;
+
+        const post = input.closest('.post');
+        const postBtn = post.querySelector('.post-btn');
+        postBtn.classList.toggle('active', input.value.trim().length > 0);
+    }
+
+    function toggleLike(postElement, postId) {
+        const updatedPost = Storage.toggleLike(postId);
+        AppState.posts = Storage.getPosts();
+
+        const likeBtn = postElement.querySelector('.like-btn');
+        const likesCount = postElement.querySelector('.likes-count');
+        const icon = likeBtn.querySelector('.action-icon');
+
+        if (updatedPost.liked) {
+            icon.outerHTML = '<svg class="action-icon liked" fill="#ed4956" viewBox="0 0 48 48"><path d="M34.6 3.1c-4.5 0-7.9 1.8-10.6 5.6-2.7-3.7-6.1-5.5-10.6-5.5C6 3.1 0 9.6 0 17.6c0 7.3 5.4 12 10.6 16.5.6.5 1.3 1.1 1.9 1.7l2.3 2c4.4 3.9 6.6 5.9 7.6 6.5.5.3 1.1.5 1.6.5s1.1-.2 1.6-.5c1-.6 2.8-2.2 7.8-6.8l2-1.8c.7-.6 1.3-1.2 2-1.7C42.7 29.6 48 25 48 17.6c0-8-6-14.5-13.4-14.5z"></path></svg>';
+        } else {
+            icon.outerHTML = '<svg class="action-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M16.792 3.904A4.989 4.989 0 0 1 21.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.167 2.5 9.122a4.989 4.989 0 0 1 4.708-5.218 4.21 4.21 0 0 1 3.675 1.941c.84 1.175.98 1.763 1.12 1.763s.278-.588 1.11-1.766a4.17 4.17 0 0 1 3.679-1.938m0-2a6.04 6.04 0 0 0-4.797 2.127 6.052 6.052 0 0 0-4.787-2.127A6.985 6.985 0 0 0 .5 9.122c0 3.61 2.55 5.827 5.015 7.97.283.246.569.494.853.747l1.027.918a44.998 44.998 0 0 0 3.518 3.018 2 2 0 0 0 2.174 0 45.263 45.263 0 0 0 3.626-3.115l.922-.824c.293-.26.59-.519.885-.774 2.334-2.025 4.98-4.32 4.98-7.94a6.985 6.985 0 0 0-6.708-7.218Z"></path></svg>';
+        }
+
+        likesCount.textContent = `${updatedPost.likes.toLocaleString('tr-TR')} beğenme`;
+    }
+
+    function toggleSave(postElement, postId) {
+        const updatedPost = Storage.toggleSave(postId);
+        AppState.posts = Storage.getPosts();
+
+        const saveBtn = postElement.querySelector('.save-btn');
+        const icon = saveBtn.querySelector('.action-icon');
+
+        if (updatedPost.saved) {
+            icon.outerHTML = '<svg class="action-icon saveContinue22:36saved" fill="currentColor" viewBox="0 0 24 24"><polygon fill="currentColor" points="20 21 12 13.44 4 21 4 3 20 3 20 21"></polygon></svg>';
+} else {
+icon.outerHTML = '<svg class="action-icon" fill="currentColor" viewBox="0 0 24 24"><polygon fill="none" points="20 21 12 13.44 4 21 4 3 20 3 20 21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></polygon></svg>';
+}
+}
+    // ==================== MODAL FUNCTIONS ====================
+    function openCreateModal() {
+        document.getElementById('create-modal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeCreateModal() {
+        document.getElementById('create-modal').classList.remove('active');
+        document.body.style.overflow = '';
+        resetModal();
+    }
+
+    function resetModal() {
+        document.getElementById('upload-area').style.display = 'block';
+        document.getElementById('preview-container').classList.remove('active');
+        document.getElementById('caption-input').value = '';
+        document.getElementById('username-input').value = '';
+        document.getElementById('share-btn').classList.remove('active');
+        document.getElementById('preview-image').style.display = 'none';
+        document.getElementById('preview-video').style.display = 'none';
+        document.getElementById('modal-username').textContent = 'kullanici_adi';
+        AppState.selectedFile = null;
+        AppState.selectedFileType = null;
+        if (AppState.selectedFileURL) {
+            URL.revokeObjectURL(AppState.selectedFileURL);
+            AppState.selectedFileURL = null;
+        }
+    }
+
+    function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        AppState.selectedFile = file;
+        AppState.selectedFileType = file.type.startsWith('video') ? 'video' : 'image';
+        AppState.selectedFileURL = URL.createObjectURL(file);
+
+        document.getElementById('upload-area').style.display = 'none';
+        document.getElementById('preview-container').classList.add('active');
+
+        if (AppState.selectedFileType === 'video') {
+            document.getElementById('preview-video').src = AppState.selectedFileURL;
+            document.getElementById('preview-video').style.display = 'block';
+            document.getElementById('preview-image').style.display = 'none';
+        } else {
+            document.getElementById('preview-image').src = AppState.selectedFileURL;
+            document.getElementById('preview-image').style.display = 'block';
+            document.getElementById('preview-video').style.display = 'none';
+        }
+    }
+
+    function handleSharePost() {
+        const caption = document.getElementById('caption-input').value.trim();
+        const username = document.getElementById('username-input').value.trim() || 'kullanici_adi';
+
+        if (!AppState.selectedFile) return;
+
+        // Read file as base64
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const newPost = {
+                id: 'post_' + Date.now(),
+                username: username,
+                avatar: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23${Math.floor(Math.random()*16777215).toString(16)}'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-family='Arial' font-size='14' font-weight='600'%3E${username.charAt(0).toUpperCase()}%3C/text%3E%3C/svg%3E`,
+                media: e.target.result,
+                mediaType: AppState.selectedFileType,
+                caption: caption || '',
+                likes: 0,
+                comments: [],
+                time: 'ŞİMDİ',
+                liked: false,
+                saved: false
+            };
+
+            Storage.savePost(newPost);
+            AppState.posts = Storage.getPosts();
+            renderFeed();
+            closeCreateModal();
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        reader.readAsDataURL(AppState.selectedFile);
+    }
+
+    // ==================== NAVIGATION ====================
+    function showReels() {
+        document.getElementById('reels-container').classList.add('active');
+        document.querySelector('.main-content').style.display = 'none';
+        AppState.currentPage = 'reels';
+    }
+
+    function showHome() {
+        document.getElementById('reels-container').classList.remove('active');
+        document.querySelector('.main-content').style.display = 'flex';
+        AppState.currentPage = 'home';
+    }
+
+    // ==================== START APP ====================
+    init();
+    window.addEventListener('message', function(e) {
+            const data = e.data;
+            if (!data) return;
+
+            // 1. Profil/Hesap Açma
+            if (data.action === 'OPEN_PROFILE') {
+                const searchInput = document.querySelector('input[type="text"]');
+                if (searchInput) {
+                    searchInput.value = data.username;
+                    // Kullanıcıya arama yapıldığını hissettirmek için focus yapalım
+                    searchInput.focus();
+                    alert("Jarvis: " + data.username + " profili aranıyor..."); 
+                    // Not: Gerçek bir backend olmadığı için simüle ediyoruz.
+                }
+            }
+            
+            // 2. Fotoğrafı/Videoyu Beğen
+            else if (data.action === 'LIKE_POST') {
+                // Ekranda görünen ve henüz beğenilmemiş (kırmızı olmayan) kalp butonunu bul
+                // SVG path'ine veya buton yapısına göre genel bir arama:
+                const likeBtns = document.querySelectorAll('button svg[aria-label="Beğen"], button svg[aria-label="Like"]');
+                if(likeBtns.length > 0) {
+                    // İlk bulduğu beğenilmemiş gönderiye tıklar
+                    likeBtns[0].closest('button').click();
+                } else {
+                    // Eğer hepsi beğenilmişse veya bulunamazsa
+                    console.log("Beğenilecek gönderi bulunamadı veya zaten beğenilmiş.");
+                }
+            }
+
+            // 3. Gönderiyi Kaydet
+            else if (data.action === 'SAVE_POST') {
+                const saveBtns = document.querySelectorAll('button svg[aria-label="Kaydet"], button svg[aria-label="Save"]');
+                if(saveBtns.length > 0) {
+                    saveBtns[0].closest('button').click();
+                }
+            }
+
+            // 4. Ana Sayfa / Yenile
+            else if (data.action === 'HOME') {
+                // Logo veya ev ikonuna tıklar
+                const homeBtn = document.querySelector('svg[aria-label="Ana Sayfa"]')?.closest('div');
+                if(homeBtn) homeBtn.click();
+                else window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            // 5. Aşağı Kaydır (Keşfetme modu)
+            else if (data.action === 'SCROLL_DOWN') {
+                window.scrollBy({ top: 600, behavior: 'smooth' });
+            }
+        });
+</script>
+</body>
+</html>
