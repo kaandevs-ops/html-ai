@@ -25,6 +25,36 @@ Unlike traditional chatbots, html-ai:
 
 ---
 
+## 🎬 Live Demos
+
+### 💬 Chat Interface
+> Conversational AI with memory, quick-action buttons, and real-time response streaming.
+
+![Chat Demo](demo1.gif)
+
+---
+
+### 🎭 AI Personality & Emotional States
+> The AI personality system reacts dynamically — switching moods, expressions, and behavior based on context.
+
+![Personality Demo](demo2.gif)
+
+---
+
+### 🚀 Startup & AI Face Animation
+> Biometric startup sequence with animated AI avatar and camera/mic initialization.
+
+![Startup Demo](demo3.gif)
+
+---
+
+### 🔄 Full Session Walkthrough
+> End-to-end demo: launching the app, interacting with the AI, and exploring core features.
+
+![Full Demo](demo4.gif)
+
+---
+
 ## 🧠 Core Features
 
 ### 🧩 Memory (RAG)
