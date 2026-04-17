@@ -1,78 +1,78 @@
 # html-ai 🤖
 ### Self-Learning AI Assistant with Memory + Autonomous Agents
 
-Kullanıcı davranışını analiz eden, zamanla öğrenen ve kendini optimize eden otonom bir AI asistan sistemi. Yerel LLM (Ollama) ile çalışır — bulut API'lerine bağımlı değildir.
+An autonomous AI assistant system that analyzes user behavior, learns over time, and self-optimizes. Runs on a local LLM (Ollama) — no dependency on cloud APIs.
 
 ---
 
-## 🚀 Ne Yapıyor?
+## 🚀 What Does It Do?
 
-html-ai, klasik chatbotlardan farklı olarak:
+Unlike traditional chatbots, html-ai:
 
-- 🧠 Kullanıcıyı zamanla **tanır ve adapte olur**
-- 📚 Geçmiş konuşmalardan **bağlamsal hafıza** oluşturur (RAG)
-- 🤖 Görevleri planlayıp uygulayan **otonom ajanlar** kullanır
-- 🎭 Kişiye özel deneyim sunar (**AI personality system**)
+- 🧠 **Learns and adapts** to the user over time
+- 📚 Builds **contextual memory** from past conversations (RAG)
+- 🤖 Uses **autonomous agents** that plan and execute tasks
+- 🎭 Delivers a personalized experience via an **AI personality system**
 
 ---
 
-## 🖥️ Ekran Görüntüleri
+## 🖥️ Screenshots
 
-![Giriş](screenshots/giris.png)
+![Login](screenshots/giris.png)
 ![Chat](screenshots/chat.png)
-![AI Yüzü](screenshots/ai_yuzu.png)
-![Brain](screenshots/brain_dashboard.png)
+![AI Face](screenshots/ai_yuzu.png)
+![Brain Dashboard](screenshots/brain_dashboard.png)
 
 ---
 
-## 🧠 Core Özellikler
+## 🧠 Core Features
 
 ### 🧩 Memory (RAG)
-- Konuşmaları ve verileri saklar
-- Bağlamsal cevaplar üretir
-- Uzun vadeli hafıza simülasyonu
+- Stores conversations and data
+- Generates context-aware responses
+- Long-term memory simulation
 
 ### 🤖 Autonomous Agent
-- Plan → Uygula → Değerlendir döngüsü
-- Görevleri kendi başına yürütme
+- Plan → Execute → Evaluate loop
+- Runs tasks independently
 
 ### 🧬 Brain System
-- Kullanıcının alışkanlıklarını öğrenir
-- İlgi alanlarına göre davranış değiştirir
-- Duygusal durum ve kişilik metrikleri
+- Learns user habits over time
+- Adapts behavior based on interests
+- Emotional state and personality metrics
 
-### ⚙️ Ek Özellikler
-- 📱 Telegram entegrasyonu
-- 💬 WhatsApp entegrasyonu (Puppeteer)
-- 🏥 Sağlık modülü (hatırlatıcı & takip)
-- 🛠 Mini web uygulamaları (Excel, Word, Photoshop klonu)
-- 🧑‍💻 Türkçe AI modeli (deneysel)
-- 👁️ Yüz & ses tanıma (biyometrik kimlik doğrulama)
+### ⚙️ Additional Features
+- 📱 Telegram integration
+- 💬 WhatsApp integration (Puppeteer)
+- 🏥 Health module (reminders & tracking)
+- 🛠 Mini web apps (Excel, Word, Photoshop clone)
+- 🧑‍💻 Turkish AI model (experimental)
+- 👁️ Face & voice recognition (biometric authentication)
 
 ---
 
-## 🏗️ Sistem Mimarisi
+## 🏗️ System Architecture
 
 ```
 User Input
    ↓
-RAG Memory (Geçmiş veri + bağlam)
+RAG Memory (Past data + context)
    ↓
-Brain System (Kişilik & öğrenme)
+Brain System (Personality & learning)
    ↓
-Agent (Planlama & karar)
+Agent (Planning & decision-making)
    ↓
-LLM (Ollama - yerel)
+LLM (Ollama - local)
    ↓
 Response
 ```
 
 ---
 
-## 🛠️ Teknolojiler
+## 🛠️ Tech Stack
 
-| Katman | Teknoloji |
-|--------|-----------|
+| Layer | Technology |
+|-------|------------|
 | Backend | Node.js, Express |
 | LLM | Ollama (local) |
 | Memory | RAG + SQLite |
@@ -82,13 +82,13 @@ Response
 
 ---
 
-## ⚡ Kurulum
+## ⚡ Getting Started
 
-### Gereksinimler
+### Prerequisites
 - Node.js v18+
-- [Ollama](https://ollama.ai) kurulu ve çalışıyor olmalı
+- [Ollama](https://ollama.ai) installed and running
 
-### Adımlar
+### Steps
 
 ```bash
 git clone https://github.com/kaandevs-ops/html-ai.git
@@ -98,9 +98,9 @@ cp .env.example .env
 node server.js
 ```
 
-Tarayıcıda aç: 👉 `http://localhost:3000`
+Open in browser: 👉 `http://localhost:3000`
 
-### .env Örneği
+### .env Example
 
 ```env
 PORT=3000
@@ -111,15 +111,15 @@ TELEGRAM_BOT_TOKEN=your_token
 
 ---
 
-## ⚠️ Not
+## ⚠️ Note
 
-Bu proje deneysel ve kişisel kullanım amaçlıdır. Production kullanımı için güvenlik ve ölçekleme iyileştirmeleri gereklidir.
+This project is experimental and intended for personal use. Security and scalability improvements are required before using in production.
 
 ---
 
 ## 📌 Roadmap
 
-- [ ] Daha gelişmiş öğrenme sistemi
-- [ ] UI/UX iyileştirmeleri
-- [ ] Plugin/extension desteği
-- [ ] Çoklu kullanıcı desteği
+- [ ] More advanced learning system
+- [ ] UI/UX improvements
+- [ ] Plugin/extension support
+- [ ] Multi-user support
